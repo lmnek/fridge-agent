@@ -1,0 +1,168 @@
+/* Shared look for the side panel cards. Every class is prefixed `ck-` so nothing leaks into the stage.
+   Sizes are for a 1920x1080 projector: body 24px, labels 18px, titles 46px. Flat surfaces, hairline borders,
+   one accent (lamp blue), amber for "soon / sale", red for "out / missing". No gradients, no glass, no emoji. */
+
+.ck {
+  --ck-bg: #ffffff;
+  --ck-sunk: #f3f6f7;
+  --ck-line: #dce5e9;
+  --ck-ink: #14222b;
+  --ck-mute: #586a75;
+  --ck-faint: #8a9aa3;
+  --ck-lamp: #1f6f96;
+  --ck-lamp-soft: #e3eff5;
+  --ck-soon: #9a5b00;
+  --ck-soon-soft: #f8eedd;
+  --ck-gone: #b8283a;
+  --ck-gone-soft: #f8e4e6;
+  --ck-ok: #2c6e49;
+  --ck-ok-soft: #e2efe7;
+  --ck-radius: 18px;
+
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  padding: 36px 40px;
+  border: 1px solid var(--ck-line);
+  border-radius: var(--ck-radius);
+  background: var(--ck-bg);
+  color: var(--ck-ink);
+  font-family: "Barlow", system-ui, sans-serif;
+  font-size: 24px;
+  line-height: 1.35;
+  font-variant-numeric: tabular-nums;
+}
+
+.ck-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 28px;
+}
+
+.ck-kicker {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 6px;
+  color: var(--ck-mute);
+  font-size: 18px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.ck-title {
+  margin: 0;
+  font-family: "Barlow Semi Condensed", "Barlow", sans-serif;
+  font-size: 46px;
+  font-weight: 600;
+  line-height: 1.05;
+  letter-spacing: -0.01em;
+}
+
+.ck-aside {
+  flex: none;
+  color: var(--ck-mute);
+  font-size: 20px;
+  text-align: right;
+}
+
+.ck-body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.ck-foot {
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid var(--ck-line);
+}
+
+/* A live dot: steady when done, pulsing while a step runs. */
+.ck-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--ck-lamp);
+}
+.ck-dot.is-live {
+  animation: ck-pulse 1.2s ease-in-out infinite;
+}
+@keyframes ck-pulse {
+  50% {
+    opacity: 0.25;
+  }
+}
+
+/* Why tags and status labels. Squared, flat, one tone each. */
+.ck-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px 4px;
+  border-radius: 6px;
+  background: var(--ck-sunk);
+  color: var(--ck-mute);
+  font-size: 18px;
+  font-weight: 500;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+.ck-tag.lamp {
+  background: var(--ck-lamp-soft);
+  color: var(--ck-lamp);
+}
+.ck-tag.soon {
+  background: var(--ck-soon-soft);
+  color: var(--ck-soon);
+}
+.ck-tag.gone {
+  background: var(--ck-gone-soft);
+  color: var(--ck-gone);
+}
+.ck-tag.ok {
+  background: var(--ck-ok-soft);
+  color: var(--ck-ok);
+}
+
+/* Step trail: captured, analysing, boxes, diff. */
+.ck-steps {
+  display: flex;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.ck-steps li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--ck-faint);
+  font-size: 18px;
+  font-weight: 500;
+}
+.ck-steps li + li::before {
+  content: "";
+  width: 22px;
+  height: 1px;
+  background: var(--ck-line);
+}
+.ck-steps li.is-active {
+  color: var(--ck-lamp);
+}
+.ck-steps li.is-done {
+  color: var(--ck-ink);
+}
+
+.ck-num {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+}

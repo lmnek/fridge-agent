@@ -45,14 +45,14 @@ Anything that should show up on stage goes through the bridge. Screens never tal
 | `inventory` | `items`, `source` | bridge | C1, kitchen page |
 | `learned` | `fact`, `category` (craving, missing, diet, preference, habit) | `remember` tool | B craving card, Telegram |
 | `recipe` | `recipe` (`title`, `have`, `missing`, `steps`) | `show_recipe` tool | C2 |
-| `cart` | `items` (`name`, `qty`, `price_czk`, `reason`, `image_url`), `total_czk` | `show_cart` tool (part 3) | C4, Telegram |
-| `deals` | `items` (`item`, `store`, `price_czk`, `was_czk`), `stores` (`name`, `distance_m`), `scraped_at` | the deals tool (part 8) | C3 overview |
+| `cart` | `items` (`name`, `qty`, `price_czk` per unit, `reason` as comma-separated why tags, `image_url`), `total_czk` | `show_cart` tool (part 3) | C4, Telegram |
+| `deals` | `items` (`item`, `store`, `price_czk`, `was_czk`), `stores` (`name`, `distance_m`, or `delivery_min` for Rohlík), `scraped_at` | the deals tool (part 8) | C3 overview |
 | `approval` | `approval`, `order` | bridge | Telegram |
 | `look` | `reason` (motion, manual, replay) | bridge | kitchen page or the vision pipeline |
 | `vision` | `phase` (captured, analysing, done), `run`, `reason`, `frames` (`when` before or after, `camera`, `url`), `boxes` (`frame` index, `label`, `status` out, new or in, `x`, `y`, `w`, `h` from 0 to 1), `removed`, `added`, `tell`, `error` | part 4 | B card, kitchen page |
 | `caption` | `who` (coldex, actor, presenter, courier), `id`, `text` (so far), `final` | both apps (part 1), part 6 | subtitles, F card |
-| `call` | `phase` (dialing, ringing, answered, ended), `number` (masked) | part 6 | F card, Telegram |
-| `stage` | `beat` (A–H), `action` | hotkeys (part 1) | forces a card, fallbacks |
+| `call` | `phase` (dialing, ringing, answered, ended), `number` (masked), optional `name` | part 6 | F card, Telegram |
+| `stage` | `beat` (A, B, C, DE, F, G, H, idle), `action` | hotkeys (part 1) | forces a card, fallbacks |
 | `system` | `message` | bridge | error line |
 
 The call audio is too heavy for the bus. Part 6 exposes its own WebSocket, and the stage view plays it.
