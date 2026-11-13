@@ -8,11 +8,23 @@
   border-radius: var(--ck-r-inner); background: var(--ck-gone-soft);
 }
 .ck-fridge-outrow {
-  display: grid; grid-template-columns: 32px 1fr auto; align-items: center; column-gap: 20px;
-  padding: 22px 0; color: var(--ck-gone);
+  display: grid; grid-template-columns: 56px 1fr auto; align-items: center; column-gap: 20px;
+  padding: 14px 0; color: var(--ck-gone);
 }
 .ck-fridge-outrow + .ck-fridge-outrow { border-top: 1.5px solid #efc9ce; }
-.ck-fridge-x { display: grid; place-items: center; width: 32px; }
+
+/* Product photo tile, as in the C4 cart: white, a thin line border. 56px in the red block, 48px in the list. */
+.ck-fridge-thumb {
+  display: grid; place-items: center; width: 56px; height: 56px; overflow: hidden;
+  border: 1px solid var(--ck-line); border-radius: var(--ck-r-inner); background: #fff;
+}
+.ck-fridge-out .ck-fridge-thumb { border-color: #efc9ce; }
+.ck-fridge-thumb img { width: 100%; height: 100%; padding: 3px; box-sizing: border-box; object-fit: contain; }
+.ck-fridge-thumb b {
+  color: var(--ck-faint); font-family: "Barlow Semi Condensed", "Barlow", sans-serif;
+  font-size: var(--ck-t-label); font-weight: 600;
+}
+.ck-fridge-row .ck-fridge-thumb { width: 48px; height: 48px; border-radius: var(--ck-r-chip); }
 .ck-fridge-outname {
   font-family: "Barlow Semi Condensed", "Barlow", sans-serif;
   font-size: 40px; font-weight: 600; line-height: 1.05; color: var(--ck-ink);
@@ -25,8 +37,8 @@
 }
 .ck-fridge-list { margin: 0; padding: 0; list-style: none; }
 .ck-fridge-row {
-  display: grid; grid-template-columns: 1fr 120px 200px; align-items: baseline; column-gap: 24px;
-  padding: 17px 0; border-top: 1px solid var(--ck-line); font-size: var(--ck-t-body); line-height: 1.25;
+  display: grid; grid-template-columns: 48px 1fr 120px 200px; align-items: center; column-gap: 24px;
+  padding: 8px 0; border-top: 1px solid var(--ck-line); font-size: var(--ck-t-body); line-height: 1.25;
 }
 .ck-fridge-name { font-weight: 500; color: var(--ck-ink); }
 .ck-fridge-qty { color: var(--ck-slate); font-weight: 500; text-align: right; }

@@ -31,11 +31,26 @@ function expiry(days: number | null): { text: string; soon: boolean } {
   return { text: `in ${days} days`, soon: false };
 }
 
-const Cross = () => (
-  <svg width="28" height="28" viewBox="0 0 26 26" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round">
-    <path d="M6 6l14 14M20 6L6 20" />
-  </svg>
-);
+// Local product photos (Rohlík CDN, saved into public/ so nothing hits the network at demo time).
+// `key` is matched inside the lowercased item name; the first hit wins.
+const PHOTOS: [string, string][] = [
+  ["milk", "/demo/products/milk.jpg"],
+  ["egg", "/demo/products/eggs.jpg"],
+  ["yog", "/demo/products/yogurt.jpg"],
+  ["butter", "/demo/items/butter.jpg"],
+  ["pecorino", "/demo/items/pecorino.jpg"],
+  ["spinach", "/demo/items/spinach.jpg"],
+  ["tomato", "/demo/items/tomatoes.jpg"],
+  ["guanciale", "/demo/products/guanciale.jpg"],
+  ["spaghetti", "/demo/products/spaghetti.jpg"],
+  ["banana", "/demo/products/bananas.jpg"],
+];
+
+function Thumb({ name }: { name: string }) {
+  const n = name.toLowerCase();
+  const src = PHOTOS.find(([k]) => n.includes(k))?.[1];
+  return <span className="ck-fridge-thumb">{src ? <img src={src} alt="" /> : <b>{name.charAt(0)}</b>}</span>;
+}
 
 export default function FridgeCard({ events }: { events: BusEvent[] }) {
   const inv = latest(events, "inventory");
@@ -82,7 +97,7 @@ export default function FridgeCard({ events }: { events: BusEvent[] }) {
           <div className="ck-fridge-out">
             {out.map((n) => (
               <motion.div key={n} variants={rise} className="ck-fridge-outrow">
-                <span className="ck-fridge-x"><Cross /></span>
+                <Thumb name={n} />
                 <span className="ck-fridge-outname">{n}</span>
                 <span className="ck-fridge-none">none left</span>
               </motion.div>
@@ -98,6 +113,7 @@ export default function FridgeCard({ events }: { events: BusEvent[] }) {
             const ex = expiry(daysUntil(i.expires));
             return (
               <motion.li key={i.id ?? i.name} variants={rise} className={`ck-fridge-row${ex.soon ? " soon" : ""}`}>
+                <Thumb name={i.name} />
                 <span className="ck-fridge-name">{i.name}</span>
                 <span className="ck-fridge-qty">{i.qty}</span>
                 <span className="ck-fridge-exp">{ex.soon && i.note ? i.note : ex.text}</span>
