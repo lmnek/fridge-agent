@@ -178,7 +178,7 @@ export class FridgeBrain {
   }
 
   private onItem(item: Json) {
-    if (item?.type !== "mcp_approval_request" || this.seen.has(String(item.id))) return;
+    if (item?.type !== "mcp_approval_request" || !item.name || this.seen.has(String(item.id))) return;
     this.seen.add(String(item.id));
     const req = { id: String(item.id), name: String(item.name), server: String(item.server_label ?? ""), args: String(item.arguments ?? "{}") };
     if (AUTO_APPROVE.test(req.name)) this.approve(req.id, true);
@@ -194,6 +194,7 @@ export class FridgeBrain {
       calls.forEach((c, i) => {
         this.send({ type: "conversation.item.create", item: { type: "function_call_output", call_id: c.call_id, output: results[i] } });
       });
+      this.wantResponse = false; // this follow-up already covers anything queued meanwhile
       this.send({ type: "response.create" });
       return;
     }

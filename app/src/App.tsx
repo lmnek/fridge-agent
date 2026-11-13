@@ -95,6 +95,7 @@ export default function App() {
       if (ev.type === "inventory") setItems(ev.items);
       if (ev.type === "look") void lookRef.current();
       if (ev.type === "recipe") setRecipe(ev.recipe);
+      if (ev.type === "system") setError(ev.message);
       if (ev.type === "learned") {
         setLearned(ev.fact);
         setTimeout(() => setLearned((f) => (f === ev.fact ? null : f)), 7000);

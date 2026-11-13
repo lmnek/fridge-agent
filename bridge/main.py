@@ -339,7 +339,7 @@ What you do:
 """
 
 
-def session_config() -> dict[str, Any]:
+def session_config(rohlik: bool = True) -> dict[str, Any]:
     tools: list[dict[str, Any]] = [
         _fn("get_inventory", "What is in the fridge right now, with expiry dates.", {}),
         _fn(
@@ -364,7 +364,7 @@ def session_config() -> dict[str, Any]:
             ["title"],
         ),
     ]
-    if ROHLIK_TOKEN:
+    if rohlik and ROHLIK_TOKEN:
         tools.append(
             {
                 "type": "mcp",
@@ -432,14 +432,23 @@ async def realtime_token() -> dict[str, Any]:
     if not OPENAI_API_KEY:
         raise HTTPException(503, "OPENAI_API_KEY is not set in bridge/.env.")
     async with httpx.AsyncClient(timeout=20) as client:
-        res = await client.post(
-            "https://api.openai.com/v1/realtime/client_secrets",
-            headers={"Authorization": f"Bearer {OPENAI_API_KEY}"},
-            json={"session": session_config()},
-        )
+
+        async def mint(rohlik: bool) -> httpx.Response:
+            return await client.post(
+                "https://api.openai.com/v1/realtime/client_secrets",
+                headers={"Authorization": f"Bearer {OPENAI_API_KEY}"},
+                json={"session": session_config(rohlik)},
+            )
+
+        res = await mint(rohlik=True)
+        rohlik = bool(ROHLIK_TOKEN)
+        if res.status_code != 200 and ROHLIK_TOKEN:
+            # A stale Rohlík token must not keep the fridge from waking up. HACK(demo): fall back to the fake cart.
+            emit("system", message=f"Rohlík MCP rejected, using the demo cart: {res.text[:200]}")
+            res, rohlik = await mint(rohlik=False), False
     if res.status_code != 200:
         raise HTTPException(502, f"OpenAI: {res.text[:300]}")
-    return {"value": res.json()["value"], "model": REALTIME_MODEL}
+    return {"value": res.json()["value"], "model": REALTIME_MODEL, "rohlik": rohlik}
 
 
 @app.get("/config")

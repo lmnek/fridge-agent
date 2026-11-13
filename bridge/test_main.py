@@ -73,3 +73,16 @@ def test_camera_without_hub_is_404():
 def test_remember_goes_into_instructions(fact):
     client.post("/tools/remember", json={"fact": fact})
     assert fact in main.session_config()["instructions"]
+
+
+@respx.mock
+def test_bad_rohlik_token_falls_back_to_demo_cart(monkeypatch):
+    monkeypatch.setattr(main, "OPENAI_API_KEY", "sk-test")
+    monkeypatch.setattr(main, "ROHLIK_TOKEN", "expired")
+    route = respx.post("https://api.openai.com/v1/realtime/client_secrets").mock(
+        side_effect=[httpx.Response(400, json={"error": "mcp auth"}), httpx.Response(200, json={"value": "ek_2"})]
+    )
+    body = client.get("/realtime/token").json()
+    assert body == {"value": "ek_2", "model": main.REALTIME_MODEL, "rohlik": False}
+    retry = json.loads(route.calls.last.request.content)["session"]["tools"]
+    assert "place_order" in {t.get("name") for t in retry} and not [t for t in retry if t["type"] == "mcp"]
