@@ -1,23 +1,34 @@
 /* Shared look for the side panel cards. Every class is prefixed `ck-` so nothing leaks into the stage.
-   Sizes are for a 1920x1080 projector: body 24px, labels 18px, titles 46px. Flat surfaces, hairline borders,
-   one accent (lamp blue), amber for "soon / sale", red for "out / missing". No gradients, no glass, no emoji. */
+   Sizes are for an 800x800 box on a 1920x1080 projector: title 50px, body 26px, labels 20px. A solid white panel
+   with a fine ice-blue edge, hairlines inside, one accent (lamp blue), amber for "soon / sale", red for
+   "out / missing", green for done. No shadows, gradients, glass or emoji. */
 
 .ck {
   --ck-bg: #ffffff;
   --ck-sunk: #f3f6f7;
-  --ck-line: #dce5e9;
+  --ck-line: #dce5e9; /* hairlines inside the card */
+  --ck-edge: #c6dbe5; /* the card's own border: a cool ice blue between frost and lamp */
   --ck-ink: #14222b;
   --ck-mute: #44545e;
+  --ck-slate: #586a75;
   --ck-faint: #667780;
   --ck-lamp: #1f6f96;
-  --ck-lamp-soft: #e3eff5;
+  --ck-lamp-soft: #e6f1f6;
   --ck-soon: #9a5b00;
   --ck-soon-soft: #f8eedd;
   --ck-gone: #b8283a;
   --ck-gone-soft: #f8e4e6;
   --ck-ok: #2c6e49;
   --ck-ok-soft: #e2efe7;
-  --ck-radius: 18px;
+  /* Three radii, used the same everywhere: the card, frames/images/rows, chips/tags. */
+  --ck-radius: 24px;
+  --ck-r-inner: 14px;
+  --ck-r-chip: 8px;
+  /* Three type sizes: title, body, label. */
+  --ck-t-title: 50px;
+  --ck-t-body: 26px;
+  --ck-t-label: 20px;
+  --ck-pad: 44px;
 
   position: relative;
   display: flex;
@@ -26,41 +37,40 @@
   height: 100%;
   min-height: 0;
   overflow: hidden;
-  padding: 36px 40px;
-  border: 1px solid var(--ck-line);
+  padding: var(--ck-pad);
+  border: 1.5px solid var(--ck-edge);
   border-radius: var(--ck-radius);
   background: var(--ck-bg);
   color: var(--ck-ink);
   font-family: "Barlow", system-ui, sans-serif;
-  font-size: 24px;
+  font-size: var(--ck-t-body);
   line-height: 1.35;
   font-variant-numeric: tabular-nums;
 }
 
 .ck-head {
   display: flex;
-  align-items: flex-start;
+  align-items: flex-end;
   justify-content: space-between;
   gap: 24px;
   margin-bottom: 28px;
 }
 
+/* A quiet sentence-case line above the title (no tracked caps), with the live dot where it means live. */
 .ck-kicker {
   display: flex;
   align-items: center;
   gap: 10px;
-  margin: 0 0 6px;
-  color: var(--ck-mute);
-  font-size: 20px;
+  margin: 0 0 4px;
+  color: var(--ck-slate);
+  font-size: 22px;
   font-weight: 500;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
 }
 
 .ck-title {
   margin: 0;
   font-family: "Barlow Semi Condensed", "Barlow", sans-serif;
-  font-size: 46px;
+  font-size: var(--ck-t-title);
   font-weight: 600;
   line-height: 1.05;
   letter-spacing: -0.01em;
@@ -68,8 +78,9 @@
 
 .ck-aside {
   flex: none;
-  color: var(--ck-mute);
-  font-size: 20px;
+  padding-bottom: 6px;
+  color: var(--ck-slate);
+  font-size: var(--ck-t-label);
   text-align: right;
 }
 
@@ -81,8 +92,8 @@
 }
 
 .ck-foot {
-  margin-top: 24px;
-  padding-top: 20px;
+  margin-top: 20px;
+  padding-top: 18px;
   border-top: 1px solid var(--ck-line);
 }
 
@@ -102,16 +113,16 @@
   }
 }
 
-/* Why tags and status labels. Squared, flat, one tone each. */
+/* Why tags and status labels. Flat, one tone each. */
 .ck-tag {
   display: inline-flex;
   align-items: center;
   gap: 6px;
   padding: 3px 10px 4px;
-  border-radius: 6px;
+  border-radius: var(--ck-r-chip);
   background: var(--ck-sunk);
   color: var(--ck-mute);
-  font-size: 20px;
+  font-size: var(--ck-t-label);
   font-weight: 600;
   line-height: 1.2;
   white-space: nowrap;
@@ -146,14 +157,14 @@
   align-items: center;
   gap: 8px;
   color: var(--ck-faint);
-  font-size: 20px;
+  font-size: var(--ck-t-label);
   font-weight: 500;
 }
 .ck-steps li + li::before {
   content: "";
   width: 22px;
   height: 1px;
-  background: var(--ck-line);
+  background: var(--ck-edge);
 }
 .ck-steps li.is-active {
   color: var(--ck-lamp);

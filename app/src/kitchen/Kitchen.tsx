@@ -23,8 +23,8 @@ type Item = { id: string; name: string; qty?: string; expires?: string };
 /** A card leaves this long after the last event that asked for one. */
 const IDLE_MS = 40_000;
 /** The stage cards are drawn for an 860x920 box on the projector; the side scales that box to fit. */
-const CARD_W = 860;
-const CARD_H = 920;
+const CARD_W = 800;
+const CARD_H = 800;
 
 /** The orb's glide and the card's entrance: a soft spring that settles without a bounce. */
 const SPRING = { type: "spring", stiffness: 120, damping: 22, mass: 1 } as const;

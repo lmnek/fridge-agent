@@ -25,7 +25,7 @@ export function czk(n: number): string {
   return `${n.toLocaleString("cs-CZ", { minimumFractionDigits: whole ? 0 : 2, maximumFractionDigits: whole ? 0 : 2 })} Kč`;
 }
 
-/** The card surface: kicker (small caps line), title, optional aside on the right, body, optional footer. */
+/** The card surface: kicker (a quiet sentence-case line, with a pulsing dot while live), title, optional aside on the right, body, optional footer. */
 export function CardFrame({
   kicker,
   title,
@@ -48,7 +48,7 @@ export function CardFrame({
       <header className="ck-head">
         <div>
           <p className="ck-kicker">
-            {live !== undefined && <span className={`ck-dot${live ? " is-live" : ""}`} />}
+            {live && <span className="ck-dot is-live" />}
             {kicker}
           </p>
           <h2 className="ck-title">{title}</h2>
