@@ -1,0 +1,135 @@
+/* Live subtitles under the stage orb. Owned by part 1, sub-task 2. */
+
+.subtitles {
+  --now-size: 42px;
+  --now-lh: 1.18;
+  --prev-size: 25px;
+  --prev-lh: 1.25;
+  width: 860px;
+  max-width: 100%;
+  flex-shrink: 0;
+  /* Fixed height so the orb above never moves: one previous line plus two lines of the newest. */
+  height: calc(var(--prev-size) * var(--prev-lh) + 2 * var(--now-size) * var(--now-lh) + 18px);
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  overflow: hidden;
+  transition: opacity 900ms ease;
+}
+
+.subtitles[data-faded="true"] {
+  opacity: 0;
+}
+
+.subtitle {
+  display: grid;
+  grid-template-columns: 112px 1fr;
+  column-gap: 20px;
+  /* Not baseline: a clipped, bottom-aligned text box has its first baseline outside the box. */
+  align-items: start;
+  max-height: 140px;
+  transition:
+    opacity 360ms ease,
+    margin 360ms ease,
+    max-height 360ms ease;
+}
+
+.subtitle-who {
+  font-family: "Barlow", system-ui, sans-serif;
+  font-size: 17px;
+  font-weight: 500;
+  color: var(--slate);
+  line-height: 1.4;
+  text-align: right;
+  /* Sits on the first text line's baseline, by hand (see .subtitle). */
+  padding-top: 15px;
+  transition:
+    font-size 360ms ease,
+    padding 360ms ease;
+}
+
+.subtitle[data-who="coldex"] .subtitle-who {
+  color: var(--lamp);
+}
+
+.subtitle-text {
+  margin: 0;
+  font-family: "Barlow Semi Condensed", "Barlow", sans-serif;
+  font-weight: 500;
+  letter-spacing: -0.005em;
+  color: var(--slate);
+  text-wrap: pretty;
+  /* Bottom-aligned inside a clipped box: an overlong line loses its oldest lines, never its newest. */
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  overflow: hidden;
+  transition:
+    font-size 360ms ease,
+    max-height 360ms ease,
+    color 360ms ease;
+}
+
+.subtitle[data-who="coldex"] .subtitle-text {
+  color: var(--ink);
+}
+
+.subtitle[data-role="now"] {
+  opacity: 1;
+  margin-top: 14px;
+  animation: subtitle-in 420ms cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+.subtitle[data-role="now"]:first-child {
+  margin-top: 0;
+}
+
+.subtitle[data-role="now"] .subtitle-text {
+  font-size: var(--now-size);
+  line-height: var(--now-lh);
+  max-height: calc(2 * var(--now-size) * var(--now-lh));
+}
+
+.subtitle[data-role="prev"] {
+  opacity: 0.5;
+}
+
+.subtitle[data-role="prev"] .subtitle-text,
+.subtitle[data-role="gone"] .subtitle-text {
+  font-size: var(--prev-size);
+  line-height: var(--prev-lh);
+  max-height: calc(var(--prev-size) * var(--prev-lh));
+}
+
+.subtitle[data-role="prev"] .subtitle-who,
+.subtitle[data-role="gone"] .subtitle-who {
+  font-size: 15px;
+  padding-top: 5px;
+}
+
+/* The oldest one collapses away above the previous line. */
+.subtitle[data-role="gone"] {
+  opacity: 0;
+  max-height: 0;
+  overflow: hidden;
+}
+
+.subtitle[data-role="gone"] .subtitle-text {
+  max-height: 0;
+}
+
+@keyframes subtitle-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .subtitle,
+  .subtitle-text,
+  .subtitle-who {
+    transition: none;
+    animation: none;
+  }
+}

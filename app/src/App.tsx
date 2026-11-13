@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { grabFrames } from "./camera";
 import { Orb } from "./Orb";
 import { FridgeBrain, type Status } from "./realtime";
+import { publishCaption } from "./stage/captions";
 
 interface Item {
   id: string;
@@ -55,7 +56,11 @@ export default function App() {
     () =>
       new FridgeBrain({
         status: setStatus,
-        caption: setCaption,
+        caption: (text, final, id) => {
+          setCaption(text);
+          publishCaption("coldex", `kitchen-${id ?? "r"}`, text, Boolean(final));
+        },
+        heard: (text, final, id) => publishCaption("actor", `kitchen-${id}`, text, final),
         approval: (req) => setApproval({ kind: "mcp", id: req.id, name: req.name, args: req.args }),
         error: setError,
       }),
