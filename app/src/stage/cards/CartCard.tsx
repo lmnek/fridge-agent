@@ -160,7 +160,7 @@ function Cart({ events, cartAt }: { events: BusEvent[]; cartAt: number }) {
           >
             <Thumb src={it.image} name={it.name} />
             <span className="ck-cart-main">
-              <span className={`ck-cart-name${it.name.length > 46 ? " is-longer" : it.name.length > 34 ? " is-long" : ""}`}>{it.name}</span>
+              <span className={`ck-cart-name${it.name.length > 50 ? " is-longer" : it.name.length > 40 ? " is-long" : ""}`}>{it.name}</span>
               {it.tags.length > 0 && (
                 <span className="ck-cart-tags">
                   {it.tags.map((t) => (
@@ -171,7 +171,10 @@ function Cart({ events, cartAt }: { events: BusEvent[]; cartAt: number }) {
                 </span>
               )}
             </span>
-            <span className="ck-cart-qty ck-num">{it.qty} ×</span>
+            <span className="ck-cart-qty ck-num">
+              {it.qty}
+              <i>×</i>
+            </span>
             <span className="ck-cart-price ck-num">{czk(it.qty * it.price)}</span>
           </motion.li>
         ))}
