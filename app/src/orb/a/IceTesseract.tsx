@@ -26,6 +26,14 @@ const R0 = 0.05; // beam radius at f = 1
 // The 16 corners of the hypercube and its 32 edges (corners differing in exactly one coordinate).
 const VERTS = Array.from({ length: 16 }, (_, i) => [i & 1 ? 1 : -1, i & 2 ? 1 : -1, i & 4 ? 1 : -1, i & 8 ? 1 : -1]);
 const EDGES: [number, number][] = [];
+// The 24 squares: pick two free axes, fix the other two; corners listed in winding order.
+const FACES: number[][] = [];
+for (let a = 0; a < 4; a++)
+  for (let b = a + 1; b < 4; b++)
+    for (let fixed = 0; fixed < 16; fixed++) {
+      if (fixed & ((1 << a) | (1 << b))) continue;
+      FACES.push([fixed, fixed | (1 << a), fixed | (1 << a) | (1 << b), fixed | (1 << b)]);
+    }
 for (let i = 0; i < 16; i++) for (let b = 0; b < 4; b++) if (!(i & (1 << b))) EDGES.push([i, i | (1 << b)]);
 
 /** A unit capsule, split into the half that follows end A and the half that follows end B. */
@@ -50,15 +58,28 @@ function capsuleTemplate() {
 function useTesseractGeometry() {
   return useMemo(() => {
     const t = capsuleTemplate();
-    const total = t.n * EDGES.length;
+    const sg = new THREE.SphereGeometry(1, QUALITY.radialSegments, QUALITY.capSegments * 2 + 2);
+    const sph = { n: sg.attributes.position.count, off: sg.attributes.position.array as Float32Array, index: Array.from(sg.index!.array) };
+    const total = t.n * EDGES.length + sph.n * 16;
     const geo = new THREE.BufferGeometry();
     geo.setAttribute("position", new THREE.BufferAttribute(new Float32Array(total * 3), 3).setUsage(THREE.DynamicDrawUsage));
     geo.setAttribute("normal", new THREE.BufferAttribute(new Float32Array(total * 3), 3).setUsage(THREE.DynamicDrawUsage));
     const idx: number[] = [];
     for (let e = 0; e < EDGES.length; e++) for (const k of t.index) idx.push(k + e * t.n);
+    const sBase = t.n * EDGES.length;
+    for (let v = 0; v < 16; v++) for (const k of sph.index) idx.push(sBase + k + v * sph.n);
     geo.setIndex(idx);
     geo.boundingSphere = new THREE.Sphere(new THREE.Vector3(), 10);
-    return { geo, t };
+
+    // The 24 square faces, as separate quads with a per-vertex alpha (outer faces show, inner fade).
+    const faces = new THREE.BufferGeometry();
+    faces.setAttribute("position", new THREE.BufferAttribute(new Float32Array(FACES.length * 4 * 3), 3).setUsage(THREE.DynamicDrawUsage));
+    faces.setAttribute("color", new THREE.BufferAttribute(new Float32Array(FACES.length * 4 * 4), 4).setUsage(THREE.DynamicDrawUsage));
+    const fidx: number[] = [];
+    for (let q = 0; q < FACES.length; q++) fidx.push(q * 4, q * 4 + 1, q * 4 + 2, q * 4, q * 4 + 2, q * 4 + 3);
+    faces.setIndex(fidx);
+    faces.boundingSphere = new THREE.Sphere(new THREE.Vector3(), 10);
+    return { geo, t, sph, faces };
   }, []);
 }
 
@@ -70,7 +91,7 @@ const ease = (cur: number, target: number, dt: number, tau: number) => cur + (ta
 type MTM = THREE.MeshPhysicalMaterial & { chromaticAberration: number; distortion: number };
 
 export function IceTesseract({ status, levels }: { status: Status; levels: Levels }) {
-  const { geo, t } = useTesseractGeometry();
+  const { geo, t, sph, faces } = useTesseractGeometry();
   const group = useRef<THREE.Group>(null);
   const mat = useRef<MTM>(null);
   const light = useRef<THREE.PointLight>(null);
@@ -94,6 +115,7 @@ export function IceTesseract({ status, levels }: { status: Status; levels: Level
     () => ({
       p: Array.from({ length: 16 }, () => new THREE.Vector3()),
       r: new Float32Array(16),
+      f: new Float32Array(16),
       d: new THREE.Vector3(),
       a: new THREE.Vector3(),
       b: new THREE.Vector3(),
@@ -141,9 +163,10 @@ export function IceTesseract({ status, levels }: { status: Status; levels: Level
       [z, ww] = [cz * z - sz * ww, sz * z + cz * ww];
       // Corners deep in w are the inner cube; the voice pushes them outward on stressed syllables.
       const inner = THREE.MathUtils.clamp(0.5 - ww / 2.4, 0, 1);
-      const f = (D / (D - ww)) * (1 + pulse * 0.42 * inner);
+      const f = (D / (D - ww)) * (1 + pulse * 0.75 * inner);
       tmp.p[i].set(x * f * SCALE, y * f * SCALE, z * f * SCALE);
       tmp.r[i] = R0 * Math.pow(f, 0.8);
+      tmp.f[i] = f;
     }
 
     // Write every capsule: each vertex rides with its end, offset by the template direction.
@@ -174,8 +197,42 @@ export function IceTesseract({ status, levels }: { status: Status; levels: Level
         nor[j + 2] = nz;
       }
     }
+    // Joint spheres a touch fatter than the beams, so no flat cap ever faces the camera.
+    const sBase = t.n * EDGES.length;
+    for (let v = 0; v < 16; v++) {
+      const P = tmp.p[v], r = tmp.r[v] * 1.1;
+      for (let k = 0; k < sph.n; k++) {
+        const j = (sBase + v * sph.n + k) * 3;
+        const ox = sph.off[k * 3], oy = sph.off[k * 3 + 1], oz = sph.off[k * 3 + 2];
+        pos[j] = P.x + ox * r;
+        pos[j + 1] = P.y + oy * r;
+        pos[j + 2] = P.z + oz * r;
+        nor[j] = ox;
+        nor[j + 1] = oy;
+        nor[j + 2] = oz;
+      }
+    }
     geo.attributes.position.needsUpdate = true;
     geo.attributes.normal.needsUpdate = true;
+
+    // Faint ice faces: alpha rises with 4D nearness, so the outer cube reads as a solid block.
+    let fmin = Infinity, fmax = -Infinity;
+    for (let i = 0; i < 16; i++) (fmin = Math.min(fmin, tmp.f[i])), (fmax = Math.max(fmax, tmp.f[i]));
+    const fp = faces.attributes.position.array as Float32Array;
+    const fc = faces.attributes.color.array as Float32Array;
+    const faceA = 0.09 + out * 0.08 + inp * 0.04;
+    for (let q = 0; q < FACES.length; q++) {
+      for (let c = 0; c < 4; c++) {
+        const v = FACES[q][c], P = tmp.p[v];
+        const j = q * 4 + c;
+        fp.set([P.x, P.y, P.z], j * 3);
+        const near = (tmp.f[v] - fmin) / (fmax - fmin + 1e-4);
+        fc.set([1, 1, 1, faceA * near * near * near], j * 4);
+      }
+    }
+    faces.attributes.position.needsUpdate = true;
+    faces.attributes.color.needsUpdate = true;
+    faces.computeVertexNormals();
 
     // Float, bob, and lean in toward the listener.
     const g = group.current!;
@@ -186,24 +243,23 @@ export function IceTesseract({ status, levels }: { status: Status; levels: Level
 
     // The ice catches more light when it hears you; the voice lights it from inside.
     const m = mat.current!;
-    m.envMapIntensity = 1 + inp * 1.2 + out * 0.9 + w.connecting * 0.4;
+    m.envMapIntensity = 1 + inp * 1.4 + out * 2.2 + pulse * 1.5 + w.connecting * 0.5;
     m.chromaticAberration = 0.04 + out * 0.12 + pulse * 0.1;
     m.distortion = 0.06 + out * 0.18;
-    m.emissiveIntensity = out * 0.22 + pulse * 0.25 + w.thinking * 0.04;
+    m.emissiveIntensity = out * 0.55 + pulse * 0.6 + w.thinking * 0.05;
     light.current!.intensity = 0.6 + w.thinking * 1.2 + out * 9 + pulse * 6;
   });
 
   return (
     <>
       <Environment resolution={256} frames={1}>
-        <color attach="background" args={["#b9cad3"]} />
-        <Lightformer form="rect" intensity={1} position={[0, -5, 0]} rotation-x={-Math.PI / 2} scale={[10, 10, 1]} color="#153447" />
-        <Lightformer form="rect" intensity={1} position={[-6, 0, -3]} rotation-y={Math.PI / 3} scale={[3, 10, 1]} color="#1f4f66" />
+        <color attach="background" args={["#2c4250"]} />
         <Lightformer form="rect" intensity={6} position={[0, 4, 1]} rotation-x={Math.PI / 2} scale={[8, 1.2, 1]} />
         <Lightformer form="rect" intensity={8} position={[2, 3, 3]} rotation-x={Math.PI / 3} scale={[0.6, 4, 1]} />
         <Lightformer form="rect" intensity={2.2} position={[-5, 1, 1]} rotation-y={Math.PI / 2} scale={[4, 0.4, 1]} />
         <Lightformer form="rect" intensity={2.2} position={[5, -1, 1]} rotation-y={-Math.PI / 2} scale={[4, 0.4, 1]} />
-        <Lightformer form="rect" intensity={1.4} position={[0, 0, 6]} scale={[6, 6, 1]} color="#eaf6ff" />
+        <Lightformer form="rect" intensity={0.5} position={[0, 0, 6]} scale={[5, 5, 1]} color="#f2f8fb" />
+        <Lightformer form="rect" intensity={10} position={[-2.5, 2, 4]} rotation-y={0.5} scale={[0.25, 6, 1]} />
         <Lightformer form="ring" intensity={1.5} position={[0, -4, -2]} rotation-x={-Math.PI / 2} scale={3} color="#bfe3f2" />
       </Environment>
       <group ref={group}>
@@ -213,7 +269,7 @@ export function IceTesseract({ status, levels }: { status: Status; levels: Level
             background={PAGE}
             transmission={1}
             ior={1.31}
-            thickness={0.8}
+            thickness={0.6}
             roughness={0.05}
             resolution={QUALITY.res}
             samples={QUALITY.samples}
@@ -226,14 +282,23 @@ export function IceTesseract({ status, levels }: { status: Status; levels: Level
             temporalDistortion={0.06}
             color="#ffffff"
             attenuationColor="#1f6f96"
-            attenuationDistance={2.4}
+            attenuationDistance={4.5}
             clearcoat={1}
             clearcoatRoughness={0.06}
             emissive="#d8efff"
             emissiveIntensity={0}
-            sheen={0.35}
-            sheenRoughness={0.6}
-            sheenColor="#ffffff"
+          />
+        </mesh>
+        <mesh geometry={faces} frustumCulled={false} renderOrder={2}>
+          <meshPhysicalMaterial
+            vertexColors
+            transparent
+            depthWrite={false}
+            side={THREE.DoubleSide}
+            color="#ffffff"
+            roughness={0.08}
+            clearcoat={1}
+            envMapIntensity={1.6}
           />
         </mesh>
         <pointLight ref={light} position={[0, 0, 0]} color="#e3f4ff" intensity={0.6} distance={0} decay={2} />
