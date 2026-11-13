@@ -121,6 +121,12 @@ async def say(ws, who: str, text: str, expected: str | None, vision: tuple[float
     t0 = time.monotonic()
     first_word = None
     speech = [""]  # one string per response, to split what was said before the first tool call from what came after
+    aud = [[None, 0.0]]  # per response: when its first audio arrived, and how many seconds of audio it has
+
+    def next_response() -> None:
+        speech.append("")
+        aud.append([None, 0.0])
+
     tools: list[str] = []
     pre_len = None  # number of responses up to and including the first one that called a tool
     # Mirrors the kitchen page (App.tsx): busy or spoke in the last 45 s, the camera goes in as a note with no reply.
@@ -138,7 +144,7 @@ async def say(ws, who: str, text: str, expected: str | None, vision: tuple[float
         if st["told"]:
             st["busy"] = True
             st["extra"].append(len(speech))
-            speech.append("")
+            next_response()
             await ws.send(json.dumps({"type": "response.create"}))
 
     cam_task = asyncio.create_task(camera()) if vision else None
@@ -152,6 +158,9 @@ async def say(ws, who: str, text: str, expected: str | None, vision: tuple[float
             first_word = first_word or time.monotonic() - t0
             speech[-1] += ev["delta"]
             print(ev["delta"], end="", flush=True)
+        elif kind == "response.output_audio.delta":  # base64 PCM16 at 24 kHz
+            aud[-1][0] = aud[-1][0] if aud[-1][0] is not None else time.monotonic() - t0
+            aud[-1][1] += len(ev["delta"]) * 3 / 4 / 48000
         elif kind == "error":
             print(f"\n[error] {ev['error'].get('message')}")
         elif kind == "response.done":
@@ -181,8 +190,18 @@ async def say(ws, who: str, text: str, expected: str | None, vision: tuple[float
                 output = {"type": "function_call_output", "call_id": call["call_id"], "output": json.dumps(result, ensure_ascii=False)}
                 await ws.send(json.dumps({"type": "conversation.item.create", "item": output}))
             await ws.send(json.dumps({"type": "response.create"}))
-            speech.append("")
+            next_response()
     done = time.monotonic() - t0
+    # Dead air as the audience hears it: each response plays from when its audio arrives or the last one ends.
+    heard, gaps = 0.0, []
+    for start, secs in aud:
+        if start is None or not secs:
+            continue
+        begin = max(start, heard)
+        if heard:
+            gaps.append(begin - heard)
+        heard = begin + secs
+    first_audio = next((a for a, secs in aud if a is not None and secs), 0.0)
     cut = pre_len or 0
     pre = " | ".join(s for s in speech[:cut] if s)
     post = " | ".join(s for s in speech[cut:] if s)
@@ -193,8 +212,10 @@ async def say(ws, who: str, text: str, expected: str | None, vision: tuple[float
     extra = " | ".join(speech[i] for i in st["extra"] if speech[i]) or ("(silent)" if st["extra"] else "")
     if vision:
         print(f"  camera at {st['cam'] or 0:.1f}s, responses it started: {len(st['extra'])} {extra}")
-    print(f"  [first words {first_word or 0:.1f}s, done {done:.1f}s]")
+    print(f"  [first words {first_word or 0:.1f}s, first audio {first_audio:.1f}s, done {done:.1f}s, "
+          f"heard until {heard:.1f}s, silences {' '.join(f'{g:.1f}s' for g in gaps) or 'none'}]")
     return {"first": first_word or 0.0, "done": done, "tools": tools, "sim": sim, "pre": pre, "cam": st["cam"],
+            "audio1": first_audio, "heard": heard, "gap": max(gaps, default=0.0),
             "told": st["told"], "extra": len(st["extra"]), "extra_text": extra}
 
 
@@ -214,7 +235,7 @@ async def one_run(n: int, steps: list[tuple]) -> dict | None:
     main.reset()  # the rehearsal reset: seed fridge, no cart, no notes, no order underway
     EVENTS.clear()
     print(f"\n\n{'=' * 20} run {n}: {ARGS.scenario} {'=' * 20}")
-    sessions = {"stage": await connect(), "kitchen": await connect()}  # stage connects before B, like on stage
+    sessions = {s: await connect() for s in ("stage", "kitchen") if any(st[0] == s for st in steps)}  # stage first, like on stage
     try:
         results = []
         for s, who, text, exp, *vision in steps:
@@ -252,10 +273,11 @@ async def run() -> None:
     if ROHLIK:
         return
     print(f"\n\nSUMMARY  scenario={ARGS.scenario}  (C = first step with show_cart; flagged = items without a reason or price)")
-    print(f"{'run':>3} {'C done':>7} {'C 1st':>6} {'tools':>5} {'items':>5} {'total':>6} {'flagged':>7}  similarity (expected lines)")
+    print(f"{'run':>3} {'C done':>7} {'C 1st':>6} {'heard':>6} {'gap':>5} {'tools':>5} {'items':>5} {'total':>6} {'flagged':>7}  similarity (expected lines)")
     for n, r in enumerate(rows, 1):
         sims = " ".join(f"{s:.2f}" for s in r["sims"]) or "-"
-        print(f"{n:>3} {r['c']['done']:6.1f}s {r['c']['first']:5.1f}s {len(r['c']['tools']):>5} {r['n']:>5} {r['total']:>6.0f} {r['flagged']:>7}  {sims}")
+        c = r["c"]
+        print(f"{n:>3} {c['done']:6.1f}s {c['audio1']:5.1f}s {c['heard']:5.1f}s {c['gap']:4.1f}s {len(c['tools']):>5} {r['n']:>5} {r['total']:>6.0f} {r['flagged']:>7}  {sims}")
         print(f"      C tools: {', '.join(r['c']['tools']) or '(none)'}")
         print(f"      C said before first tool: {r['c']['pre'][:120] or '(nothing)'}")
         if r["c"]["cam"] is not None:

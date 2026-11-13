@@ -52,6 +52,7 @@ ap.add_argument("--voices", default="ballad,verse,ash,echo,shimmer,cedar,marin")
 ap.add_argument("--styles", default="plain,cheeky")
 ap.add_argument("--narration", metavar="VOICE", help="render only the C opener, plain, to app/public/demo/c-narration.wav")
 ap.add_argument("--parallel", type=int, default=4)
+ap.add_argument("--opener-only", action="store_true", help="only the C opener, no Q&A answer (half the sessions)")
 ARGS = ap.parse_args()
 
 
@@ -150,7 +151,10 @@ def level(pcm: bytes) -> tuple[float, float]:
 async def render(voice: str, style: str, sem: asyncio.Semaphore) -> dict:
     async with sem:
         try:
-            (op, op_said), (ans, ans_said) = await asyncio.gather(opener(voice, style), qa(voice, style))
+            if ARGS.opener_only:  # one session per file, no Q&A
+                (op, op_said), (ans, ans_said) = await opener(voice, style), (b"", "")
+            else:
+                (op, op_said), (ans, ans_said) = await asyncio.gather(opener(voice, style), qa(voice, style))
         except Exception as e:  # an unsupported voice errors here; note it and carry on
             print(f"{voice}-{style}: ERROR {e}")
             return {"voice": voice, "style": style, "error": str(e)}
