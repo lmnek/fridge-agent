@@ -65,7 +65,14 @@ export class FridgeBrain {
     return this.dc?.readyState === "open";
   }
 
+  /** Woken by a human and not put to sleep since: a dropped or expired session reconnects by itself. */
+  private wanted = false;
+  private retry: ReturnType<typeof setTimeout> | null = null;
+  private wakeLock: { release(): Promise<void> } | null = null;
+
   async start() {
+    this.wanted = true;
+    void this.holdScreen();
     this.h.status("connecting");
     const tokenRes = await fetch("/api/realtime/token");
     if (!tokenRes.ok) throw new Error((await tokenRes.json().catch(() => null))?.detail ?? "The bridge is not running.");
@@ -93,7 +100,15 @@ export class FridgeBrain {
       this.h.status("listening");
       for (const e of this.outbox.splice(0)) this.sendRaw(e);
     };
-    dc.onclose = () => this.h.status("off");
+    // A session that drops or expires (60 min) comes back on its own, so the fridge stays listening.
+    dc.onclose = () => {
+      if (this.dc !== dc) return; // an old session closing after a reconnect
+      if (this.wanted) this.reconnect();
+      else this.h.status("off");
+    };
+    pc.onconnectionstatechange = () => {
+      if (this.pc === pc && pc.connectionState === "failed" && this.wanted) this.reconnect();
+    };
 
     const offer = await pc.createOffer();
     await pc.setLocalDescription(offer);
@@ -107,12 +122,54 @@ export class FridgeBrain {
   }
 
   stop() {
+    this.wanted = false;
+    if (this.retry) clearTimeout(this.retry);
+    this.retry = null;
+    this.teardown();
+    void this.wakeLock?.release().catch(() => {});
+    this.wakeLock = null;
+    this.h.status("off");
+  }
+
+  private teardown() {
     this.pc?.getSenders().forEach((s) => s.track?.stop());
     this.pc?.close();
     void this.ctx?.close();
     this.pc = this.dc = null;
+    this.ctx = this.inAnalyser = this.outAnalyser = this.micTrack = null;
     this.busy = this.wantResponse = false;
-    this.h.status("off");
+  }
+
+  private reconnect(delay = 1500) {
+    if (this.retry || !this.wanted) return;
+    this.teardown();
+    this.h.status("connecting");
+    this.retry = setTimeout(async () => {
+      this.retry = null;
+      if (!this.wanted) return;
+      try {
+        await this.start();
+      } catch (e) {
+        this.h.error(`Reconnecting: ${e instanceof Error ? e.message : String(e)}`);
+        this.reconnect(Math.min(delay * 2, 10_000));
+      }
+    }, delay);
+  }
+
+  /** Keeps the tablet's screen on while Coldex is awake (Screen Wake Lock, where the browser has it). */
+  private async holdScreen() {
+    if (this.wakeLock || !("wakeLock" in navigator)) return;
+    try {
+      const lock = await (navigator as any).wakeLock.request("screen");
+      this.wakeLock = lock;
+      lock.addEventListener?.("release", () => {
+        this.wakeLock = null;
+        // The browser drops the lock when the tab is hidden; take it again once it's visible.
+        if (this.wanted) document.addEventListener("visibilitychange", () => void this.holdScreen(), { once: true });
+      });
+    } catch {
+      // not allowed (no gesture, insecure origin): the screen may dim, the session still runs
+    }
   }
 
   /** The mic gate. Off, the session hears nothing (the stage mic stays off until C). Works before start(). */

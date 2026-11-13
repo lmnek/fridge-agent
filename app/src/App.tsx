@@ -143,7 +143,8 @@ export default function App() {
   }, []);
 
   const toggle = async () => {
-    if (status !== "off") return brain.stop();
+    // Wakes once and stays listening: a tap at the fridge mid-demo must not put Coldex to sleep. Reload to stop.
+    if (status !== "off") return;
     setError(null);
     try {
       await brain.start();
