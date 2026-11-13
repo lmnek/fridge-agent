@@ -1,0 +1,171 @@
+/* The kitchen page (kitchen/Kitchen.tsx): the orb is the hero on the enamel, one card at a time on the side.
+   Tokens come from index.css (--enamel, --frost, --ink, --slate, --lamp, --gone). Flat, no gradients, no glass. */
+
+.kitchen {
+  --gut: clamp(20px, 2.6vw, 48px);
+  --top: clamp(64px, 8vh, 88px);
+  --orb: min(68vh, 46vw);
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  background: var(--enamel);
+}
+
+/* ---------------------------------------------------------------- top */
+
+.k-top {
+  position: absolute;
+  z-index: 2;
+  top: 0;
+  left: var(--gut);
+  right: var(--gut);
+  height: var(--top);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.k-mark {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: "Barlow Semi Condensed", "Barlow", sans-serif;
+  font-weight: 600;
+  font-size: 24px;
+  letter-spacing: -0.01em;
+}
+
+.k-mark img {
+  width: 26px;
+  height: 26px;
+}
+
+/* ---------------------------------------------------------------- the orb and its voice */
+
+.k-hero {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--top) var(--gut) calc(var(--gut) + 28px);
+}
+
+.kitchen .orb {
+  flex: none;
+  width: var(--orb);
+  height: var(--orb);
+  margin-top: calc(var(--orb) * -0.06);
+}
+
+.k-voice {
+  /* a wide measure: long lines, few wraps, readable from a step back */
+  width: min(100%, 30em);
+  min-height: calc(1.28em * 3 + 1.6em);
+  margin-top: calc(var(--orb) * -0.1);
+  text-align: center;
+  font-size: clamp(26px, 2.4vw, 38px);
+}
+
+.k-state {
+  margin: 0 0 0.3em;
+  color: var(--slate);
+  font-size: 0.56em;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+}
+
+/* the newest three lines of what Coldex says; older lines leave at the top */
+.k-caption {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  max-height: calc(1.28em * 3);
+  overflow: hidden;
+}
+
+.k-caption p {
+  margin: 0;
+  line-height: 1.28;
+  font-weight: 500;
+  color: var(--ink);
+  text-wrap: pretty;
+}
+
+.k-learned,
+.k-error {
+  margin: 0.6em 0 0;
+  font-size: 0.56em;
+  font-weight: 500;
+}
+
+.k-learned {
+  color: var(--lamp);
+}
+
+.k-error {
+  color: var(--gone);
+}
+
+.k-fridge {
+  position: absolute;
+  left: var(--gut);
+  right: var(--gut);
+  bottom: var(--gut);
+  margin: 0;
+  text-align: center;
+  color: var(--slate);
+  font-size: clamp(16px, 1.3vw, 20px);
+}
+
+/* ---------------------------------------------------------------- the side: one card at a time */
+
+.k-side {
+  position: absolute;
+  z-index: 1;
+  top: var(--top);
+  left: 50%;
+  right: var(--gut);
+  bottom: var(--gut);
+}
+
+.k-fit {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.k-fit-box {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform-origin: center;
+}
+
+.k-fit .panel,
+.k-fit .panel-card {
+  width: 100%;
+  height: 100%;
+}
+
+.k-approval {
+  display: flex;
+  align-items: center;
+  height: 100%;
+}
+
+.k-approval .card {
+  width: 100%;
+  max-height: 100%;
+  overflow: auto;
+  padding: 28px 32px;
+  font-size: 20px;
+}
+
+.k-approval .card h3 {
+  font-size: 32px;
+}
