@@ -3,6 +3,7 @@ import { grabFrames } from "./camera";
 import { KitchenRelay } from "./kitchenAudio";
 import { Orb } from "./Orb";
 import { FridgeBrain, type Status } from "./realtime";
+import { publish } from "./stage/bus";
 import { publishCaption } from "./stage/captions";
 
 interface Item {
@@ -58,7 +59,10 @@ export default function App() {
   const brain = useMemo(
     () =>
       new FridgeBrain({
-        status: setStatus,
+        status: (st) => {
+          setStatus(st);
+          void publish({ type: "status", screen: "kitchen", status: st }); // the stage orb mirrors it
+        },
         caption: (text, final, id) => {
           setCaption(text);
           publishCaption("coldex", `kitchen-${id ?? "r"}`, text, Boolean(final));

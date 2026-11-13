@@ -35,6 +35,25 @@ function kitchenSpeakingSince(events: BusEvent[]): number | null {
   return null;
 }
 
+/**
+ * The orb is off (grey ice) through A and B until the actor or Coldex first speaks, and again after a forced
+ * A, H or idle, and on a reset (which clears the events). Then it wakes into ice blue.
+ */
+function awake(events: BusEvent[]): boolean {
+  for (let i = events.length - 1; i >= 0; i--) {
+    const e = events[i];
+    if (e.type === "stage" && (e.beat === "A" || e.beat === "H" || e.beat === "idle")) return false;
+    if (e.type === "caption" && (e.who === "actor" || e.who === "coldex")) return true;
+  }
+  return false;
+}
+
+/** The kitchen session's own state, as the kitchen page publishes it. */
+function kitchenStatus(events: BusEvent[]): Status | null {
+  const e = events.findLast((x) => x.type === "status" && x.screen === "kitchen");
+  return e ? (e.status as Status) : null;
+}
+
 /** A `call` event in phase answered with no later ended. */
 function callActive(events: BusEvent[]): boolean {
   for (let i = events.length - 1; i >= 0; i--) {
@@ -104,7 +123,12 @@ export function useOrbVoice(brain: FridgeBrain, status: Status, events: BusEvent
 
   if (callLevel() !== null || callActive(events)) return { status: "speaking" as Status, levels };
   if (status !== "off") return { status, levels };
-  if (relay !== "none") return { status: (relay === "speaking" ? "speaking" : "listening") as Status, levels };
+  if (!awake(events)) return { status: "off" as Status, levels };
+  // Mirrors the kitchen session: speaking follows the relayed voice (or the captions without it), thinking
+  // comes from the kitchen's own status.
+  const thinking = kitchenStatus(events) === "thinking";
+  if (relay !== "none") return { status: (relay === "speaking" ? "speaking" : thinking ? "thinking" : "listening") as Status, levels };
   const mirroring = since !== null && Math.max(now, since) - since < KITCHEN_WINDOW_MS;
-  return { status: (mirroring ? "speaking" : "listening") as Status, levels };
+  const speaking = mirroring || kitchenStatus(events) === "speaking";
+  return { status: (speaking ? "speaking" : thinking ? "thinking" : "listening") as Status, levels };
 }
