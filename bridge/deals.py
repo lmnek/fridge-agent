@@ -82,6 +82,14 @@ ITEMS = [
     Item("Bananas", "banány", r"^banány\b", (1, "kg"), r"čokol|sušen|chips|lupín"),
 ]
 
+JUNK = r"protlak|pyré|kečup|omáčk|chips|lupín|sušen|nápoj|drink|čokolád|bonbon|tyčin|sirup|likér|limonád|mirinda|fanta|ledový|baby"
+
+
+def unjunk(query: str) -> str:
+    """JUNK without the words the food itself has (a soy sauce is an omáčka)."""
+    return "|".join(w for w in JUNK.split("|") if not re.search(w, query, re.I)) or r"(?!)"
+
+
 # "What's on sale?": the best leaflet discount per staple in the shops around the flat, with the product photo.
 SALES = [
     ("Butter", "máslo", r"\bmáslo\b", r"arašíd|bylink|česnek|kakao|sušenk|pomazán"),
@@ -99,7 +107,7 @@ SALES = [
     ("Onions", "cibule", r"cibul", r"smažen|sušen|chips"),
     ("Spaghetti", "špagety", r"špaget|spaghet", r"boloň|hotov|omáčk"),
     *(
-        (name, query, re.escape(query.split()[0][: max(4, len(query.split()[0]) - 2)]), r"(?!)")
+        (name, query, re.escape(query.split()[0][: max(4, len(query.split()[0]) - 2)]), unjunk(query))
         for name, query in [
             ("Ham", "šunka"), ("Salami", "salám"), ("Sausages", "párky"), ("Bacon", "slanina"),
             ("Minced meat", "mleté maso"), ("Pork", "vepřová krkovice"), ("Salmon", "losos"),
@@ -117,7 +125,6 @@ SALES = [
         ]
     ),
 ]
-JUNK = r"protlak|pyré|kečup|omáčk|chips|lupín|sušen|nápoj|drink|čokolád|bonbon|tyčin|sirup|likér"
 
 
 _PACK = re.compile(r"(?:(\d+)\s*[x×]\s*)?(\d+(?:[.,]\d+)?)\s*(kg|g|l|ml|ks)\b", re.IGNORECASE)
@@ -301,8 +308,7 @@ def search_live(query: str) -> dict[str, Any] | None:
         return None
     found = json.loads(res.stdout.strip().splitlines()[-1]).get(query)
     stem = re.escape(query.split()[0][: max(4, len(query.split()[0]) - 2)])
-    junk = "|".join(w for w in JUNK.split("|") if not re.search(w, query, re.I)) or r"(?!)"
-    return cheapest(found, stem, junk, stores_nearby())
+    return cheapest(found, stem, unjunk(query), stores_nearby())
 
 
 def nearby() -> dict[str, dict[str, Any]]:
