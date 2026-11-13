@@ -36,6 +36,7 @@ ap = argparse.ArgumentParser()
 ap.add_argument("--scenario", default="demo", choices=["demo", "no-camera", "other-dish", "other-missing", "judge-craving", "judge-edit"])
 ap.add_argument("--runs", type=int, default=1)
 ap.add_argument("--rohlik", action="store_true")
+ap.add_argument("--voices", help="comma-separated Realtime voices: saves data/voices/<voice>.wav of the B and C lines to listen to")
 ARGS = ap.parse_args()
 ROHLIK = ARGS.rohlik
 
@@ -204,7 +205,32 @@ async def run() -> None:
         print(f"      C said before first tool: {r['c']['pre'][:120] or '(nothing)'}")
 
 
+async def voices(names: list[str]) -> None:
+    """One WAV per voice, so a human can pick REALTIME_VOICE by ear."""
+    import base64
+    import wave
+    from pathlib import Path
+
+    out = Path(__file__).resolve().parent.parent / "data" / "voices"
+    out.mkdir(parents=True, exist_ok=True)
+    line = f"{B_LINE} {B2_LINE} {C_LINE}"
+    for voice in names:
+        ws = await connect()
+        await ws.send(json.dumps({"type": "session.update", "session": {"type": "realtime", "tools": [], "audio": {"output": {"voice": voice}}}}))
+        item = {"type": "message", "role": "user", "content": [{"type": "input_text", "text": f"Read this aloud exactly, in your own voice: {line}"}]}
+        await ws.send(json.dumps({"type": "conversation.item.create", "item": item}))
+        await ws.send(json.dumps({"type": "response.create"}))
+        pcm = b""
+        while (ev := json.loads(await asyncio.wait_for(ws.recv(), 60)))["type"] != "response.done":
+            if ev["type"] == "response.output_audio.delta":
+                pcm += base64.b64decode(ev["delta"])
+        await ws.close()
+        with wave.open(str(out / f"{voice}.wav"), "wb") as w:
+            w.setnchannels(1), w.setsampwidth(2), w.setframerate(24000), w.writeframes(pcm)
+        print(f"{out / voice}.wav  {len(pcm) / 48000:.1f}s")
+
+
 if __name__ == "__main__":
     if not main.OPENAI_API_KEY:
         sys.exit("Put OPENAI_API_KEY in bridge/.env first.")
-    asyncio.run(run())
+    asyncio.run(voices(ARGS.voices.split(",")) if ARGS.voices else run())
