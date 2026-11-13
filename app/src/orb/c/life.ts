@@ -1,5 +1,5 @@
 import type { Status } from "../../realtime";
-import { rgba, type Palette, type RGB } from "./palette";
+import { rgb, rgba, type Palette, type RGB } from "./palette";
 
 /**
  * The C orb's life while awake: depth colour through the nested cubes, waves of light that travel
@@ -38,6 +38,7 @@ export function createLife(EDGES: number[][], N: number) {
 
   let act = 0, armed = true, sinceWave = 9, thinkClock = 0, trAcc = 0, sweep = 0, sweepAmp = 0, voice = 0, t = 0;
   const bodyRgb: RGB = [0, 0, 0], coreRgb: RGB = [0, 0, 0];
+  let bodyStr = "", coreStr = "";
 
   const spawnWave = (pos: number, v: number, amp: number) => {
     let slot = 0;
@@ -49,8 +50,8 @@ export function createLife(EDGES: number[][], N: number) {
     for (let i = 0; i < MAX_TR; i++) {
       if (tAge[i] < tLife[i]) continue;
       const r = rnd();
-      // mostly the shell, some on the inner rim, a few on the mid cycling cubes
-      tC[i] = r < 0.5 ? N + 1 : r < 0.68 ? N : Math.floor(rnd() * N);
+      // mostly the deep-blue cycling cubes (white light reads best against deep ice), some on the shell
+      tC[i] = r < 0.32 ? N + 1 : Math.floor(rnd() * N);
       tE[i] = Math.floor(rnd() * 12);
       tV[i] = EDGES[tE[i]][rnd() < 0.5 ? 0 : 1];
       tPE[i] = -1;
@@ -68,9 +69,10 @@ export function createLife(EDGES: number[][], N: number) {
     t = now;
     act = Math.min(1, Math.max(0, activeX));
     for (let j = 0; j < 3; j++) {
-      bodyRgb[j] = pal.body[j] + (pal.deep[j] - pal.body[j]) * 0.5;
+      bodyRgb[j] = pal.body[j] + (pal.deep[j] - pal.body[j]) * 0.25;
       coreRgb[j] = pal.core[j];
     }
+    bodyStr = rgb(bodyRgb); coreStr = rgb(coreRgb);
 
     // waves
     for (let i = 0; i < MAX_WAVES; i++) {
@@ -97,9 +99,9 @@ export function createLife(EDGES: number[][], N: number) {
 
     // tracers
     let rate = 0, speed = 0.5;
-    if (st === "speaking") { rate = 0.9 + lvlOut * 2.6; speed = 0.75 + lvlOut * 1.4; }
-    else if (st === "thinking") { rate = 0.75; speed = 0.45; }
-    else if (st === "listening") { rate = 0.35; speed = 0.35; }
+    if (st === "speaking") { rate = 0.9 + voice * 2.4; speed = 0.7 + voice * 1.2; }
+    else if (st === "thinking") { rate = 0.55; speed = 0.4; }
+    else if (st === "listening") { rate = 0.3; speed = 0.32; }
     else if (st === "connecting") { rate = 1.2; speed = 0.9; }
     trAcc += rate * act * dt;
     if (trAcc > 1) { trAcc -= 1 + rnd() * 0.4; spawnTracer(speed); }
@@ -138,9 +140,10 @@ export function createLife(EDGES: number[][], N: number) {
 
   /** edge tone 0 (light body) .. 1 (deep blue): deep inside, light outside, slowly breathing; waves lighten it */
   const toneAt = (d: number) => {
-    const depth = 1 - smooth(0.12, 0.92, d);
-    const breathe = 0.78 + 0.22 * Math.sin(t * 0.8 - d * 4.2);
-    return act * depth * breathe * (1 - 0.75 * waveAt(d));
+    const depth = 1 - smooth(0.08, 0.88, d);
+    // a slow swell rolling outward through the depth, so the deep blue breathes rather than sits
+    const breathe = 0.8 + 0.2 * Math.sin(t * 0.55 - d * 3.2);
+    return act * depth * breathe * (1 - 0.85 * waveAt(d));
   };
 
   /** brightness at the centre, for the inner glow */
@@ -168,27 +171,9 @@ export function createLife(EDGES: number[][], N: number) {
     return any;
   };
 
-  // a point at q along tracer i (q < 0 lies on the previous edge)
-  let ptX = 0, ptY = 0;
-  const pointAt = (i: number, q: number, SX: Float32Array, SY: Float32Array) => {
-    const prev = q < 0 && tPE[i] >= 0;
-    const v0 = prev ? tPV[i] : tV[i], v1 = other(prev ? tPE[i] : tE[i], v0);
-    const f = prev ? 1 + q : Math.max(0, q);
-    ptX = SX[v0] + (SX[v1] - SX[v0]) * f;
-    ptY = SY[v0] + (SY[v1] - SY[v0]) * f;
-  };
-
-  // a soft streak: transparent tail, bright just behind the head, a short fade in front of it
-  const streak = (ctx: CanvasRenderingContext2D, x0: number, y0: number, x1: number, y1: number, col: RGB, a: number, mid: number) => {
-    const g = ctx.createLinearGradient(x0, y0, x1, y1);
-    g.addColorStop(0, rgba(col, 0));
-    g.addColorStop(mid, rgba(col, a * 0.75));
-    g.addColorStop(Math.min(0.97, mid + 0.18), rgba(col, a));
-    g.addColorStop(1, rgba(col, 0));
-    return g;
-  };
-
-  /** draw the tracers living on cube c, right after its edges (pass 1: back edges, pass 2: front) */
+  /** draw the tracers living on cube c, right after its edges (pass 1: back edges, pass 2: front).
+   * Solid strokes, no gradients: a faint tail and a bright head, each a blue bead under a white filament
+   * (white alone vanishes on the pale page). Round caps soften the ends. */
   const drawTracers = (
     ctx: CanvasRenderingContext2D, c: number, wantFront: boolean, cubeA: number, w: number,
     SX: Float32Array, SY: Float32Array, front: Uint8Array,
@@ -200,18 +185,15 @@ export function createLife(EDGES: number[][], N: number) {
       const env = smooth(0, 0.25, k) * (1 - smooth(0.65, 1, k));
       const a = Math.min(1, env * cubeA * act * (wantFront ? 1 : 0.45));
       if (a < 0.01) continue;
-      const len = tLen[i], s = tS[i];
-      if (!span(ctx, i, s - len, s + 0.03, SX, SY, front, wantFront)) continue;
-      pointAt(i, s - len, SX, SY);
-      const x0 = ptX, y0 = ptY;
-      pointAt(i, s + 0.03, SX, SY);
-      ctx.globalAlpha = 1;
-      ctx.strokeStyle = streak(ctx, x0, y0, ptX, ptY, bodyRgb, a, 0.5);
-      ctx.lineWidth = w * 5;
-      ctx.stroke();
-      ctx.strokeStyle = streak(ctx, x0, y0, ptX, ptY, coreRgb, a, 0.6);
-      ctx.lineWidth = w * 1.7;
-      ctx.stroke();
+      const len = tLen[i], s = tS[i], mid = s - len * 0.42;
+      if (span(ctx, i, s - len, mid, SX, SY, front, wantFront)) {
+        ctx.strokeStyle = bodyStr; ctx.globalAlpha = a * 0.2; ctx.lineWidth = w * 3.2; ctx.stroke();
+        ctx.strokeStyle = coreStr; ctx.globalAlpha = a * 0.45; ctx.lineWidth = w * 1.2; ctx.stroke();
+      }
+      if (span(ctx, i, mid, s, SX, SY, front, wantFront)) {
+        ctx.strokeStyle = bodyStr; ctx.globalAlpha = a * 0.5; ctx.lineWidth = w * 6; ctx.stroke();
+        ctx.strokeStyle = coreStr; ctx.globalAlpha = a; ctx.lineWidth = w * 2.6; ctx.stroke();
+      }
     }
   };
 

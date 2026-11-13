@@ -208,15 +208,17 @@ export default function OrbC({ status, levels }: OrbVariantProps) {
     // tone: 0 = the palette's edge body, 1 = its deep colour (depth and pulses).
     // bevel (the outer shell, 0..1): the edge reads like a bevel catching the key light, a tight bright
     // specular toward the light with a thin dark line right beside it (borrowed from B).
-    const strokeEdges = (path: Path2D, a: number, w: number, core: number, tone = 0, bevel = 0) => {
+    // glow (0..1): a travelling wave passing this shell, which widens and lifts the soft halo.
+    const strokeEdges = (path: Path2D, a: number, w: number, core: number, tone = 0, bevel = 0, glow = 0) => {
       if (a < 0.004) return;
-      if (!lite) {
-        ctx.globalAlpha = a * (0.11 - bevel * 0.03);
+      if (!lite || glow > 0.05) {
+        ctx.globalAlpha = Math.min(1, a * (0.11 - bevel * 0.03 + glow * (0.3 - bevel * 0.12)));
         ctx.strokeStyle = rgb(pal.halo);
-        ctx.lineWidth = w * 6.5;
+        ctx.lineWidth = w * (6.5 + glow * 1.5);
         ctx.stroke(path);
       }
-      ctx.globalAlpha = Math.min(1, a * (0.58 + bevel * 0.1));
+      // deep tone is denser too: the inner cubes read as deep blue ink in the ice, not a faded line
+      ctx.globalAlpha = Math.min(1, a * (0.58 + bevel * 0.1 + tone * 0.3));
       ctx.strokeStyle = mixRgb(pal.body, pal.deep, tone);
       ctx.lineWidth = w * (2.6 + bevel * 0.4);
       ctx.stroke(path);
@@ -409,8 +411,8 @@ export default function OrbC({ status, levels }: OrbVariantProps) {
       const toneOf = (c: number) => life.toneAt(depthOf(c));
       // white core: brighter outward, and lit up as a wave passes through the shell
       const coreOf = (c: number) =>
-        (c >= N ? 0.55 + 0.35 * lk : (0.25 + 0.55 * cubeU[c]) * (0.7 + 0.3 * lk) + lvlOut * (1 - cubeU[c]) * 0.8 + Math.max(0, pulse.x) * 0.5) +
-        life.waveAt(depthOf(c)) * 1.1;
+        (c >= N ? 0.55 + 0.35 * lk : ((0.25 + 0.55 * cubeU[c]) * (0.7 + 0.3 * lk) + Math.max(0, pulse.x) * 0.3) * (1 - 0.55 * toneOf(c))) +
+        life.waveAt(depthOf(c)) * 1.3;
 
       // pass 1: back faces and back edges, outer to inner
       for (let ii = N + 1; ii >= 0; ii--) {
@@ -427,7 +429,7 @@ export default function OrbC({ status, levels }: OrbVariantProps) {
           back.moveTo(SX[E[0]], SY[E[0]]);
           back.lineTo(SX[E[1]], SY[E[1]]);
         }
-        strokeEdges(back, a * 0.55, widthOf(c) * 0.85, coreOf(c) * 0.6, toneOf(c));
+        strokeEdges(back, a * 0.55, widthOf(c) * 0.85, coreOf(c) * 0.6, toneOf(c), 0, life.waveAt(depthOf(c)) * 0.5);
         if (!lite) life.drawTracers(ctx, c, false, a, widthOf(c) * 0.85, SX, SY, front);
       }
 
@@ -468,12 +470,12 @@ export default function OrbC({ status, levels }: OrbVariantProps) {
         const w = widthOf(c);
         const core = coreOf(c);
         const bev = c === N + 1 ? 1 : 0;
-        strokeEdges(dimP, a, w, core * 0.75, toneOf(c), bev * 0.4);
-        strokeEdges(litP, a, w * 1.1, core * 1.35, toneOf(c), bev);
-        if (!lite) {
-          life.drawTracers(ctx, c, true, a, w, SX, SY, front);
-          if (c === N + 1) life.drawSweep(ctx, w, cx, cy, px * 1.05, SX, SY, front, lit);
-        }
+        const tone = toneOf(c), glow = life.waveAt(depthOf(c));
+        strokeEdges(dimP, a, w, core * 0.75, tone, bev * 0.4, glow);
+        strokeEdges(litP, a, w * 1.1, core * 1.35, tone, bev, glow);
+        // tracers are solid strokes (no gradients), cheap enough to keep in lite; the sweep is an extra
+        life.drawTracers(ctx, c, true, a, w, SX, SY, front);
+        if (!lite && c === N + 1) life.drawSweep(ctx, w, cx, cy, px * 1.05, SX, SY, front, lit);
 
         if (c === N + 1) {
           // frost along the shell's edges, densest at the corners: a soft haze under the brightest
