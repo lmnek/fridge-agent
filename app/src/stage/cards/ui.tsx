@@ -42,12 +42,9 @@ export function CardFrame({
   children?: ReactNode;
 }) {
   return (
-    <motion.section
-      className="ck"
-      initial={{ opacity: 0, y: 24 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ type: "spring", stiffness: 260, damping: 30 }}
-    >
+    // No entrance of its own: the stage panel (Panel.tsx) moves the whole card in and out, and the card's
+    // content builds inside it (rows rise with `stagger`/`rise`), so the two never stack.
+    <motion.section className="ck">
       <header className="ck-head">
         <div>
           <p className="ck-kicker">

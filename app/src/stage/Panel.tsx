@@ -2,6 +2,7 @@
  * The side panel: shows one card at a time, picked from the bus (pick.ts). Cards come from part 2's
  * `cards/index.ts` as soon as it exists, and from local placeholders until then.
  */
+import { AnimatePresence, motion } from "motion/react";
 import { type ComponentType, useEffect, useRef, useState } from "react";
 import type { BusEvent } from "./bus";
 import { Idle } from "./Idle";
@@ -60,9 +61,20 @@ export function Panel({ card, events }: { card: PanelId; events: BusEvent[] }) {
   const Card = card === "idle" ? Idle : cards[card];
   return (
     <div className="panel" data-card={card}>
-      <div className="panel-card" key={card}>
-        <Card events={events} />
-      </div>
+      {/* One switch for every card (part 2): the old card fades out, then the new one rises in and builds
+          its content. The cards have no entrance of their own. */}
+      <AnimatePresence mode="wait" initial={false}>
+        <motion.div
+          className="panel-card"
+          key={card}
+          style={{ animation: "none" }}
+          initial={{ opacity: 0, y: 14 }}
+          animate={{ opacity: 1, y: 0, transition: { duration: 0.42, ease: [0.2, 0, 0, 1] } }}
+          exit={{ opacity: 0, y: -6, transition: { duration: 0.18, ease: [0.4, 0, 1, 1] } }}
+        >
+          <Card events={events} />
+        </motion.div>
+      </AnimatePresence>
     </div>
   );
 }
