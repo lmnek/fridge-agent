@@ -26,6 +26,12 @@ def to_gray(jpeg: bytes, size: tuple[int, int] = (GRID_W, GRID_H)) -> np.ndarray
         return np.asarray(small, dtype=np.float32) / 255.0
 
 
+def to_rgb(jpeg: bytes, size: tuple[int, int] = (GRID_W, GRID_H)) -> np.ndarray:
+    with Image.open(io.BytesIO(jpeg)) as img:
+        small = img.convert("RGB").resize(size, Image.Resampling.BOX)
+        return np.asarray(small, dtype=np.float32) / 255.0
+
+
 def brightness(jpeg: bytes) -> float:
     return float(to_gray(jpeg).mean())
 
@@ -34,7 +40,7 @@ def changed_regions(
     prev_jpeg: bytes | None,
     new_jpeg: bytes,
     *,
-    threshold: float = 0.12,
+    threshold: float = 0.08,
     min_cells: int = 4,
 ) -> list[BBox]:
     """Vrátí obdélníky (normalizované 0..1), kde se snímky liší.
@@ -44,9 +50,10 @@ def changed_regions(
     """
     if prev_jpeg is None:
         return []
-    a, b = to_gray(prev_jpeg), to_gray(new_jpeg)
-    a = a - a.mean() + b.mean()
-    mask = np.abs(a - b) > threshold
+    a, b = to_rgb(prev_jpeg), to_rgb(new_jpeg)
+    a = a - a.mean(axis=(0, 1)) + b.mean(axis=(0, 1))
+    # barevně, ne v odstínech šedi: oranžový džus a prázdná lahev mají skoro stejný jas
+    mask = np.abs(a - b).max(axis=2) > threshold
     if mask.sum() < min_cells:
         return []
     return _components(mask, min_cells=min_cells)
