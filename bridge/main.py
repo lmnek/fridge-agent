@@ -329,6 +329,7 @@ def decide(approval_id: str, decision: Decision) -> dict[str, Any]:
     if approval is None or approval["status"] != "pending":
         raise HTTPException(404, "No pending approval with this id.")
     approval["status"] = "approved" if decision.approved else "declined"
+    show.ORDER.clear()  # decided: the next order starts empty
     order = None
     if decision.approved:
         # HACK(demo): a staged order id only. Nothing here calls Rohlík, so no real order or payment ever happens.
@@ -503,6 +504,7 @@ app.include_router(loop.router)
 async def realtime_token() -> dict[str, Any]:
     if not OPENAI_API_KEY:
         raise HTTPException(503, "OPENAI_API_KEY is not set in bridge/.env.")
+    show.new_order()  # a new voice session starts with an empty order
     async with httpx.AsyncClient(timeout=20) as client:
 
         async def mint(rohlik: bool) -> httpx.Response:

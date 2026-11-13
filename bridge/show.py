@@ -250,6 +250,13 @@ async def rohlik_find(query: str) -> dict[str, Any] | None:
 ORDER: list[dict[str, Any]] = []
 
 
+def new_order() -> None:
+    """A fresh voice session or a decided approval starts an empty order: nothing from an earlier one carries over."""
+    ORDER.clear()
+    bridge.STATE["cart"] = []
+    bridge.save()
+
+
 class OrderAdd(BaseModel):
     item: str
     query_cs: str = ""
