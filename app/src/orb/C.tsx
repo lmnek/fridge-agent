@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import { ACTIVE, clonePalette, IDLE, mixPalette, mixRgb, rgb, rgba } from "./c/palette";
+import { createLife } from "./c/life";
 import type { OrbVariantProps } from "./types";
 
 /**
@@ -46,8 +47,9 @@ for (let axis = 0; axis < 3; axis++)
     FACES.push([n[0], n[1], n[2], base, base | b, base | b | c, base | c]);
   }
 
-const FROST_PER_EDGE = 13;
-// frost on the shell: short irregular scratches hugging the edges, denser toward corners
+const FROST_PER_EDGE = 26;
+// frost on the shell: tiny crystals in every direction (feathery, not dashes) hugging the edges, piling up
+// and creeping further onto the faces toward the corners. Bucket 2 (brightest) is most likely at corners.
 const FROST = (() => {
   const out: number[] = [];
   let seed = 7;
@@ -55,30 +57,32 @@ const FROST = (() => {
   for (const [a, b, nx, ny, nz] of EDGES) {
     const dx = VX[b] - VX[a], dy = VY[b] - VY[a], dz = VZ[b] - VZ[a];
     for (let k = 0; k < FROST_PER_EDGE; k++) {
-      let t = Math.pow(rnd(), 2.6);
+      let t = Math.pow(rnd(), 1.9) * 0.5;
       if (k & 1) t = 1 - t;
+      const corner = 1 - Math.min(t, 1 - t) * 2; // 1 at a corner, 0 mid-edge
       // step inward on one of the two faces that meet at this edge
       const useFirst = rnd() < 0.5;
-      const inset = 0.004 + Math.pow(rnd(), 2.5) * (0.03 + (0.5 - Math.abs(t - 0.5)) * 0.1);
+      const inset = 0.003 + Math.pow(rnd(), 2.2) * (0.018 + corner * corner * 0.09);
       // the edge normal has two non-zero coords, one per adjacent face; step against one of them
       const opts = [nx ? 0 : -1, ny ? 1 : -1, nz ? 2 : -1].filter((o) => o >= 0);
       const pick = opts[useFirst ? 0 : 1];
       const ix = pick === 0 ? -nx : 0, iy = pick === 1 ? -ny : 0, iz = pick === 2 ? -nz : 0;
-      const px = VX[a] + dx * t + ix * inset;
+      const px = VX[a] + dx * t * 1 + ix * inset;
       const py = VY[a] + dy * t + iy * inset;
       const pz = VZ[a] + dz * t + iz * inset;
-      // direction: mostly along the edge, a bit into the face, short
-      const ang = (rnd() - 0.5) * 2.2;
-      const len = 0.006 + Math.pow(rnd(), 2) * 0.034;
-      const ca = Math.cos(ang) * len * 0.5, sa = Math.sin(ang) * len * 0.5;
+      // a short crystal at any angle in the face plane (edge direction is length 2, hence the 0.5)
+      const ang = rnd() * Math.PI;
+      const len = 0.006 + Math.pow(rnd(), 2) * (0.016 + corner * 0.03);
+      const ca = Math.cos(ang) * len * 0.25, sa = Math.sin(ang) * len * 0.5;
       const qx = dx * ca + ix * sa, qy = dy * ca + iy * sa, qz = dz * ca + iz * sa;
-      out.push(px - qx, py - qy, pz - qz, px + qx, py + qy, pz + qz, Math.floor(rnd() * 2.999));
+      const bk = Math.min(2, Math.floor(rnd() * 2.2 + corner * 0.9));
+      out.push(px - qx, py - qy, pz - qz, px + qx, py + qy, pz + qz, bk);
     }
   }
   return new Float32Array(out);
 })();
 const FROST_EDGE = (() => {
-  // which edge each scratch belongs to (16 per edge, in order)
+  // which edge each crystal belongs to (FROST_PER_EDGE per edge, in order)
   const e = new Uint8Array(FROST.length / 7);
   for (let i = 0; i < e.length; i++) e[i] = Math.floor(i / FROST_PER_EDGE);
   return e;
@@ -135,7 +139,10 @@ export default function OrbC({ status, levels }: OrbVariantProps) {
     const spin = spring(0.12), flow = spring(0.07), twist = spring(0.55), light = spring(0.7), lean = spring(0);
     const pulse = spring(0);
     const active = spring(0); // 0 idle grey ice .. 1 awake ice blue: crossfades the palette
+    const wake = spring(0); // the same, but faster: the highlights light up before the colour floods in
     const pal = clonePalette(IDLE);
+    const life = createLife(EDGES, N); // depth colour, travelling waves, edge tracers (c/life.ts)
+    let shadowKey = "", shadowGrad: CanvasGradient | null = null;
     let lvlIn = 0, lvlOut = 0, slowOut = 0;
     let yaw = 0.62, phase = 0.3, last = performance.now(), raf = 0;
 
@@ -194,32 +201,36 @@ export default function OrbC({ status, levels }: OrbVariantProps) {
       }
     };
 
-    // tone: 0 = the palette's edge body, 1 = its deep colour (depth and pulses)
-    const strokeEdges = (path: Path2D, a: number, w: number, core: number, tone = 0) => {
+    // tone: 0 = the palette's edge body, 1 = its deep colour (depth and pulses).
+    // bevel (the outer shell, 0..1): the edge reads like a bevel catching the key light, a tight bright
+    // specular toward the light with a thin dark line right beside it (borrowed from B).
+    const strokeEdges = (path: Path2D, a: number, w: number, core: number, tone = 0, bevel = 0) => {
       if (a < 0.004) return;
       if (!lite) {
-        ctx.globalAlpha = a * 0.11;
+        ctx.globalAlpha = a * (0.11 - bevel * 0.03);
         ctx.strokeStyle = rgb(pal.halo);
         ctx.lineWidth = w * 6.5;
         ctx.stroke(path);
       }
-      ctx.globalAlpha = Math.min(1, a * 0.58);
+      ctx.globalAlpha = Math.min(1, a * (0.58 + bevel * 0.1));
       ctx.strokeStyle = mixRgb(pal.body, pal.deep, tone);
-      ctx.lineWidth = w * 2.6;
+      ctx.lineWidth = w * (2.6 + bevel * 0.4);
       ctx.stroke(path);
-      // a darker refraction line on the side away from the light
-      ctx.translate(w * 0.75, w * 0.85);
-      ctx.globalAlpha = Math.min(1, a * 0.62);
+      // a darker refraction line on the side away from the light (tighter and darker on a bevel)
+      const ox = w * (0.75 - bevel * 0.2), oy = w * (0.85 - bevel * 0.25);
+      ctx.translate(ox, oy);
+      ctx.globalAlpha = Math.min(1, a * (0.62 + bevel * 0.25));
       ctx.strokeStyle = rgb(pal.refr);
-      ctx.lineWidth = w * 0.8;
+      ctx.lineWidth = w * (0.8 - bevel * 0.2);
       ctx.stroke(path);
-      // the crisp white core, nudged toward the light
-      ctx.translate(-w * 1.1, -w * 1.25);
-      ctx.globalAlpha = Math.min(1, a * core);
+      // the crisp white core (the specular), nudged toward the light
+      const sx = w * (0.35 + bevel * 0.2), sy = w * (0.4 + bevel * 0.2);
+      ctx.translate(-ox - sx, -oy - sy);
+      ctx.globalAlpha = Math.min(1, a * core * (1 + bevel * 0.3));
       ctx.strokeStyle = rgb(pal.core);
-      ctx.lineWidth = w * 1.05;
+      ctx.lineWidth = w * (1.05 - bevel * 0.25);
       ctx.stroke(path);
-      ctx.translate(w * 0.35, w * 0.4);
+      ctx.translate(sx, sy);
     };
 
     const faces = (alpha: number, wantFront: boolean, lightK: number, glint = 0) => {
@@ -278,7 +289,7 @@ export default function OrbC({ status, levels }: OrbVariantProps) {
       const st = statusRef.current;
       const lv = levels();
 
-      // levels: fast attack, slower release
+      // levels: fast attack, slower release. Listening hears the mic only, speaking hears Coldex only.
       const tin = st === "listening" ? Math.min(1, lv.input) : 0;
       const tout = st === "speaking" ? Math.min(1, lv.output) : 0;
       lvlIn += (tin - lvlIn) * (1 - Math.exp(-dt / (tin > lvlIn ? 0.06 : 0.25)));
@@ -286,19 +297,28 @@ export default function OrbC({ status, levels }: OrbVariantProps) {
       slowOut += (lvlOut - slowOut) * (1 - Math.exp(-dt / 0.45));
       const stress = Math.min(1.2, Math.max(0, lvlOut - slowOut) * 3.4);
 
-      let tSpin = 0.12, tFlow = 0.07, tTwist = 0.55, tLight = 0.7, tLean = 0;
-      if (st === "connecting") { tSpin = 1.4; tFlow = 0.32; tTwist = 0.95; tLight = 0.9; }
-      else if (st === "listening") { tSpin = 0.16; tFlow = 0.08; tTwist = 0.6; tLight = 0.85 + lvlIn * 0.7; tLean = lvlIn; }
-      else if (st === "thinking") { tSpin = 0.32; tFlow = -0.42; tTwist = 0.95; tLight = 0.85; }
-      else if (st === "speaking") { tSpin = 0.2 + lvlOut * 1.3; tFlow = 0.1 + lvlOut * 0.25; tTwist = 0.62 + lvlOut * 0.45; tLight = 0.95 + lvlOut * 0.8; }
-      step(spin, tSpin, dt, 8, 0.8);
-      step(flow, tFlow, dt, 10, 0.75);
-      step(twist, tTwist, dt, 9, 0.6);
-      step(light, tLight, dt, 30, 0.55);
+      // per-state motion targets. off: asleep, slow and dim. connecting: a quick searching spin that
+      // shimmers. listening: still, leans in with the mic. thinking: flows inward and breathes light.
+      // speaking: driven by Coldex's voice.
+      let tSpin = 0.07, tFlow = 0.045, tTwist = 0.45, tLight = 0.45, tLean = 0;
+      if (st === "connecting") { tSpin = 0.95; tFlow = 0.26; tTwist = 0.9; tLight = 0.8 + Math.sin(t * 5.2) * 0.12; }
+      else if (st === "listening") { tSpin = 0.13 + lvlIn * 0.08; tFlow = 0.07 + lvlIn * 0.06; tTwist = 0.58 + lvlIn * 0.15; tLight = 0.88 + lvlIn * 0.7; tLean = lvlIn; }
+      else if (st === "thinking") { tSpin = 0.3; tFlow = -0.4; tTwist = 1; tLight = 0.82 + Math.sin(t * 2.4) * 0.1; }
+      else if (st === "speaking") { tSpin = 0.2 + lvlOut * 1.2; tFlow = 0.1 + lvlOut * 0.28; tTwist = 0.62 + lvlOut * 0.45; tLight = 0.95 + lvlOut * 0.8; }
+      const awake = st !== "off";
+      // motion springs: soft enough that a state change glides (flow reverses smoothly into thinking)
+      step(spin, tSpin, dt, 5, 0.85);
+      step(flow, tFlow, dt, 6, 0.8);
+      step(twist, tTwist, dt, 6, 0.7);
+      step(light, tLight, dt, awake ? 30 : 6, awake ? 0.55 : 0.9);
       step(lean, tLean, dt, 40, 0.5);
       step(pulse, stress, dt, 120, 0.45);
-      step(active, st === "off" ? 0 : 1, dt, 3, 0.9);
-      mixPalette(pal, IDLE, ACTIVE, Math.min(1, Math.max(0, active.x)));
+      // waking: light first (~0.4 s), then the colour floods in (~1.2 s), both critically damped. Falling
+      // asleep is slower (~2 s) and the colour drains before the light.
+      step(wake, awake ? 1 : 0, dt, awake ? 36 : 5, 1);
+      step(active, awake ? 1 : 0, dt, awake ? 9 : 4, 1);
+      const ax = Math.min(1, Math.max(0, active.x)), wx = Math.min(1, Math.max(0, wake.x));
+      mixPalette(pal, IDLE, ACTIVE, ax * ax * (3 - 2 * ax), wx);
 
       yaw += spin.x * dt;
       phase += (flow.x + Math.max(0, pulse.x) * 0.9) * dt;
@@ -323,26 +343,34 @@ export default function OrbC({ status, levels }: OrbVariantProps) {
       ctx.lineCap = "round";
       ctx.lineJoin = "round";
 
-      // soft contact shadow on the enamel, smaller as it rises
+      // soft contact shadow on the enamel, smaller as it rises (one cached unit gradient, rebuilt only
+      // while the shadow colour is crossfading)
       {
         const sy = H / 2 + W * 0.315;
         const r = W * (0.21 - bob * 0.6);
+        const key = rgb(pal.shadow);
+        if (key !== shadowKey || !shadowGrad) {
+          shadowKey = key;
+          shadowGrad = ctx.createRadialGradient(0, 0, 0, 0, 0, 1);
+          shadowGrad.addColorStop(0, rgba(pal.shadow, 0.09));
+          shadowGrad.addColorStop(0.55, rgba(pal.shadow, 0.035));
+          shadowGrad.addColorStop(1, rgba(pal.shadow, 0));
+        }
         ctx.save();
         ctx.translate(W / 2, sy);
-        ctx.scale(1, 0.16);
-        const g = ctx.createRadialGradient(0, 0, 0, 0, 0, r);
-        g.addColorStop(0, rgba(pal.shadow, 0.085));
-        g.addColorStop(1, rgba(pal.shadow, 0));
-        ctx.fillStyle = g;
-        ctx.globalAlpha = 1 - bob * 4;
-        ctx.fillRect(-r, -r, r * 2, r * 2);
+        ctx.scale(r, r * 0.16);
+        ctx.fillStyle = shadowGrad;
+        ctx.globalAlpha = (1 - bob * 4) * (0.75 + 0.25 * wake.x);
+        ctx.fillRect(-1, -1, 2, 2);
         ctx.restore();
       }
 
       // cube list: N cycling cubes (index 0..N-1), the inner rim of the shell (N), the shell (N+1)
+      life.frame(dt, t, st, active.x, lvlOut, stress, pal);
       for (let k = 0; k < N; k++) {
         const u = (k + phase) / N;
-        const pul = 1 + Math.max(0, pulse.x) * 0.3 * Math.sin(Math.PI * Math.min(1, u * 1.15));
+        // the stressed-syllable swell, plus the travelling wave nudging each shell out as it passes
+        const pul = 1 + Math.max(0, pulse.x) * 0.22 * Math.sin(Math.PI * Math.min(1, u * 1.15)) + life.waveAt(u) * 0.045;
         cubeU[k] = u;
         cubeS[k] = S_MIN * Math.pow(1 / S_MIN, u) * 0.97 * pul;
         cubeA[k] = smooth(0.06, 0.34, u) * (1 - smooth(0.8, 1, u));
@@ -356,15 +384,18 @@ export default function OrbC({ status, levels }: OrbVariantProps) {
         order[j + 1] = v;
       }
       cubeU[N] = 1; cubeS[N] = 0.9; cubeA[N] = 0.35;
-      cubeU[N + 1] = 1; cubeS[N + 1] = 1 + Math.max(0, pulse.x) * 0.035; cubeA[N + 1] = 1;
+      cubeU[N + 1] = 1; cubeS[N + 1] = 1 + Math.max(0, pulse.x) * 0.03 + life.waveAt(1) * 0.012; cubeA[N + 1] = 1;
 
       const twistOf = (c: number) => (c >= N ? 0 : fold * Math.min(1 - cubeU[c], 0.5) * 1.9);
       const widthOf = (c: number) =>
         c === N + 1 ? Math.max(1.7, unit * 1.3) : c === N ? Math.max(0.8, unit * 0.6) : Math.max(0.75 + 0.6 * cubeU[c], unit * (0.35 + 0.6 * cubeU[c]));
       // per-cube depth tone for the edge body (0 body .. 1 deep); the active animation drives this
-      const toneOf = (c: number) => (c >= N ? 0 : 0);
+      const depthOf = (c: number) => (c === N + 1 ? 1 : c === N ? 0.96 : cubeU[c]);
+      const toneOf = (c: number) => life.toneAt(depthOf(c));
+      // white core: brighter outward, and lit up as a wave passes through the shell
       const coreOf = (c: number) =>
-        c >= N ? 0.55 + 0.35 * lk : (0.25 + 0.55 * cubeU[c]) * (0.7 + 0.3 * lk) + lvlOut * (1 - cubeU[c]) * 1.2 + Math.max(0, pulse.x) * 0.9;
+        (c >= N ? 0.55 + 0.35 * lk : (0.25 + 0.55 * cubeU[c]) * (0.7 + 0.3 * lk) + lvlOut * (1 - cubeU[c]) * 0.8 + Math.max(0, pulse.x) * 0.5) +
+        life.waveAt(depthOf(c)) * 1.1;
 
       // pass 1: back faces and back edges, outer to inner
       for (let ii = N + 1; ii >= 0; ii--) {
@@ -382,18 +413,24 @@ export default function OrbC({ status, levels }: OrbVariantProps) {
           back.lineTo(SX[E[1]], SY[E[1]]);
         }
         strokeEdges(back, a * 0.55, widthOf(c) * 0.85, coreOf(c) * 0.6, toneOf(c));
+        if (!lite) life.drawTracers(ctx, c, false, a, widthOf(c) * 0.85, SX, SY, front);
       }
 
       // the voice, a cool light deep inside the ice
-      if (lvlOut > 0.01 || lean.x > 0.01) {
-        const r = px * 0.75;
-        const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, r);
-        g.addColorStop(0, rgba(pal.glow, 0.9));
-        g.addColorStop(0.35, rgba(pal.glowEdge, 0.35));
-        g.addColorStop(1, rgba(pal.glowEdge, 0));
-        ctx.fillStyle = g;
-        ctx.globalAlpha = Math.min(1, lvlOut * 0.55 + lean.x * 0.15);
-        ctx.fillRect(cx - r, cy - r, r * 2, r * 2);
+      // (borrowed from B: a soft cold glow deep in the centre that swells with the voice and each wave)
+      {
+        const wc = life.centre(), vo = life.voice();
+        const ga = Math.min(1, vo * 0.5 + wc * 0.3 + lean.x * 0.15);
+        if (ga > 0.01) {
+          const r = px * (0.5 + vo * 0.25 + wc * 0.2);
+          const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, r);
+          g.addColorStop(0, rgba(pal.glow, 0.9));
+          g.addColorStop(0.3, rgba(pal.glowEdge, 0.4));
+          g.addColorStop(1, rgba(pal.glowEdge, 0));
+          ctx.fillStyle = g;
+          ctx.globalAlpha = ga;
+          ctx.fillRect(cx - r, cy - r, r * 2, r * 2);
+        }
       }
 
       // pass 2: front faces and front edges, inner to outer
@@ -415,14 +452,20 @@ export default function OrbC({ status, levels }: OrbVariantProps) {
         }
         const w = widthOf(c);
         const core = coreOf(c);
-        strokeEdges(dimP, a, w, core * 0.75, toneOf(c));
-        strokeEdges(litP, a, w * 1.1, core * 1.35, toneOf(c));
+        const bev = c === N + 1 ? 1 : 0;
+        strokeEdges(dimP, a, w, core * 0.75, toneOf(c), bev * 0.4);
+        strokeEdges(litP, a, w * 1.1, core * 1.35, toneOf(c), bev);
+        if (!lite) {
+          life.drawTracers(ctx, c, true, a, w, SX, SY, front);
+          if (c === N + 1) life.drawSweep(ctx, w, cx, cy, px * 1.05, SX, SY, front, lit);
+        }
 
         if (c === N + 1) {
-          // frost along the shell's edges and corners
+          // frost along the shell's edges, densest at the corners: a soft haze under the brightest
+          // crystals, then three brightness layers, and the back ones faint through the ice
           const f0 = new Path2D(), f1 = new Path2D(), f2 = new Path2D();
           const fb = new Path2D();
-          const s = 1;
+          const s = cubeS[c];
           for (let i = 0; i < FROST_EDGE.length; i++) {
             const o = i * 7;
             const bk = FROST[o + 6];
@@ -437,23 +480,26 @@ export default function OrbC({ status, levels }: OrbVariantProps) {
               else target.lineTo(cx + X * p, cy - Y * p);
             }
           }
-          const fw = Math.max(0.9, unit * 0.8);
-          const fl = 0.75 + 0.25 * Math.min(1, lk);
-          ctx.strokeStyle = rgb(pal.frostBody);
-          ctx.lineWidth = fw * 1.8;
-          ctx.globalAlpha = 0.1;
-          ctx.stroke(f2);
+          const fw = Math.max(0.85, unit * 0.72);
+          const fl = (0.7 + 0.3 * Math.min(1, lk)) * (0.8 + 0.2 * wake.x);
+          if (!lite) {
+            ctx.strokeStyle = rgb(pal.frostBody);
+            ctx.lineWidth = fw * 5;
+            ctx.globalAlpha = 0.2 * fl;
+            ctx.stroke(f2);
+          }
           ctx.strokeStyle = rgb(pal.frost);
-          ctx.lineWidth = fw * 1.3;
-          ctx.globalAlpha = 0.22 * fl;
+          ctx.lineWidth = fw * 1.5;
+          ctx.globalAlpha = 0.2 * fl;
           ctx.stroke(f0);
-          ctx.lineWidth = fw;
-          ctx.globalAlpha = 0.45 * fl;
+          ctx.lineWidth = fw * 1.1;
+          ctx.globalAlpha = 0.42 * fl;
           ctx.stroke(f1);
-          ctx.lineWidth = fw * 0.8;
-          ctx.globalAlpha = 0.8 * fl;
+          ctx.lineWidth = fw * 0.85;
+          ctx.globalAlpha = 0.85 * fl;
           ctx.stroke(f2);
-          ctx.globalAlpha = 0.18;
+          ctx.lineWidth = fw;
+          ctx.globalAlpha = 0.16;
           ctx.stroke(fb);
         }
       }
