@@ -52,7 +52,7 @@ What follows:
 | Topic | Decision | Notes |
 |---|---|---|
 | Base | **Frida** (Honza's overnight build) | Merged into `main`, and everyone works on `main`. |
-| Agent core | **Frida's own agent loop on Claude.** Hermes is dropped. | The loop is done and tested (parallel tools, streaming, voice channel). Adding Hermes now would only add risk. |
+| Agent core | **Realtime-first: one OpenAI Realtime session per screen** (`bridge/` + `app/`). The old Frida build is a parts bin. Hermes is dropped. | Verified 13. 11.: C ran in 16.5 s with the right cart. The parts and their handoffs are in `docs/handoffs/`. |
 | LLM | `claude-opus-5-5`, with effort `medium` for chat, `low` for voice and `high` for vision | `FRIDA_AGENT_*` in `.env`. |
 | Cameras | **Reolink Home Hub + 2× Argus B310**, snapshots on door events | Placement is still open (§8). |
 | Ordering | **Frida fills the Rohlík cart. A human completes the order in Rohlík via the checkout link.** | Rohlík's MCP terms say an order only completes when the customer confirms it in the e-shop. Tapping the checkout link on a phone is our approval beat. The minimum order is 749 CZK. Blocked tools are listed in `grocery/rohlik_mcp.py`. |

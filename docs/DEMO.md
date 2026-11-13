@@ -36,17 +36,16 @@ recorded or replayed fallback.
 **Live subtitles for everything anyone says** (Coldex, the actor, the presenter, the courier) run under the orb
 from A to H. If the audio fails, the text still carries the story.
 
-## Stage view (frontend, `frontend/src/features/stage/`)
+## Stage view (`app/src/stage/`, see [handoffs](handoffs/README.md))
 
 - Layout: the speaking orb on the left, the side panel on the right, and the kitchen stream as an inset that's
   large in B and small afterwards.
-- **The side panel follows the agent's tool calls, not a script.** The backend already streams tool calls to the
-  UI, so the panel switches cards based on which tool is running. It stays truthful and adds no latency.
+- **The side panel follows the agent's tool calls, not a script.** Every tool call goes onto the bridge's event bus, so the panel switches cards based on which tool is running. It stays truthful and adds no latency.
 - **The B card shows the vision pipeline live:** the captured frame, an "analysing" state, the detection boxes,
   then the diff ("milk: out, eggs: out").
 - **The D/E card is a mini browser frame** playing the recording of the real Rohlík checkout, sped up. It's a
   recording, not a simulated Rohlík page, because it's honest and costs nothing to build.
-- Reuse Frida's existing pieces: the orb, the store radar, the cart panel, the tool-step chips, the call layer,
+- Reuse pieces from the old Frida build: the orb, the store radar, the cart panel, the tool-step chips, the call layer,
   and the camera view with detection boxes. Animate with `motion`, which is already installed. Design rules
   are in `CLAUDE.md`, with no emoji.
 - **The H shot is Telegram on the presenter's phone, mirrored to the projector.** The bridge posts what Coldex
