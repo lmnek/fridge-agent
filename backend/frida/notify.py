@@ -138,7 +138,7 @@ class NotificationService:
                     lowered = [i.name.lower() for i in staples[:4]]
                     names = lowered[0] if len(lowered) == 1 else ", ".join(lowered[:-1]) + " a " + lowered[-1]
                     await self.call(
-                        f"Došlo ti {names}. Mám to dát do košíku v Rohlíku, nebo najít akci v okolí?",
+                        f"Došlo ti: {names}. Mám to dát do košíku v Rohlíku, nebo najít akci v okolí?",
                         event_id=ev.id,
                     )
         except Exception:

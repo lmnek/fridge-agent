@@ -38,7 +38,7 @@ export function composeBrief(items: InventoryItem[]): Brief {
   if (out.length) {
     const names = out.slice(0, 3).map((i) => i.name.toLowerCase());
     return {
-      line: `Došlo ti ${names.join(", ")}. Můžu to dát do košíku v Rohlíku, nebo najít akci poblíž.`,
+      line: `Došlo ti: ${names.join(", ")}. Můžu to dát do košíku v Rohlíku, nebo najít akci poblíž.`,
       prompt: "Objednej z Rohlíku, co dochází",
       promptLabel: "Dej to do košíku",
     };
