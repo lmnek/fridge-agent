@@ -36,6 +36,7 @@ load_dotenv(ROOT.parent / ".env")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
 REALTIME_MODEL = os.getenv("REALTIME_MODEL", "gpt-realtime-2.1")
 REALTIME_VOICE = os.getenv("REALTIME_VOICE", "marin")
+REALTIME_TRANSCRIBE = os.getenv("REALTIME_TRANSCRIBE", "gpt-4o-transcribe")  # subtitles for the humans' speech
 ROHLIK_MCP_URL = os.getenv("ROHLIK_MCP_URL", "https://mcp.rohlik.cz/mcp")
 ROHLIK_TOKEN = os.getenv("ROHLIK_TOKEN", "")
 DATA_DIR = Path(os.getenv("DATA_DIR", ROOT.parent / "data"))
@@ -230,7 +231,7 @@ def memory() -> str:
     """The household's markdown memory, read fresh every time so edits and new notes show up at once."""
     notes = NOTES_FILE.read_text() if NOTES_FILE.exists() else "- nothing yet\n"
     seeded = [(MEMORY_DIR / f).read_text() for f in ("household.md", "products.md")]
-    return "\n\n".join([*seeded, f"# Notes\n\n{notes}"])
+    return "\n\n".join([*seeded, show.deals_markdown(), f"# Notes\n\n{notes}"])
 
 
 @app.post("/tools/get_household")
@@ -259,7 +260,8 @@ def tool_show_recipe(recipe: Recipe) -> dict[str, Any]:
 def tool_add_to_cart(body: CartItems) -> dict[str, Any]:
     STATE["cart"].extend(body.items)
     save()
-    emit("cart", cart=STATE["cart"])
+    total = sum(float(i.get("price_czk") or 0) * float(i.get("qty") or 1) for i in STATE["cart"])
+    emit("cart", items=STATE["cart"], total_czk=round(total))
     return {"ok": True, "cart": STATE["cart"]}
 
 
@@ -389,6 +391,7 @@ def session_config(rohlik: bool = True) -> dict[str, Any]:
             },
             ["title"],
         ),
+        *show.TOOLS,  # show_cart and show_shops, for the C3 and C4 cards
     ]
     if rohlik and ROHLIK_TOKEN:
         tools.append(
@@ -404,38 +407,25 @@ def session_config(rohlik: bool = True) -> dict[str, Any]:
             }
         )
     else:
-        cart_item = {
-            "type": "object",
-            "properties": {
-                "name": {"type": "string"},
-                "product_id": {"type": "string"},
-                "qty": {"type": "number"},
-                "price_czk": {"type": "number"},
-                "reason": {"type": "string", "description": "One reason tag from the instructions."},
-            },
-            "required": ["name"],
-        }
-        tools += [
-            _fn(
-                "add_to_cart",
-                "Add groceries to the Rohlík cart.",
-                {"items": {"type": "array", "items": cart_item}},
-                ["items"],
-            ),
-            _fn("view_cart", "Show the Rohlík cart.", {}),
+        # HACK(demo): no Rohlík token, so show_cart fills the fake cart (add_to_cart and view_cart only cost
+        # the model extra rounds) and place_order puts it up for approval.
+        tools.append(
             _fn(
                 "place_order",
                 "Ask the household to approve the cart. The order is placed only after they tap approve.",
                 {},
-            ),
-        ]
+            )
+        )
     instructions = (MEMORY_DIR / "instructions.md").read_text()
     today = f"Today is {date.today():%A %d %B %Y}."
     return {
         "type": "realtime",
         "model": REALTIME_MODEL,
         "instructions": f"{instructions}\n{today}\n\n{memory()}",
-        "audio": {"output": {"voice": REALTIME_VOICE}},
+        "audio": {
+            "input": {"transcription": {"model": REALTIME_TRANSCRIBE, "language": "en"}},
+            "output": {"voice": REALTIME_VOICE},
+        },
         "tools": tools,
         "tool_choice": "auto",
     }
@@ -460,6 +450,11 @@ def _fn(name: str, description: str, props: dict[str, Any], required: list[str] 
         "description": description,
         "parameters": {"type": "object", "properties": props, "required": required or []},
     }
+
+
+import show  # noqa: E402  (it imports main back, so it comes after emit, STATE and _fn)
+
+app.include_router(show.router)
 
 
 @app.get("/realtime/token")
