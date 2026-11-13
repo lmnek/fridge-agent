@@ -60,6 +60,11 @@ from A to H. If the audio fails, the text still carries the story.
   then the diff ("milk: out, eggs: out").
 - **The D/E card is a mini browser frame** with the checkout steps advancing on a timer. Decided 13. 11.: no
   recording, so nothing has to be captured before the slot.
+- **Update 13. 11. ~16:00: the D/E card plays `app/public/demo/rohlik-checkout.mp4`** when the file exists (20 s, no
+  audio). HACK(demo): it's the real rohlik.cz in English as a guest, but staged. A Playwright script pre-filled the 7
+  demo items with no login, and on camera it adds the guanciale (×2), opens the cart drawer and the cart (688.14 CZK, 7 items),
+  clicks "Continue to checkout", and stops on the address prompt. "Place your order" stays disabled, and nothing was ordered.
+  The site total differs from the 685 Kč demo figure only because bananas are priced by weight.
 - Reuse pieces from the old Frida build: the orb, the store radar, the cart panel, the tool-step chips, the call layer,
   and the camera view with detection boxes. Animate with `motion`, which is already installed. Design rules
   are in `CLAUDE.md`, with no emoji.
