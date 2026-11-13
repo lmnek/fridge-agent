@@ -25,7 +25,7 @@ The repo holds two apps that share nothing:
 | Variable | Required | What it is |
 |---|---|---|
 | `OPENAI_API_KEY` | yes | OpenAI API key. The Realtime model is the whole brain. |
-| `REALTIME_MODEL` | no | Defaults to `gpt-realtime-2.1`. Use `gpt-realtime-2` if camera photos get rejected. |
+| `REALTIME_MODEL` | no | Defaults to `gpt-realtime-2.1`. The camera photos go to `VISION_MODEL`, not to Realtime. |
 | `REALTIME_VOICE` | no | Defaults to `marin`. |
 | `ROHLIK_TOKEN` | no | OAuth access token for the official Rohlík MCP server. Without it, a fake in-memory cart is used. |
 | `ROHLIK_MCP_URL` | no | Defaults to `https://mcp.rohlik.cz/mcp`. Keep it exactly like that, no trailing slash. |

@@ -15,4 +15,4 @@ ID and price. -->
 | Spaghetti | Barilla Spaghetti n.5, 500 g | TODO | 1 | 49 | |
 | Gluten-free spaghetti | Barilla Spaghetti bez lepku, 400 g | TODO | 1 | 78 | for Anna |
 | Greek yogurt | Olympus Řecký jogurt 2 %, 500 g | TODO | 3 | 59 | |
-| Bananas | Banány, 1 kg | TODO | 2 | 47 | -20 % sale today, was 59 |
+| Bananas | Banány, 1 kg | TODO | 2 | 47 | |

@@ -45,8 +45,8 @@ Anything that should show up on stage goes through the bridge. Screens never tal
 | `inventory` | `items`, `source` | bridge | C1, kitchen page |
 | `learned` | `fact`, `category` (craving, missing, diet, preference, habit) | `remember` tool | B craving card, Telegram |
 | `recipe` | `recipe` (`title`, `have`, `missing`, `steps`) | `show_recipe` tool | C2 |
-| `cart` | `items` (`name`, `qty`, `price_czk` per unit, `reason` as comma-separated why tags, `image_url`), `total_czk` | `show_cart` tool (part 3) | C4, Telegram |
-| `deals` | `items` (`item`, `store`, `price_czk`, `was_czk`), `stores` (`name`, `distance_m`, or `delivery_min` for Rohlík), `scraped_at` | the deals tool (part 8) | C3 overview |
+| `cart` | `items` (`name`, `qty`, `price_czk` per unit, `reason` as comma-separated why tags, `image_url`), `total_czk` | `show_cart` tool (part 3, `bridge/show.py`) | C4, Telegram |
+| `deals` | `items` (`item`, `store`, `price_czk`, `was_czk`), `stores` (`name`, `distance_m`, or `delivery_min` for Rohlík), `scraped_at`, `choice` (the shop Coldex picked), `why` | `show_shops` tool (part 3), from part 8's scrape in `data/deals.json` (same shape, without `choice` and `why`), else a `HACK(demo)` sample | C3 overview |
 | `approval` | `approval`, `order` | bridge | Telegram |
 | `look` | `reason` (motion, manual, replay) | bridge | kitchen page or the vision pipeline |
 | `vision` | `phase` (captured, analysing, done), `run`, `reason`, `frames` (`when` before or after, `camera`, `url`), `boxes` (`frame` index, `label`, `status` out, new or in, `x`, `y`, `w`, `h` from 0 to 1), `removed`, `added`, `tell`, `error` | part 4 | B card, kitchen page |

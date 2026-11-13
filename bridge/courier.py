@@ -161,7 +161,11 @@ async def _hangup(sid: str | None) -> None:
 
 @router.post("/hangup")
 async def hangup() -> dict[str, Any]:
-    await _hangup(_call.get("sid"))
+    """Also the reset: a rehearsal call whose status webhook never arrived must not block the next call."""
+    try:
+        await _hangup(_call.get("sid"))
+    finally:
+        _call["ended"] = True
     return {"ok": True}
 
 
@@ -244,6 +248,7 @@ class Relay:
             elif msg["event"] == "mark" and msg["mark"].get("name") == "bye":
                 await _hangup(self.call_sid)  # Coldex's goodbye has finished playing on the phone
             elif msg["event"] == "stop":
+                _call["ended"] = True
                 return
 
     async def from_openai(self, oai: Any) -> None:

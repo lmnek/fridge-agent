@@ -49,6 +49,7 @@ def test_token_without_key_is_503():
 @respx.mock
 def test_token_sends_full_session(monkeypatch):
     monkeypatch.setattr(main, "OPENAI_API_KEY", "sk-test")
+    monkeypatch.setattr(main, "ROHLIK_TOKEN", "")  # other test files may import main before the env is blanked
     route = respx.post("https://api.openai.com/v1/realtime/client_secrets").mock(
         return_value=httpx.Response(200, json={"value": "ek_123", "expires_at": 0})
     )
@@ -56,7 +57,8 @@ def test_token_sends_full_session(monkeypatch):
     session = json.loads(route.calls.last.request.content)["session"]
     assert session["type"] == "realtime" and session["model"] == main.REALTIME_MODEL
     names = {t.get("name") for t in session["tools"]}
-    assert {"update_inventory", "add_to_cart", "place_order"} <= names
+    assert {"update_inventory", "show_cart", "show_shops", "place_order"} <= names
+    assert session["audio"]["input"]["transcription"]["model"] == main.REALTIME_TRANSCRIBE
 
     monkeypatch.setattr(main, "ROHLIK_TOKEN", "rohlik-oauth")
     client.get("/realtime/token")
@@ -104,3 +106,24 @@ def test_bus_carries_tool_calls_and_published_events():
     tools = [e for e in events if e["type"] == "tool"]
     assert [e["phase"] for e in tools] == ["start", "done"] and tools[0]["args"]["title"] == "Carbonara"
     assert {"type": "caption", "who": "actor", "text": "Ugh, again.", "kind": "final"} in events
+
+
+def test_show_cart_and_shops_publish_the_table_shapes():
+    import asyncio
+
+    queue: asyncio.Queue[str] = asyncio.Queue()
+    main._subscribers.add(queue)
+    items = [
+        {"name": "Lactose-free milk", "qty": 4, "price_czk": 34, "reason": "ran out"},
+        {"name": "Bananas", "qty": 2, "price_czk": 47, "reason": "-20 % sale"},
+    ]
+    assert client.post("/tools/show_cart", json={"items": items}).json()["total_czk"] == 230
+    client.post("/tools/show_shops", json={"choice": "Rohlík", "why": "delivers within the hour"})
+    main._subscribers.discard(queue)
+    events = {e["type"]: e for e in (json.loads(queue.get_nowait()) for _ in range(queue.qsize()))}
+    cart = events["cart"]
+    assert cart["total_czk"] == 230 and set(cart["items"][0]) == {"name", "qty", "price_czk", "reason", "image_url"}
+    assert main.STATE["cart"] == cart["items"]  # the fake cart place_order approves
+    deals = events["deals"]
+    assert {"items", "stores", "scraped_at"} <= set(deals) and deals["choice"] == "Rohlík"
+    assert "Bananas at Rohlík: 47 Kč, was 59 Kč (-20 %)" in main.memory()
