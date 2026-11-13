@@ -39,7 +39,7 @@ load_dotenv(ROOT.parent / ".env")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
 REALTIME_MODEL = os.getenv("REALTIME_MODEL", "gpt-realtime-2.1")
 REALTIME_VOICE = os.getenv("REALTIME_VOICE", "marin")
-REALTIME_TRANSCRIBE = os.getenv("REALTIME_TRANSCRIBE", "gpt-4o-transcribe")  # subtitles for the humans' speech
+REALTIME_TRANSCRIBE = os.getenv("REALTIME_TRANSCRIBE", "gpt-live-transcribe")  # subtitles for the humans' speech
 ROHLIK_MCP_URL = os.getenv("ROHLIK_MCP_URL", "https://mcp.rohlik.cz/mcp")
 ROHLIK_TOKEN = os.getenv("ROHLIK_TOKEN", "")
 DATA_DIR = Path(os.getenv("DATA_DIR", ROOT.parent / "data"))
