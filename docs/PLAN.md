@@ -46,6 +46,14 @@ We target it because the learning loop also strengthens the main demo, but never
 | 3D fridge | Stretch. Ship a clean 2D view first. | |
 | Self-improvement loop | Signals in the bridge event log, a Fridge Scout self-review, a human-approved self-edit, then measurement. A simulated household produces the learning curve. | Side prize (Mac mini) judged by PostHog. PostHog itself isn't required (§6). |
 
+### 2.3 Proposal from Honza: one Realtime session as the whole brain (branch `realtime`)
+
+Status: proposed, not decided. Instead of Hermes, a single OpenAI Realtime session in the browser does
+voice, vision (camera photos as image input) and tools. Rohlík plugs in as a remote MCP server inside
+that session. The bridge shrinks to one FastAPI file. It is running on the `realtime` branch, see
+`README.md` there. Trade-off: less to build and one brain, but no Telegram gateway, cron or
+self-written skills out of the box. Memory is a `remember` tool for now.
+
 ## 3. Demo: 3:00 run of show (draft)
 
 What's real: tracking, vision, expiry reading, agent reasoning, recipe, cart and the order.
