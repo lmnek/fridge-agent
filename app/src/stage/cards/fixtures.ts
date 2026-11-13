@@ -108,6 +108,9 @@ export const deals = {
   scraped_at: new Date(Date.now() - 2 * 3600_000).toISOString(),
 };
 
+// C3: bridge/show.py's show_shops publishes `deals` plus the model's choice and why.
+const shops = { choice: "Rohlík", why: "Lidl is 400 m away, but Rohlík delivers within the hour." };
+
 // C4. `price_czk` is per unit. `reason` is the why tags, comma-separated.
 export const cart = {
   items: [
@@ -166,9 +169,9 @@ export const demoRun: Timed[] = [
   at(49.1, { type: "recipe", recipe: carbonara }),
   at(49.2, { type: "tool", name: "show_recipe", args: carbonara, phase: "done", ok: true }),
   ...say(51, "coldex", "c-3", "For tonight: guanciale and spaghetti, with a gluten-free pack for Anna.", 4.5),
-  at(56, { type: "tool", name: "get_deals", args: { items: ["Lactose-free milk", "Eggs", "Guanciale", "Spaghetti", "Gluten-free spaghetti", "Greek yogurt", "Bananas"] }, phase: "start" }),
-  at(56.6, { type: "deals", ...deals }),
-  at(56.7, { type: "tool", name: "get_deals", args: {}, phase: "done", ok: true }),
+  at(56, { type: "tool", name: "show_shops", args: shops, phase: "start" }),
+  at(56.6, { type: "deals", ...deals, ...shops }),
+  at(56.7, { type: "tool", name: "show_shops", args: shops, phase: "done", ok: true }),
   ...say(55.5, "coldex", "c-4", "And your weekly basics: yogurt, and bananas, which are on sale today.", 4.5),
   ...say(60, "coldex", "c-5", "Lidl is 400 m away, but Rohlík delivers within the hour, so Rohlík.", 4.5),
   at(64.5, { type: "tool", name: "show_cart", args: cart, phase: "start" }),

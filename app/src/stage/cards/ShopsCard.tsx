@@ -26,7 +26,9 @@ function num(n: number) {
 }
 
 function ago(iso: string) {
-  const min = Math.max(0, Math.round((Date.now() - Date.parse(iso)) / 60000));
+  const at = Date.parse(iso);
+  if (Number.isNaN(at)) return "Today's prices"; // bridge/show.py's sample sends scraped_at: "sample"
+  const min = Math.max(0, Math.round((Date.now() - at) / 60000));
   if (min < 60) return min <= 1 ? "Scraped just now" : `Scraped ${min} min ago`;
   return `Scraped ${Math.round(min / 60)} h ago`;
 }
