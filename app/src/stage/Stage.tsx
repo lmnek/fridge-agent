@@ -88,7 +88,7 @@ export default function Stage() {
   const line = error ?? (system ? String(system.message ?? "") : null);
 
   return (
-    <div className="stage-view" data-beat={beat} data-card={card} data-inset={gone ? "gone" : "large"}>
+    <div className="stage-view" data-beat={beat} data-card={card} data-inset={gone ? "gone" : "large"} data-orb={orb.status}>
       <p className="stage-mark">Coldex</p>
       <div className="stage-orb">
         <Orb status={orb.status} levels={orb.levels} onToggle={() => {}} />

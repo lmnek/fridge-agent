@@ -115,7 +115,11 @@ export function useOrbVoice(brain: FridgeBrain, status: Status, events: BusEvent
     const kitchen = fallbackLevel() ?? relayColdexLevel();
     if (kitchen !== null && !callActive(eventsRef.current)) return { input: 0, output: kitchen };
     const s = kitchenSpeakingSince(eventsRef.current);
-    const speaking = callActive(eventsRef.current) || (s !== null && Date.now() - s < KITCHEN_WINDOW_MS);
+    // The kitchen's own status says speaking for as long as its voice plays, longer than the captions stream.
+    const speaking =
+      callActive(eventsRef.current) ||
+      kitchenStatus(eventsRef.current) === "speaking" ||
+      (s !== null && Date.now() - s < KITCHEN_WINDOW_MS);
     const target = speaking ? syntheticLevel(performance.now()) : 0.02;
     smooth.current += (target - smooth.current) * 0.25;
     return { input: 0, output: smooth.current };
@@ -127,8 +131,11 @@ export function useOrbVoice(brain: FridgeBrain, status: Status, events: BusEvent
   // Mirrors the kitchen session: speaking follows the relayed voice (or the captions without it), thinking
   // comes from the kitchen's own status.
   const thinking = kitchenStatus(events) === "thinking";
-  if (relay !== "none") return { status: (relay === "speaking" ? "speaking" : thinking ? "thinking" : "listening") as Status, levels };
+  const kitchenSpeaking = kitchenStatus(events) === "speaking"; // holds through the pauses between sentences
+  if (relay !== "none") {
+    return { status: (relay === "speaking" || kitchenSpeaking ? "speaking" : thinking ? "thinking" : "listening") as Status, levels };
+  }
   const mirroring = since !== null && Math.max(now, since) - since < KITCHEN_WINDOW_MS;
-  const speaking = mirroring || kitchenStatus(events) === "speaking";
+  const speaking = mirroring || kitchenSpeaking;
   return { status: (speaking ? "speaking" : thinking ? "thinking" : "listening") as Status, levels };
 }

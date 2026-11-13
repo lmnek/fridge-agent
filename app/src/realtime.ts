@@ -40,6 +40,8 @@ export class FridgeBrain {
   private dc: RTCDataChannel | null = null;
   private outbox: Json[] = [];
   private busy = false;
+  /** Coldex's voice is playing (WebRTC's output buffer), which outlasts generation: audio streams in faster than real time. */
+  private playing = false;
   private lastActive = 0; // when the last response ended
   private wantResponse = false;
   private seen = new Set<string>();
@@ -142,7 +144,7 @@ export class FridgeBrain {
     void this.ctx?.close();
     this.pc = this.dc = null;
     this.ctx = this.inAnalyser = this.outAnalyser = this.micTrack = null;
-    this.busy = this.wantResponse = false;
+    this.busy = this.wantResponse = this.playing = false;
   }
 
   private reconnect(delay = 1500) {
@@ -237,14 +239,19 @@ export class FridgeBrain {
         this.busy = true;
         this.captionText = "";
         this.captionId = String((ev.response as Json)?.id ?? `r${Date.now()}`);
-        this.h.status("thinking");
+        this.settle();
         break;
       case "output_audio_buffer.started":
-        this.h.status("speaking");
+        this.playing = true;
+        this.settle();
         break;
       case "output_audio_buffer.stopped":
+      case "output_audio_buffer.cleared":
+        this.playing = false;
+        this.settle();
+        break;
       case "input_audio_buffer.speech_started":
-        this.h.status("listening");
+        if (!this.playing) this.h.status("listening"); // a real barge-in clears the buffer, which settles it
         break;
       case "response.output_audio_transcript.delta":
       case "response.output_text.delta":
@@ -308,7 +315,7 @@ export class FridgeBrain {
     }
     this.busy = false;
     this.lastActive = Date.now();
-    this.h.status("listening");
+    this.settle();
     if (this.wantResponse) {
       this.wantResponse = false;
       this.respond();
@@ -316,6 +323,15 @@ export class FridgeBrain {
   }
 
   // ------------------------------------------------------------------ plumbing
+
+  /**
+   * Speaking lasts while the voice plays, not while the model generates: a long answer is generated in a few
+   * seconds (response.done) and plays for half a minute (output_audio_buffer.stopped). A follow-up response
+   * after tool calls starts while the voice still plays, so it doesn't cut speaking short either.
+   */
+  private settle() {
+    this.h.status(this.playing ? "speaking" : this.busy ? "thinking" : "listening");
+  }
 
   private send(event: Json) {
     if (this.injected || this.connected) this.sendRaw(event);
