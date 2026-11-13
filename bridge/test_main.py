@@ -5,6 +5,7 @@ import tempfile
 os.environ["DATA_DIR"] = tempfile.mkdtemp(prefix="fridge-test-")
 os.environ["OPENAI_API_KEY"] = ""
 os.environ["REOLINK_HOST"] = ""
+os.environ["ROHLIK_TOKEN"] = ""
 
 import httpx  # noqa: E402
 import pytest  # noqa: E402
@@ -87,3 +88,17 @@ def test_bad_rohlik_token_falls_back_to_demo_cart(monkeypatch):
     assert body == {"value": "ek_2", "model": main.REALTIME_MODEL, "rohlik": False}
     retry = json.loads(route.calls.last.request.content)["session"]["tools"]
     assert "place_order" in {t.get("name") for t in retry} and not [t for t in retry if t["type"] == "mcp"]
+
+
+def test_bus_carries_tool_calls_and_published_events():
+    import asyncio
+
+    queue: asyncio.Queue[str] = asyncio.Queue()
+    main._subscribers.add(queue)
+    client.post("/tools/show_recipe", json={"title": "Carbonara", "missing": ["guanciale"]})
+    client.post("/events", json={"type": "caption", "who": "actor", "text": "Ugh, again.", "kind": "final"})
+    main._subscribers.discard(queue)
+    events = [json.loads(queue.get_nowait()) for _ in range(queue.qsize())]
+    tools = [e for e in events if e["type"] == "tool"]
+    assert [e["phase"] for e in tools] == ["start", "done"] and tools[0]["args"]["title"] == "Carbonara"
+    assert {"type": "caption", "who": "actor", "text": "Ugh, again.", "kind": "final"} in events

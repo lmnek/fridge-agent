@@ -20,7 +20,7 @@ from typing import Any
 
 import httpx
 from dotenv import load_dotenv
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import Response, StreamingResponse
 from pydantic import BaseModel
 
@@ -106,7 +106,7 @@ def save() -> None:
 _subscribers: set[asyncio.Queue[str]] = set()
 
 
-def emit(kind: str, **data: Any) -> None:
+def emit(kind: str, /, **data: Any) -> None:
     message = json.dumps({"type": kind, **data}, ensure_ascii=False)
     for queue in list(_subscribers):
         queue.put_nowait(message)
@@ -129,6 +129,27 @@ async def events() -> StreamingResponse:
             _subscribers.discard(queue)
 
     return StreamingResponse(stream(), media_type="text/event-stream")
+
+
+@app.post("/events")
+async def publish(request: Request) -> dict[str, Any]:
+    """Anyone can put an event on the bus: the kitchen app's captions, the courier call, Telegram. See docs/handoffs."""
+    event = await request.json()
+    emit(event.pop("type"), **event)
+    return {"ok": True}
+
+
+@app.middleware("http")
+async def tool_events(request: Request, call_next):
+    """Every tool call goes on the bus, so the stage view follows whichever session made it."""
+    if request.method != "POST" or not request.url.path.startswith("/tools/"):
+        return await call_next(request)
+    name = request.url.path.removeprefix("/tools/")
+    args = json.loads(await request.body() or b"{}")
+    emit("tool", name=name, args=args, phase="start")
+    response = await call_next(request)
+    emit("tool", name=name, args=args, phase="done", ok=response.status_code < 400)
+    return response
 
 
 # --------------------------------------------------------------------------- inventory
