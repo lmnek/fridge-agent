@@ -9,7 +9,7 @@ import { useBus } from "../bus";
 import { demoRun, eventsAt } from "./fixtures";
 
 // The moment in the run where each card looks complete, for ?cards=<id> without t.
-const SHOWCASE: Record<CardId, number> = { B: 38, C1: 47, C2: 54, C3: 63, C4: 75, DE: 93, F: 126, G: 150 };
+const SHOWCASE: Record<CardId, number> = { B: 38, C1: 47, C2: 70, C3: 70, C4: 75, DE: 93, F: 126, G: 150 };
 const END = Math.max(...demoRun.map((e) => e.at)) / 1000;
 
 export default function Preview() {
