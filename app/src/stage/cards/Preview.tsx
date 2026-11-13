@@ -62,9 +62,9 @@ export default function Preview() {
   );
 
   if (only === "" || only === null) {
-    // Grid of every card at its showcase moment, each at its real 864x984 size scaled to half.
+    // Grid of every card at its showcase moment, each at its real 860x920 size (part 1 stage.css) scaled to half.
     return (
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 432px)", gap: 32, padding: 32, background: "#f3f6f7", minHeight: "100vh" }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 430px)", gap: 32, padding: 32, background: "#f3f6f7", minHeight: "100vh" }}>
         {ids.map((id) => {
           const Card = cards[id];
           return (
@@ -72,8 +72,8 @@ export default function Preview() {
               <a href={`?cards=${id}`} style={{ color: "#586a75", fontSize: 14 }}>
                 {id} at {SHOWCASE[id]} s
               </a>
-              <div style={{ width: 432, height: 492, marginTop: 6 }}>
-                <div style={{ width: 864, height: 984, transform: "scale(0.5)", transformOrigin: "0 0" }}>
+              <div style={{ width: 430, height: 460, marginTop: 6 }}>
+                <div style={{ width: 860, height: 920, transform: "scale(0.5)", transformOrigin: "0 0" }}>
                   <Card events={eventsAt(SHOWCASE[id] * 1000)} />
                 </div>
               </div>
@@ -91,7 +91,7 @@ export default function Preview() {
       <div style={{ position: "absolute", left: 40, top: 40, width: 980, height: 1000, display: "grid", placeItems: "center", color: "#8a9aa3", fontSize: 20 }}>
         <div style={{ width: 420, height: 420, borderRadius: "50%", border: "1px dashed #c4d1d7", display: "grid", placeItems: "center" }}>orb</div>
       </div>
-      <div style={{ position: "absolute", right: 48, top: 48, width: 864, height: 984 }}>{Card && <Card key={shown} events={events} />}</div>
+      <div style={{ position: "absolute", left: 1000, top: 100, width: 860, height: 920 }}>{Card && <Card key={shown} events={events} />}</div>
       {controls}
     </div>
   );
