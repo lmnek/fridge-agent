@@ -8,6 +8,7 @@ import { publish, useBus } from "./bus";
 import { endCallAudio, startCourierCall } from "./call";
 import { publishCaption } from "./captions";
 import { fallbackPlaying, playFallback, stopFallback } from "./fallbackRun";
+import { RECOG_HELP } from "./Recognition";
 import "./hotkeys.css";
 
 const BEAT_KEYS: Record<string, string> = { "1": "A", "2": "B", "3": "C", "4": "DE", "5": "F", "6": "G", "7": "H" };
@@ -22,6 +23,7 @@ const HELP: [string, string][] = [
   ["Shift K", "Fake courier call (scripted)"],
   ["1 – 7", "Force beat A, B, C, D/E, F, G, H"],
   ["Z / X", "Fallback: play the scripted run from B / C (again stops it)"],
+  ...RECOG_HELP,
   ["Shift R", "Reset every screen"],
   ["?", "This help"],
 ];

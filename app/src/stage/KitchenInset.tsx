@@ -26,6 +26,7 @@
  * - nothing: an empty dark slot, so a call window can be laid over it (the documented fallback).
  */
 import { useEffect, useRef, useState } from "react";
+import { Recognition } from "./Recognition";
 
 type Size = "large" | "hidden";
 
@@ -58,6 +59,7 @@ export function KitchenInset({ size, muted }: { size: Size; muted: boolean }) {
       ) : (
         <Viewer room={src} muted={muted} />
       )}
+      {src ? <Recognition visible={size === "large"} /> : null}
     </div>
   );
 }
