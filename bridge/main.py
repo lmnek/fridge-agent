@@ -14,7 +14,7 @@ import secrets
 import time
 import uuid
 from contextlib import asynccontextmanager
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
@@ -39,6 +39,8 @@ REOLINK_PASSWORD = os.getenv("REOLINK_PASSWORD", "")
 REOLINK_CHANNELS = [int(c) for c in os.getenv("REOLINK_CHANNELS", "0,1").split(",") if c.strip()]
 DATA_DIR = Path(os.getenv("DATA_DIR", ROOT.parent / "data"))
 STATE_FILE = DATA_DIR / "state.json"
+MEMORY_DIR = ROOT / "memory"  # seeded by hand: instructions, household profile, product picks
+NOTES_FILE = DATA_DIR / "notes.md"  # what the agent noted itself; delete it to reset a rehearsal
 
 
 @asynccontextmanager
@@ -59,11 +61,11 @@ def _seed() -> dict[str, Any]:
     # HACK(demo): a believable fridge so the app has something to show before the cameras run.
     today = date.today()
     items = [
-        ("Milk", "1 l", 4, None),
+        ("Lactose-free milk", "1 l", 4, None),
         ("Greek yogurt", "1 cup", 1, "use tonight"),
         ("Eggs", "6", 12, None),
         ("Butter", "250 g", 30, None),
-        ("Cheddar", "200 g", 20, None),
+        ("Pecorino romano", "150 g", 20, None),
         ("Baby spinach", "1 bag", 2, None),
         ("Cherry tomatoes", "250 g", 5, None),
     ]
@@ -79,7 +81,6 @@ def _seed() -> dict[str, Any]:
             }
             for name, qty, days, note in items
         ],
-        "facts": [],
         "cart": [],
         "approvals": {},
         "orders": [],
@@ -179,6 +180,7 @@ def inventory_changes(changes: Changes) -> dict[str, Any]:
 
 class Fact(BaseModel):
     fact: str
+    category: str = "fact"
 
 
 class CartItems(BaseModel):
@@ -202,13 +204,25 @@ def tool_update_inventory(changes: Changes) -> dict[str, Any]:
     return inventory_changes(changes)
 
 
+def memory() -> str:
+    """The household's markdown memory, read fresh every time so edits and new notes show up at once."""
+    notes = NOTES_FILE.read_text() if NOTES_FILE.exists() else "- nothing yet\n"
+    seeded = [(MEMORY_DIR / f).read_text() for f in ("household.md", "products.md")]
+    return "\n\n".join([*seeded, f"# Notes\n\n{notes}"])
+
+
+@app.post("/tools/get_household")
+def tool_get_household() -> dict[str, Any]:
+    return {"today": date.today().isoformat(), "memory": memory()}
+
+
 @app.post("/tools/remember")
 def tool_remember(body: Fact) -> dict[str, Any]:
-    if body.fact not in STATE["facts"]:
-        STATE["facts"].append(body.fact)
-        save()
-        emit("learned", fact=body.fact)
-    return {"ok": True, "facts": STATE["facts"]}
+    DATA_DIR.mkdir(parents=True, exist_ok=True)
+    with NOTES_FILE.open("a") as f:
+        f.write(f"- {datetime.now():%Y-%m-%d %H:%M} [{body.category}] {body.fact}\n")
+    emit("learned", fact=body.fact, category=body.category)
+    return {"ok": True}
 
 
 @app.post("/tools/show_recipe")
@@ -321,24 +335,6 @@ async def watch_motion() -> None:
 # --------------------------------------------------------------------------- Realtime session
 
 
-INSTRUCTIONS = """\
-You are the fridge. You live in this household's fridge, you can see inside it through cameras
-and you talk with the people who live here. Speak English, warm and brief, one or two sentences.
-
-What you do:
-- When you get camera photos, compare them with the current inventory and call update_inventory
-  with what was added or removed. Read expiry dates from packages when you can. Then say in one
-  sentence what changed and point out anything that ran out or expires soon. If nothing changed, say nothing.
-- When someone mentions a craving or asks what to cook, call get_inventory, pick a recipe that
-  uses what is there (expiring things first), call show_recipe, then offer to order what is missing.
-- When you learn a lasting preference, diet or habit, call remember. Use what you remember
-  (for example the milk they drink) when you pick products.
-- Ordering costs real money. Fill the cart, say the total, and let the household approve it in
-  the app. Never claim an order was placed until you are told it was approved. Rohlík's minimum
-  order is 749 CZK.
-"""
-
-
 def session_config(rohlik: bool = True) -> dict[str, Any]:
     tools: list[dict[str, Any]] = [
         _fn("get_inventory", "What is in the fridge right now, with expiry dates.", {}),
@@ -351,7 +347,20 @@ def session_config(rohlik: bool = True) -> dict[str, Any]:
                 "source": {"type": "string", "enum": ["vision", "agent"]},
             },
         ),
-        _fn("remember", "Remember a lasting fact about the household.", {"fact": {"type": "string"}}, ["fact"]),
+        _fn(
+            "get_household",
+            "A fresh copy of the household profile, product picks and your notes, including cravings.",
+            {},
+        ),
+        _fn(
+            "remember",
+            "Note something about the household that every conversation should know.",
+            {
+                "fact": {"type": "string", "description": "One short sentence, e.g. 'Kryštof is craving carbonara tonight.'"},
+                "category": {"type": "string", "enum": ["craving", "diet", "preference", "habit"]},
+            },
+            ["fact", "category"],
+        ),
         _fn(
             "show_recipe",
             "Show a recipe card in the app.",
@@ -377,7 +386,13 @@ def session_config(rohlik: bool = True) -> dict[str, Any]:
     else:
         cart_item = {
             "type": "object",
-            "properties": {"name": {"type": "string"}, "qty": {"type": "number"}, "price_czk": {"type": "number"}},
+            "properties": {
+                "name": {"type": "string"},
+                "product_id": {"type": "string"},
+                "qty": {"type": "number"},
+                "price_czk": {"type": "number"},
+                "reason": {"type": "string", "description": "One reason tag from the instructions."},
+            },
             "required": ["name"],
         }
         tools += [
@@ -394,12 +409,12 @@ def session_config(rohlik: bool = True) -> dict[str, Any]:
                 {},
             ),
         ]
-    facts = "\n".join(f"- {f}" for f in STATE["facts"]) or "- nothing yet"
+    instructions = (MEMORY_DIR / "instructions.md").read_text()
     today = f"Today is {date.today():%A %d %B %Y}."
     return {
         "type": "realtime",
         "model": REALTIME_MODEL,
-        "instructions": f"{INSTRUCTIONS}\n{today}\n\nWhat you know about this household:\n{facts}\n",
+        "instructions": f"{instructions}\n{today}\n\n{memory()}",
         "audio": {"output": {"voice": REALTIME_VOICE}},
         "tools": tools,
         "tool_choice": "auto",

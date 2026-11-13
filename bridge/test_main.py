@@ -18,13 +18,13 @@ client = TestClient(main.app)
 
 def test_inventory_changes_add_update_remove():
     names = {i["name"] for i in client.get("/inventory").json()}
-    assert "Milk" in names
+    assert "Lactose-free milk" in names
     res = client.post(
         "/inventory/changes",
-        json={"added": [{"name": "Oat milk", "qty": "1 l", "expires": "2026-12-01"}], "removed": [{"name": "milk"}]},
+        json={"added": [{"name": "Oat milk", "qty": "1 l", "expires": "2026-12-01"}], "removed": [{"name": "lactose-free milk"}]},
     ).json()
     names = {i["name"] for i in res["items"]}
-    assert "Oat milk" in names and "Milk" not in names
+    assert "Oat milk" in names and "Lactose-free milk" not in names
     client.post("/inventory/changes", json={"added": [{"name": "oat milk", "qty": "2 l"}]})
     oat = [i for i in client.get("/inventory").json() if i["name"].lower() == "oat milk"]
     assert len(oat) == 1 and oat[0]["qty"] == "2 l"
@@ -69,10 +69,11 @@ def test_camera_without_hub_is_404():
     assert client.get("/camera/0.jpg").status_code == 404
 
 
-@pytest.mark.parametrize("fact", ["Drinks oat milk, not cow milk"])
-def test_remember_goes_into_instructions(fact):
-    client.post("/tools/remember", json={"fact": fact})
-    assert fact in main.session_config()["instructions"]
+def test_remember_reaches_new_sessions_and_get_household():
+    client.post("/tools/remember", json={"fact": "Kryštof is craving carbonara tonight.", "category": "craving"})
+    assert "[craving] Kryštof is craving carbonara tonight." in main.session_config()["instructions"]
+    memory = client.post("/tools/get_household").json()["memory"]
+    assert "craving carbonara" in memory and "Anna" in memory and "Product picks" in memory
 
 
 @respx.mock
