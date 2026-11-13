@@ -148,9 +148,10 @@ async def tool_events(request: Request, call_next):
         return await call_next(request)
     name = request.url.path.removeprefix("/tools/")
     args = json.loads(await request.body() or b"{}")
-    emit("tool", name=name, args=args, phase="start")
+    screen = request.headers.get("x-coldex-screen")  # kitchen or stage, so the stage knows who called
+    emit("tool", name=name, args=args, phase="start", screen=screen)
     response = await call_next(request)
-    emit("tool", name=name, args=args, phase="done", ok=response.status_code < 400)
+    emit("tool", name=name, args=args, phase="done", ok=response.status_code < 400, screen=screen)
     return response
 
 

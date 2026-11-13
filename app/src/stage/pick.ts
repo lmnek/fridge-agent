@@ -44,7 +44,9 @@ export function cardFor(ev: BusEvent): PanelId | null {
     case "tool": {
       const name = String(ev.name ?? "");
       if (name === "remember") return ev.args?.category === "craving" ? "B" : null;
-      return TOOLS.find(([re]) => re.test(name))?.[1] ?? null;
+      const card = TOOLS.find(([re]) => re.test(name))?.[1] ?? null;
+      // The kitchen session works in B. Its other tool calls (a get_inventory, say) must not jump the stage to C.
+      return ev.screen === "kitchen" && card !== "B" ? null : card;
     }
     case "vision":
     case "look":

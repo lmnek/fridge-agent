@@ -274,11 +274,17 @@ export class FridgeBrain {
   }
 }
 
+/** Which screen this page is. Tool events carry it, so the kitchen's tool calls don't move the stage panel to C. */
+let screen: "kitchen" | "stage" = "kitchen";
+export function setScreen(s: "kitchen" | "stage") {
+  screen = s;
+}
+
 export async function runTool(name: string, args: string): Promise<string> {
   try {
     const res = await fetch(`/api/tools/${name}`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", "X-Coldex-Screen": screen },
       body: args || "{}",
     });
     return JSON.stringify(res.ok ? await res.json() : { error: `${name} failed with ${res.status}: ${await res.text()}` });

@@ -41,7 +41,7 @@ Anything that should show up on stage goes through the bridge. Screens never tal
 
 | Event | Fields | Produced by | Used by |
 |---|---|---|---|
-| `tool` | `name`, `args`, `phase` (start, done), `ok` | bridge, automatic | every card |
+| `tool` | `name`, `args`, `phase` (start, done), `ok`, `screen` (kitchen, stage: which session called, from the `X-Coldex-Screen` header) | bridge, automatic | every card |
 | `inventory` | `items`, `source` | bridge | C1, kitchen page |
 | `learned` | `fact`, `category` (craving, missing, diet, preference, habit) | `remember` tool | B craving card, Telegram |
 | `recipe` | `recipe` (`title`, `have`, `missing`, `steps`) | `show_recipe` tool | C2 |
