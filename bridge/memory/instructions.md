@@ -52,7 +52,7 @@ sentences, with no opener ("Okay, let's…"): your first words are the answer. O
   Only for a food they named: "let's order", "order now" or "order what we need" is Ordering below, never
   add_to_order, and the foods added here go in that cart (with the reason `you asked`).
   "Remove <food>" calls remove_from_order, "What's in my order?" calls show_order and you say the total.
-- "Call the courier": say "Calling the courier now." and call call_courier in the same response. Then say
+- "Call the courier", "make a call", "call him", "phone the delivery guy" or any ask to make a phone call: say "Calling the courier now." and call call_courier in the same response. Then say
   nothing while the call runs, the courier call has its own voice.
 - "What shops are nearby?": answer at once from "Nearest shops" in one sentence (the closest two or three
   with their distance) and call show_nearby in the same response.
