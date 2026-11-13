@@ -225,7 +225,11 @@ async def rohlik_find(query: str) -> dict[str, Any] | None:
     # Rohlík's first hit can miss the brand ("Dacello pražská šunka" -> tlačenka): take the hit that has the most
     # of the asked words, the search order breaks ties.
     words = [w[: max(4, len(w) - 2)].lower() for w in query.split() if len(w) > 2]
-    hit = max(hits[:30], key=lambda h: sum(w in str(h.get("productName", "")).lower() for w in words))
+    score = {id(h): sum(w in str(h.get("productName", "")).lower() for w in words) for h in hits[:30]}
+    best = max(score.values())
+    # Among the products that match the asked words best, the cheapest one (per kg or l where Rohlík says).
+    fits = [h for h in hits[:30] if score[id(h)] == best]
+    hit = min(fits, key=lambda h: (h.get("pricePerUnit") or {}).get("full") or h["price"])
     pid = hit.get("productId")
     image = ""
     try:
@@ -254,6 +258,13 @@ class OrderAdd(BaseModel):
 
 def _order_event(added: Any = None) -> dict[str, Any]:
     total = round(sum(i["price_czk"] * i["qty"] for i in ORDER), 2)
+    # The named foods are the order: place_order's approval lists exactly these (bridge.STATE["cart"]).
+    bridge.STATE["cart"] = [
+        {"name": i["item"], "product": i["product"], "qty": i["qty"], "price_czk": i["price_czk"],
+         "image_url": i["image_url"], "reason": "you asked"}
+        for i in ORDER
+    ]
+    bridge.save()
     bridge.emit("order", items=ORDER, added=added, total_czk=total)
     return {"items": [f"{i['qty']}x {i['item']}" for i in ORDER], "total_czk": total}
 
@@ -268,7 +279,9 @@ async def tool_add_to_order(add: OrderAdd) -> dict[str, Any]:
         same["qty"] += max(1, add.qty)
     else:
         ORDER.append({**found, "item": add.item[:1].upper() + add.item[1:], "qty": max(1, add.qty)})
-    return {"ok": True, "added": found["product"], **_order_event(found["id"])}
+    if bridge.ROHLIK_TOKEN:  # part 5: the real Rohlík cart gets it too (cart only, the order needs a human tap)
+        asyncio.create_task(fill_rohlik([(int(i["id"]), i["qty"]) for i in ORDER]))
+    return {"ok": True, "added": found["product"], "price_czk": found["price_czk"], **_order_event(found["id"])}
 
 
 @router.post("/tools/remove_from_order")

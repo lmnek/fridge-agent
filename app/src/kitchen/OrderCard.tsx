@@ -3,6 +3,7 @@
  * bridge/show.py). The new line slides in, the total ticks over, and the card leaves on its own like the others.
  */
 import { AnimatePresence, motion } from "motion/react";
+import type { ReactNode } from "react";
 import type { BusEvent } from "../stage/bus";
 import "./product.css";
 
@@ -13,7 +14,7 @@ const czk = (n: number) =>
 const SPRING = { type: "spring", stiffness: 320, damping: 30 } as const;
 const SHOWN = 7; // the newest lines (a full recipe order fits), the card keeps its height
 
-export function OrderCard({ ev }: { ev: BusEvent }) {
+export function OrderCard({ ev, title = "Your order", actions }: { ev: BusEvent; title?: string; actions?: ReactNode }) {
   const items = (ev.items as Line[]) ?? [];
   const total = Number(ev.total_czk ?? 0);
   const count = items.reduce((n, i) => n + i.qty, 0);
@@ -25,7 +26,7 @@ export function OrderCard({ ev }: { ev: BusEvent }) {
       transition={{ type: "spring", stiffness: 260, damping: 26 }}
     >
       <header className="oc-head">
-        <h2 className="pc-item">Your order</h2>
+        <h2 className="pc-item">{title}</h2>
         <span className="oc-count">{count === 1 ? "1 item" : `${count} items`}</span>
       </header>
       <ul className="oc-list">
@@ -68,6 +69,7 @@ export function OrderCard({ ev }: { ev: BusEvent }) {
           {czk(total)}
         </motion.span>
       </motion.div>
+      {actions ? <div className="oc-actions">{actions}</div> : null}
     </motion.article>
   );
 }

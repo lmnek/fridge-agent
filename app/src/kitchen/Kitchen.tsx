@@ -124,7 +124,39 @@ export function Kitchen(props: {
             animate={{ opacity: 1, x: 0, transition: { ...SPRING, delay: 0.12, opacity: { duration: 0.42, ease: [0.2, 0, 0, 1], delay: 0.12 } } }}
             exit={{ opacity: 0, x: 24, transition: { duration: 0.22, ease: [0.4, 0, 1, 1] } }}
           >
-            {approval ? (
+            {approval?.kind === "order" ? (
+              <div className="k-approval">
+                <OrderCard
+                  title="Order from Rohlík"
+                  ev={{
+                    type: "order",
+                    added: null,
+                    total_czk: approval.total,
+                    items: approval.items.map((l, n) => {
+                      const line = l as typeof l & { image_url?: string; reason?: string; product?: string };
+                      return {
+                        id: n,
+                        item: l.name,
+                        product: line.product || line.reason || "",
+                        price_czk: Number(l.price_czk ?? 0),
+                        qty: Math.max(1, Math.round(Number(l.qty ?? 1))),
+                        image_url: line.image_url ?? "",
+                      };
+                    }),
+                  }}
+                  actions={
+                    <>
+                      <button type="button" className="oc-go" onClick={() => props.onDecide(true)}>
+                        Place order
+                      </button>
+                      <button type="button" onClick={() => props.onDecide(false)}>
+                        Not now
+                      </button>
+                    </>
+                  }
+                />
+              </div>
+            ) : approval ? (
               <div className="k-approval">
                 <ApprovalCard approval={approval} onDecide={props.onDecide} />
               </div>
