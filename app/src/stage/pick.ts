@@ -7,7 +7,7 @@ import type { BusEvent } from "./bus";
 // Mirrors app/src/stage/cards/index.ts (part 2). Kept here so the panel builds before the cards land.
 export type CardId = "B" | "C1" | "C2" | "C3" | "C4" | "DE" | "F" | "G";
 export type PanelId = CardId | "idle";
-/** The stage beat drives the layout: the kitchen inset is large in A and B, small from C on. */
+/** The stage beat. The layout keys off the inset (`insetGone`), the beat only off what's forced and shown. */
 export type Beat = "A" | "B" | "C" | "DE" | "F" | "G" | "H";
 
 const FORCED: Record<string, PanelId> = {
@@ -44,9 +44,8 @@ export function cardFor(ev: BusEvent): PanelId | null {
     case "tool": {
       const name = String(ev.name ?? "");
       if (name === "remember") return ev.args?.category === "craving" ? "B" : null;
-      const card = TOOLS.find(([re]) => re.test(name))?.[1] ?? null;
-      // The kitchen session works in B. Its other tool calls (a get_inventory, say) must not jump the stage to C.
-      return ev.screen === "kitchen" && card !== "B" ? null : card;
+      // One session runs B and C, the kitchen's, so its tool calls drive the panel like any other.
+      return TOOLS.find(([re]) => re.test(name))?.[1] ?? null;
     }
     case "vision":
     case "look":
@@ -88,4 +87,19 @@ export function beatFor(card: PanelId, events: BusEvent[]): Beat {
     if (ev.type === "stage" && ev.beat) return ev.beat === "A" ? "A" : "H";
   }
   return "A";
+}
+
+const isC = (card: PanelId | null) => card === "C1" || card === "C2" || card === "C3" || card === "C4";
+
+/**
+ * The kitchen inset is gone for good once the door closed: the first vision capture, the D hotkey
+ * (`stage` action `door`) or the first C tool call, whichever comes first. A bus reset brings it back.
+ */
+export function insetGone(events: BusEvent[]): boolean {
+  return events.some(
+    (ev) =>
+      (ev.type === "vision" && ev.phase === "captured") ||
+      (ev.type === "stage" && ev.action === "door") ||
+      (ev.type === "tool" && isC(cardFor(ev))),
+  );
 }

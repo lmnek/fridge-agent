@@ -1,10 +1,11 @@
 /**
  * The stage view, on the projector (docs/DEMO.md, "Stage view"). The orb speaks on the left with subtitles
  * under it, the side panel on the right follows the agent's tool calls, and the kitchen stream is an inset
- * that's large in A and B and small from C on. Open it at /stage (or ?mode=stage).
+ * that's large in A and B and fades out for good when the door closes (pick.ts `insetGone`).
+ * Open it at /stage (or ?mode=stage).
  *
- * The stage runs its own Realtime session from C on. Its mic stays off until a hotkey turns it on,
- * otherwise it would answer the kitchen audio coming through the video call.
+ * One session runs B and C, the kitchen's. The stage's own session is only the T-hotkey fallback (and M,
+ * the emergency mic): it never starts by itself and its mic never turns on by itself.
  */
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Orb } from "../Orb";
@@ -15,7 +16,7 @@ import { DevPlayer } from "./DevPlayer";
 import { Hotkeys } from "./Hotkeys";
 import { KitchenInset } from "./KitchenInset";
 import { Panel, usePanelCard } from "./Panel";
-import { beatFor } from "./pick";
+import { beatFor, insetGone } from "./pick";
 import { Subtitles } from "./Subtitles";
 import { useOrbVoice } from "./voice";
 import "./stage.css";
@@ -50,26 +51,24 @@ export default function Stage() {
     }
   }, [brain, status]);
 
-  const toggle = useCallback(() => {
-    if (status !== "off") brain.stop();
-    else void wake();
-  }, [brain, status, wake]);
-
   useEffect(() => {
     if (import.meta.env.DEV) Object.assign(window, { __stage: { brain } });
   }, [brain]);
 
   const card = usePanelCard(events);
   const beat = beatFor(card, events);
+  // Gone once the door closed, or whenever a beat past B is forced without one (H passes: a forced beat
+  // shows idle for one render before its card).
+  const gone = insetGone(events) || !(beat === "A" || beat === "B" || beat === "H");
   const orb = useOrbVoice(brain, status, events);
   const system = events.findLast((e) => e.type === "system");
   const line = error ?? (system ? String(system.message ?? "") : null);
 
   return (
-    <div className="stage-view" data-beat={beat} data-card={card}>
+    <div className="stage-view" data-beat={beat} data-card={card} data-inset={gone ? "gone" : "large"}>
       <p className="stage-mark">Coldex</p>
       <div className="stage-orb">
-        <Orb status={orb.status} levels={orb.levels} onToggle={toggle} />
+        <Orb status={orb.status} levels={orb.levels} onToggle={() => {}} />
       </div>
       <div className="stage-subs">
         <Subtitles events={events} />
@@ -77,7 +76,7 @@ export default function Stage() {
       <section className="stage-panel">
         <Panel card={card} events={events} />
       </section>
-      <KitchenInset size={beat === "A" || beat === "B" ? "large" : "small"} muted={!(beat === "A" || beat === "B")} />
+      <KitchenInset size={gone ? "hidden" : "large"} muted={true} />
       {line ? <p className="stage-error">{line}</p> : null}
       <Hotkeys brain={brain} wake={wake} />
       <DevPlayer />

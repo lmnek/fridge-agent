@@ -25,7 +25,15 @@ const DWELL_MS = 2600;
 const BATCH_DWELL_MS = 1500;
 const BATCH_GAP_MS = 1000;
 
-/** The card to show: every card asked for, in order, paced by DWELL_MS. A forced beat cuts in. */
+/**
+ * The card to show: every card asked for, in order, paced by DWELL_MS. A forced beat cuts in, a reset clears all.
+ *
+ * The door's vision run lands a few seconds into C's narration (one kitchen session runs B and C), so:
+ * - while a vision run is in progress (captured or analysing, no done or error yet) B holds and the C cards
+ *   asked for wait in the queue, then play from the done on with the normal dwell;
+ * - a vision run may take the panel to B (ahead of a queued C1) until a C2, C3 or C4 was asked for. From then
+ *   on nothing B-asking moves the panel back to B. With no vision at all, C cards show straight away.
+ */
 export function usePanelCard(events: BusEvent[]): PanelId {
   const { card: target, at, forced } = latestCard(events);
   const [shown, setShown] = useState<PanelId>(target);
@@ -35,19 +43,44 @@ export function usePanelCard(events: BusEvent[]): PanelId {
   const scanned = useRef(0); // events already looked at
   const [, wake] = useState(0);
 
+  const vision = useRef(false); // a vision run is in progress
+  const lateC = useRef(false); // C2–C4 asked for: B never comes back until a forced beat or a reset
+
   useEffect(() => {
     if (events.length === 0 || forced || events.length < scanned.current) {
       queue.current = [];
       scanned.current = events.length;
+      vision.current = lateC.current = false;
       shownAt.current = shownAsked.current = performance.now();
       setShown(target);
       return;
     }
     // Every card asked for since the last look, not only the newest: a batch can land in one render.
+    let last = queue.current.at(-1)?.card ?? shown;
     for (let i = scanned.current; i < events.length; i++) {
-      const card = cardFor(events[i]);
-      if (card && card !== (queue.current.at(-1)?.card ?? shown)) queue.current.push({ card, asked: performance.now() });
+      const ev = events[i];
+      const card = cardFor(ev);
+      if (!card) continue;
+      if (card === "C2" || card === "C3" || card === "C4") lateC.current = true;
+      if (card === "B" && lateC.current) continue; // never back to B in the middle of C
+      if (ev.type === "vision") {
+        const running = ev.phase === "captured" || ev.phase === "analysing";
+        if (vision.current && !running) {
+          // Done: the held C cards play from now, after the normal dwell.
+          shownAt.current = performance.now();
+          shownAsked.current = -Infinity;
+        }
+        vision.current = running;
+        // B jumps ahead of a queued C1 for the analysis, once.
+        queue.current = queue.current.filter((q) => q.card !== "B");
+        if (shown !== "B") queue.current.unshift({ card, asked: performance.now() });
+        last = queue.current.at(-1)?.card ?? shown;
+        continue;
+      }
+      if (card !== last) queue.current.push({ card, asked: performance.now() });
+      last = card;
     }
+    if (lateC.current) vision.current = false;
     scanned.current = events.length;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [target, at, forced, events.length === 0]);
@@ -55,6 +88,7 @@ export function usePanelCard(events: BusEvent[]): PanelId {
   useEffect(() => {
     const next = queue.current[0];
     if (!next) return;
+    if (vision.current && next.card !== "B") return; // B holds while the vision run is in progress
     const hold = next.asked - shownAsked.current < BATCH_GAP_MS ? BATCH_DWELL_MS : DWELL_MS;
     const wait = Math.max(0, hold - (performance.now() - shownAt.current));
     const t = setTimeout(() => {
