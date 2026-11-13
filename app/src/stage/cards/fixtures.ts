@@ -122,7 +122,7 @@ export const cart = {
   total_czk: 812,
 };
 
-export const callNumber = "+420 7•• ••• 482";
+export const callNumber = "+420 *** *** 482"; // bridge/courier.py mask()
 
 export const demoRun: Timed[] = [
   // A: opener (0:00–0:10)
@@ -184,16 +184,16 @@ export const demoRun: Timed[] = [
   // F: courier call (1:35–2:25)
   at(95, { type: "stage", beat: "F", action: "call" }),
   ...tool(95.2, "call_courier", {}, 0.3),
-  at(95.5, { type: "call", phase: "dialing", number: callNumber, name: "Rohlík courier" }),
-  at(97.5, { type: "call", phase: "ringing", number: callNumber, name: "Rohlík courier" }),
-  at(102, { type: "call", phase: "answered", number: callNumber, name: "Rohlík courier" }),
+  at(95.5, { type: "call", phase: "dialing", number: callNumber }),
+  at(97.5, { type: "call", phase: "ringing", number: callNumber }),
+  at(102, { type: "call", phase: "answered", number: callNumber }),
   ...say(102.5, "courier", "f-1", "Hello?", 0.8),
   ...say(104, "coldex", "f-2", "Hi, this is Kryštof's agent. You're delivering his Rohlík order. Skip the door and come straight onto the stage.", 7),
   ...say(112, "courier", "f-3", "Sorry, onto the stage? In the building?", 3),
   ...say(116, "coldex", "f-4", "Yes, the stage in the main hall. Just walk straight in, the audience is waiting.", 5),
   ...say(122, "courier", "f-5", "Okay, I'm coming up.", 2),
   ...say(125, "coldex", "f-6", "Thank you, see you in a minute.", 2),
-  at(128.5, { type: "call", phase: "ended", number: callNumber, name: "Rohlík courier" }),
+  at(128.5, { type: "call", phase: "ended", number: callNumber }),
 
   // G: the courier walks on (2:25–2:45)
   at(145, { type: "stage", beat: "G", action: "delivered" }),
