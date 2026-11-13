@@ -7,7 +7,7 @@ import "./CartCard.css";
 // Pacing. Rows land one by one from the moment the card opens; the total eases to each new running sum.
 const LEAD_MS = 300; // the card frame settles first
 const ROW_MS = 400; // one row per beat: 7 rows land in under 3 s
-const HURRY_MS = 600; // Coldex says "… Kč" while rows are still landing: the rest land within this
+const HURRY_MS = 1000; // Coldex says "… Kč" before the rows are in: the rest cascade in within this
 const SETTLE_MS = 550; // after the last row, the total settles (colour + hairline)
 const ease = [0.16, 1, 0.3, 1] as const;
 
@@ -55,18 +55,19 @@ function schedule(n: number, start: number, hurry: number | null): number[] {
   const at = Array.from({ length: n }, (_, i) => start + LEAD_MS + i * ROW_MS);
   if (hurry === null) return at;
   const left = at.filter((t) => t > hurry).length;
-  return at.map((t, i) => (t > hurry ? Math.min(t, hurry + ((i - (n - left) + 1) * HURRY_MS) / left) : t));
+  return at.map((t, i) => (t > hurry ? Math.min(t, Math.round(hurry + ((i - (n - left) + 1) * HURRY_MS) / left)) : t));
 }
 
 /** Re-renders at each moment in `times` until they've all passed. */
 function useClock(times: number[]) {
   const [now, setNow] = useState(Date.now);
   const next = times.find((t) => t > now);
+  // Re-arms on every tick too: a timer that fires a hair early (fractional times) must not stall the clock.
   useEffect(() => {
     if (next === undefined) return;
-    const id = setTimeout(() => setNow(Date.now()), Math.max(0, next - Date.now()));
+    const id = setTimeout(() => setNow(Date.now()), Math.max(0, Math.ceil(next - Date.now()) + 1));
     return () => clearTimeout(id);
-  }, [next]);
+  }, [next, now]);
   return now;
 }
 
@@ -109,12 +110,13 @@ function Cart({ events, cartAt }: { events: BusEvent[]; cartAt: number }) {
   if (run.current.key !== cartTs) run.current = { key: cartTs, start: Math.max(cartTs, Date.now()) };
   const start = run.current.start;
 
-  // Coldex saying the total while the card is counting: the first "Kč" caption that arrived after the count began.
+  // Coldex saying the total: the first "Kč" caption after the cart event. If it came while the card waited in
+  // the panel's queue (part 3 says the total right after show_cart), the rows hurry from the moment it opens.
   let hurry: number | null = null;
   for (let i = cartAt + 1; i < events.length; i++) {
     const e = events[i];
-    if (e.type === "caption" && e.who === "coldex" && typeof e.ts === "number" && e.ts > start && /Kč/.test(String(e.text ?? ""))) {
-      hurry = e.ts;
+    if (e.type === "caption" && e.who === "coldex" && typeof e.ts === "number" && /Kč/.test(String(e.text ?? ""))) {
+      hurry = Math.max(e.ts, start);
       break;
     }
   }
