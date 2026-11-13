@@ -70,3 +70,10 @@ def lit(jpeg: bytes) -> bool:
     px = small.tobytes()
     colour = sum(abs(px[i] - px[i + 1]) + abs(px[i + 1] - px[i + 2]) for i in range(0, len(px), 3)) / (64 * 36)
     return brightness > 35 and colour > 4  # colour is about 0 in infrared
+
+
+if __name__ == "__main__":  # `uv run python camera.py` prints the hub's channels, to set REOLINK_CHANNELS
+    import asyncio
+    import json
+
+    print(json.dumps(asyncio.run(channels()), indent=2))
