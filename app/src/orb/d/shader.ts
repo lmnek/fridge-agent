@@ -83,6 +83,25 @@ const vec4 BUB[NB] = vec4[NB](
   vec4( 0.21, -0.09, -0.14, 0.012)
 );
 
+// The surface under the cube: a soft contact shadow and the core light thrown down through the ice as a
+// caustic pool. Only alpha and a tint, so the page's own background stays the surface.
+vec4 floorPool(vec3 roW, vec3 rdW) {
+  if (rdW.y > -0.01) return vec4(0.0);
+  float y0 = -0.82 * uSize + uPos.y * 0.5;
+  float tf = (y0 - roW.y) / rdW.y;
+  vec3 f = roW + rdW * tf;
+  vec2 d = (f.xz - uPos.xz) / uSize;
+  float r2 = dot(d, d);
+  float shadow = exp(-r2 * 3.2) * 0.10;
+  vec2 cq = d * 5.0;
+  float cn = noise(vec3(cq, uTime * 0.35)) * 0.6 + noise(vec3(cq * 2.1, uTime * 0.5 + 4.0)) * 0.4;
+  float ridge = pow(1.0 - abs(cn * 2.0 - 1.0), 5.0);
+  float pool = exp(-r2 * 2.4) * (0.45 + 0.9 * ridge) * clamp(uGlow, 0.0, 1.4);
+  float a = clamp(shadow + pool * 0.32, 0.0, 0.6);
+  vec3 c = mix(vec3(0.42, 0.48, 0.52), uGlowC, clamp(pool * 0.32 / max(a, 1e-3), 0.0, 1.0));
+  return vec4(c * a, a);
+}
+
 void main() {
   vec2 uv = (gl_FragCoord.xy * 2.0 - uRes) / min(uRes.x, uRes.y);
   vec3 roW = vec3(0.0, 0.0, 4.0);
@@ -93,7 +112,7 @@ void main() {
 
   float br = length(B) + R + 0.01;
   float bb = dot(ro, rd), bc = dot(ro, ro) - br * br, h = bb * bb - bc;
-  if (h < 0.0) { frag = vec4(0.0); return; }
+  if (h < 0.0) { frag = floorPool(roW, rdW); return; }
   h = sqrt(h);
   float t = -bb - h, tEnd = -bb + h;
   bool hit = false;
@@ -103,7 +122,7 @@ void main() {
     t += d;
     if (t > tEnd) break;
   }
-  if (!hit) { frag = vec4(0.0); return; }
+  if (!hit) { frag = floorPool(roW, rdW); return; }
 
   vec3 p = ro + rd * t;
   vec3 n = nBox(p);
@@ -137,13 +156,18 @@ void main() {
   float tir = 0.0;
   if (dot(r2, r2) < 0.5) { r2 = reflect(r1, -n2); tir = 1.0; }
   vec3 trans = env(uRot * r2) * (tir > 0.5 ? 0.7 : 1.0);
+  // dispersion: one exit ray per channel, spreading most at the grazing exits near the bevels
+  if (uLite < 0.5 && tir < 0.5) {
+    vec3 rR = refract(r1, -n2, ETA * 0.975), rB = refract(r1, -n2, ETA * 1.025);
+    if (dot(rR, rR) > 0.5 && dot(rB, rB) > 0.5) trans = vec3(env(uRot * rR).r, trans.g, env(uRot * rB).b);
+  }
   trans *= pow(uTint, vec3(L * 2.2));
 
   // the milky core: air frozen out towards the middle, densest at the centre, feathered by noise
   float cloud = 0.0, glowAcc = 0.0;
-  int steps = uLite > 0.5 ? 4 : 9;
+  int steps = uLite > 0.5 ? 4 : 16;
   float ds = L / float(steps);
-  for (int i = 0; i < 9; i++) {
+  for (int i = 0; i < 16; i++) {
     if (i >= steps) break;
     vec3 s = pi + r1 * (ds * (float(i) + 0.5));
     float r2c = dot(s * vec3(1.0, 1.25, 1.0), s * vec3(1.0, 1.25, 1.0));
@@ -158,7 +182,16 @@ void main() {
   float m = length(pi + r1 * clamp(-dot(pi, r1), 0.0, L));
   float core = exp(-m * m / (uGlowR * uGlowR));
   col = mix(col, col * uTint, uGlow * core * 0.5);
-  col += uGlowC * uGlow * (core * 0.22 + glowAcc * 0.45 / uGlowR * (0.4 + milk));
+  col += uGlowC * min(uGlow, 0.9) * (core * 0.2 + glowAcc * 0.38 / uGlowR * (0.4 + milk));
+
+  // soft rays from the core when it is loud
+  if (uLite < 0.5 && uGlow > 0.5) {
+    vec3 mp = pi + r1 * clamp(-dot(pi, r1), 0.0, L);
+    vec3 md = normalize(mp + 1e-4);
+    float rays = noise(md * 6.0 + vec3(0.0, uTime * 0.25, 0.0));
+    rays = smoothstep(0.45, 0.9, rays) * exp(-m * 3.2) * smoothstep(0.5, 1.2, uGlow);
+    col += uGlowC * rays * 0.2;
+  }
 
   // bubbles: a bright rim and a darker belly where the chord grazes each one
   if (uLite < 0.5) {
@@ -180,6 +213,17 @@ void main() {
   vec3 rw = uRot * reflect(rd, n);
   col += vec3(1.0) * pow(max(dot(rw, normalize(vec3(0.0, 1.0, 0.15))), 0.0), 40.0) * edge * (0.7 + 0.8 * uSheen);
   col += vec3(0.85, 0.93, 1.0) * pow(max(dot(rw, normalize(vec3(-1.0, 0.2, 0.1))), 0.0), 24.0) * edge * 0.5 * (0.5 + uSheen);
+  // crisp face speculars that slide as it turns, and a thin bright rim on the bevels
+  col += vec3(1.0) * pow(max(dot(rw, normalize(vec3(0.35, 0.9, 0.45))), 0.0), 260.0) * 1.6;
+  col += vec3(0.9, 0.96, 1.0) * pow(max(dot(rw, normalize(vec3(-0.6, 0.5, 0.65))), 0.0), 120.0) * 0.7;
+  float rim = smoothstep(-0.012, 0.0, second) * smoothstep(0.65, 0.2, cosi);
+  col += vec3(0.85, 0.93, 1.0) * rim * (0.35 + 0.4 * uSheen);
+  // micro-scratches on the faces
+  if (uLite < 0.5) {
+    float sc1 = pow(1.0 - abs(noise(p * vec3(90.0, 3.0, 90.0)) * 2.0 - 1.0), 18.0);
+    float sc2 = pow(1.0 - abs(noise(p.zxy * vec3(3.0, 80.0, 80.0) + 5.0) * 2.0 - 1.0), 18.0);
+    col += vec3(1.0) * (sc1 + sc2) * 0.05;
+  }
   col = mix(col, vec3(0.96, 0.975, 0.985), frost * 0.7);
 
   float a = clamp(0.78 + 0.5 * F + frost * 0.25 + milk * 0.2 + core * uGlow * 0.2, 0.0, 1.0);

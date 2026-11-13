@@ -8,14 +8,15 @@ import type { OrbVariantProps } from "./types";
  * syllable while the ice plays between deep and pale blue. Raw WebGL2, one quad, one fragment shader.
  */
 
-const QUALITY = 0.85; // render resolution relative to CSS pixels (times min(DPR, 1.5))
-const LITE_QUALITY = 0.5;
+// Render resolution in device pixels per CSS pixel: the full DPR (capped at 2), stepped down gently on
+// sustained slow frames (2 -> 1.5 -> 1), and only past the last step the lite shader at 0.75.
+const DPR_STEPS = [1.5, 1];
 
 type V3 = [number, number, number];
 const GREY: V3 = [0.83, 0.85, 0.86];
 const ICE: V3 = [0.55, 0.8, 0.95];
 const DEEP: V3 = [0.4, 0.63, 0.9];
-const PALE: V3 = [0.8, 0.94, 1.0];
+const PALE: V3 = [0.64, 0.87, 1.0];
 const GLOW_IDLE: V3 = [0.9, 0.92, 0.94];
 const GLOW_ICE: V3 = [0.5, 0.8, 1.0];
 
@@ -71,9 +72,12 @@ export default function OrbD({ status, levels }: OrbVariantProps) {
 
     // Lighter mode for weak hardware (the tablet): `?orblite`, or the frame-time watchdog below.
     let lite = new URLSearchParams(window.location.search).has("orblite");
-    let slowFrames = 0;
+    const top = Math.min(window.devicePixelRatio || 1, 2);
+    const steps = [top, ...DPR_STEPS.filter((d) => d < top)];
+    let level = 0;
+    let winFrames = 0, winTime = 0, badWins = 0;
     const resize = () => {
-      const scale = Math.min(window.devicePixelRatio || 1, 1.5) * (lite ? LITE_QUALITY : QUALITY);
+      const scale = lite ? 0.75 : steps[level];
       canvas.width = Math.round(Math.max(1, canvas.clientWidth) * scale);
       canvas.height = Math.round(Math.max(1, canvas.clientHeight) * scale);
       gl.viewport(0, 0, canvas.width, canvas.height);
@@ -96,12 +100,21 @@ export default function OrbD({ status, levels }: OrbVariantProps) {
       const rawDt = (now - last) / 1000;
       const dt = Math.min(0.05, rawDt);
       last = now;
-      // watchdog: ~1.5 s of mostly slow frames (under ~45 fps, ignoring hitches) switches to lite for good
-      if (!lite && !document.hidden && rawDt < 0.25) {
-        slowFrames = Math.max(0, slowFrames + (rawDt > 0.022 ? 1 : -0.5));
-        if (slowFrames > 60) {
-          lite = true;
-          resize();
+      // watchdog: 3 s straight under 20 fps (1 s windows, ignoring hitches) steps the resolution down one
+      // notch; past the last notch it switches to the lite shader. It never steps back up.
+      if (!lite && !document.hidden && rawDt < 0.5) {
+        winFrames++;
+        winTime += rawDt;
+        if (winTime >= 1) {
+          badWins = winFrames / winTime < 20 ? badWins + 1 : 0;
+          winFrames = 0;
+          winTime = 0;
+          if (badWins >= 3) {
+            badWins = 0;
+            if (level < steps.length - 1) level++;
+            else lite = true;
+            resize();
+          }
         }
       }
       const t = now / 1000;
