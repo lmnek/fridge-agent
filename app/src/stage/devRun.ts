@@ -95,7 +95,7 @@ say(
   45_000,
   "coldex",
   "c-2",
-  "Ordering three things. What just ran out: milk, lactose-free as always, and eggs, which carbonara needs anyway. For tonight: guanciale and spaghetti, with a gluten-free pack for Anna. And your weekly basics: yogurt, and bananas, which are on sale today. Lidl is 400 m away, but Rohlík delivers within the hour, so Rohlík. 812 Kč, ordering now.",
+  "Ordering three things. What just ran out: milk, lactose-free as always, and eggs, which carbonara needs anyway. For tonight: guanciale and spaghetti, with a gluten-free pack for Anna. And your weekly basics: yogurt, and bananas, which are on sale today. Lidl is 400 m away, but Rohlík delivers within the hour, so Rohlík. 685 Kč, ordering now.",
   30_000,
 );
 tool(49_000, "show_recipe", { title: "Spaghetti carbonara" }, 500);
@@ -136,7 +136,7 @@ at(56_500, {
 tool(64_000, "show_cart", {}, 500);
 at(64_500, {
   type: "cart",
-  total_czk: 812,
+  total_czk: 685,
   items: [
     { name: "Lactose-free milk 1 l", qty: 2, price_czk: 32.9, reason: "ran out · lactose-free", image_url: "/demo/cart-milk.jpg" },
     { name: "Eggs, 10 pcs", qty: 1, price_czk: 69.9, reason: "ran out · for carbonara", image_url: "/demo/cart-eggs.jpg" },

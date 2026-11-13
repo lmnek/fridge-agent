@@ -59,7 +59,7 @@ B_LINE = "That was the last of the milk and the eggs."
 B2_LINE = "They're going in the next order. Noted, carbonara."
 C_LINE = ("Ordering three things. What just ran out: milk, lactose-free as always, and eggs, which carbonara needs anyway. "
           "For tonight: guanciale and spaghetti, with a gluten-free pack for Anna. And your weekly basics: yogurt, and "
-          "bananas, which are on sale today. Lidl is 400 m away, but Rohlík delivers within the hour, so Rohlík. 812 Kč, ordering now.")
+          "bananas, which are on sale today. Lidl is 400 m away, but Rohlík delivers within the hour, so Rohlík. 685 Kč, ordering now.")
 def cam(*names: str, expected: str | None = B_LINE) -> tuple:
     text = CAMERA.format(", ".join(names))
     CAM_REMOVED[text] = list(names)

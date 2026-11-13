@@ -54,9 +54,9 @@ the bridge log prints `[telegram, fake] ...` for every message instead of sendin
 |---|---|
 | `vision` `done` with `removed` | "Lactose-free milk and eggs just ran out. I'll put them in the next order." |
 | `learned` | craving: "Noted. Craving carbonara tonight. I'll plan the order around it.", missing: "Noted. ... It goes in the next order.", others: "... I'll remember that." |
-| `cart` | "Your Rohlík cart is ready, 812 Kč:" and one line per item (qty × name (why tags)), plus "Check out here: ..." if the event has `checkout_url` |
-| `approval` | pending: "The cart is waiting for your OK in the app, 812 Kč.", approved: "Order placed, 812 Kč. The courier is on the way." |
-| `stage` `DE` | "Order placed, 812 Kč. The courier is on the way." (once per run, skipped if an approval already said it) |
+| `cart` | "Your Rohlík cart is ready, 685 Kč:" and one line per item (qty × name (why tags)), plus "Check out here: ..." if the event has `checkout_url` |
+| `approval` | pending: "The cart is waiting for your OK in the app, 685 Kč.", approved: "Order placed, 685 Kč. The courier is on the way." |
+| `stage` `DE` | "Order placed, 685 Kč. The courier is on the way." (once per run, skipped if an approval already said it) |
 | `call` | dialing: "Calling the courier to tell them where to bring it.", ended after answered: "Talked to the courier. They're on their way up." |
 | `stage` `G` | "Delivered. Enjoy dinner." (once per run) |
 

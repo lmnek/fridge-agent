@@ -19,7 +19,7 @@ export function all(events: BusEvent[], type: string, pred?: (e: BusEvent) => bo
   return events.filter((e) => e.type === type && (!pred || pred(e)));
 }
 
-/** Price in Czech crowns, the way Rohlík prints it: "812 Kč", "29,90 Kč". */
+/** Price in Czech crowns, the way Rohlík prints it: "685 Kč", "29,90 Kč". */
 export function czk(n: number): string {
   const whole = Math.abs(n - Math.round(n)) < 0.005;
   return `${n.toLocaleString("cs-CZ", { minimumFractionDigits: whole ? 0 : 2, maximumFractionDigits: whole ? 0 : 2 })} Kč`;

@@ -114,15 +114,15 @@ const shops = { choice: "Rohlík", why: "Lidl is 400 m away, but Rohlík deliver
 // C4. `price_czk` is per unit. `reason` is the why tags, comma-separated.
 export const cart = {
   items: [
-    { name: "Kunín lactose-free milk 1.5 %, 1 l", qty: 4, price_czk: 34, reason: "ran out, lactose-free", image_url: "/demo/products/milk.jpg" },
-    { name: "Eggs M, 10 pcs", qty: 1, price_czk: 89, reason: "ran out, for carbonara", image_url: "/demo/products/eggs.jpg" },
-    { name: "Guanciale, 200 g", qty: 1, price_czk: 189, reason: "for carbonara", image_url: "/demo/products/guanciale.jpg" },
-    { name: "Barilla Spaghetti n.5, 500 g", qty: 1, price_czk: 49, reason: "for carbonara", image_url: "/demo/products/spaghetti.jpg" },
-    { name: "Barilla gluten-free spaghetti, 400 g", qty: 1, price_czk: 78, reason: "gluten-free · Anna", image_url: "/demo/products/spaghetti-gf.jpg" },
-    { name: "Olympus Greek yogurt 2 %, 500 g", qty: 3, price_czk: 59, reason: "weekly", image_url: "/demo/products/yogurt.jpg" },
-    { name: "Bananas, 1 kg", qty: 2, price_czk: 47, reason: "weekly, −20 % sale", image_url: "/demo/products/bananas.jpg" },
+    { name: "Kunín lactose-free milk 1.5 %, 1 l", qty: 4, price_czk: 47.9, reason: "ran out, lactose-free", image_url: "/demo/products/milk.jpg" },
+    { name: "Schubert eggs M, 10 pcs", qty: 1, price_czk: 64.9, reason: "ran out, for carbonara", image_url: "/demo/products/eggs.jpg" },
+    { name: "Beretta guanciale cubes, 100 g", qty: 2, price_czk: 58.9, reason: "for carbonara", image_url: "/demo/products/guanciale.jpg" },
+    { name: "Barilla Spaghetti, 500 g", qty: 1, price_czk: 64.9, reason: "for carbonara", image_url: "/demo/products/spaghetti.jpg" },
+    { name: "Barilla gluten-free spaghetti, 400 g", qty: 1, price_czk: 95.9, reason: "gluten-free · Anna", image_url: "/demo/products/spaghetti-gf.jpg" },
+    { name: "Milko Greek yogurt 5 %, 140 g", qty: 4, price_czk: 22.9, reason: "weekly", image_url: "/demo/products/yogurt.jpg" },
+    { name: "Bananas, 1 pc", qty: 6, price_czk: 9.68, reason: "weekly, −20 % sale", image_url: "/demo/products/bananas.jpg" },
   ],
-  total_czk: 812,
+  total_czk: 685,
 };
 
 export const callNumber = "+420 *** *** 482"; // bridge/courier.py mask()
@@ -176,7 +176,7 @@ export const demoRun: Timed[] = [
   at(64.025, { type: "deals", ...deals, ...shops }),
   ...tool(64.04, "show_cart", cart, 0.01),
   at(64.045, { type: "cart", ...cart }),
-  ...say(65.2, "coldex", "c-6", "812 Kč, ordering now.", 2),
+  ...say(65.2, "coldex", "c-6", "685 Kč, ordering now.", 2),
 
   // D/E: fast forward, the recording of the real checkout (1:20–1:35)
   at(80, { type: "stage", beat: "DE", action: "play" }),
