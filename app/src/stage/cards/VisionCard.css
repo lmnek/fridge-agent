@@ -1,0 +1,251 @@
+/* B analysis card. Uses the `--ck-*` tokens from cards.css. Frames read like real camera feeds (on-screen
+   display text in the corners), boxes are flat outlines, the diff is set big for the back of the room. */
+
+.ck-vision {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  gap: 22px;
+}
+
+.ck-vision-grid {
+  position: relative;
+  display: grid;
+  gap: 12px;
+}
+
+.ck-vision-frame {
+  position: relative;
+  margin: 0;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  border-radius: 10px;
+  background: #1b262d;
+}
+.ck-vision-frame img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: fill;
+  display: block;
+}
+.ck-vision-frame.is-idle {
+  background: var(--ck-sunk);
+  border: 1px solid var(--ck-line);
+}
+.is-idle .ck-vision-osd {
+  color: var(--ck-faint);
+  text-shadow: none;
+}
+
+/* Camera OSD: white text with a hard shadow, like the feed burns it in. */
+.ck-vision-osd {
+  position: absolute;
+  z-index: 3;
+  color: #fff;
+  font-family: "Barlow Semi Condensed", "Barlow", sans-serif;
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: 0.02em;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.75), 0 0 1px rgba(0, 0, 0, 0.9);
+}
+.ck-vision-osd.is-cam {
+  left: 12px;
+  bottom: 11px;
+}
+.ck-vision-osd.is-when {
+  right: 12px;
+  top: 11px;
+  display: flex;
+  gap: 10px;
+}
+.ck-vision-clock {
+  font-weight: 500;
+  opacity: 0.85;
+}
+
+/* Analysing: the frame dims a little and one blue line sweeps it, slowly and back. */
+.ck-vision-scan {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  background: rgba(20, 34, 43, 0.22);
+  animation: ck-vision-breathe 2.4s ease-in-out infinite;
+}
+.ck-vision-scan i {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 3px;
+  background: #8ccbea;
+  box-shadow: 0 0 0 1px rgba(31, 111, 150, 0.35);
+  animation: ck-vision-sweep 2.2s cubic-bezier(0.45, 0, 0.55, 1) infinite alternate;
+}
+.ck-vision-scan i::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 3px;
+  height: 44px;
+  background: rgba(127, 195, 230, 0.16);
+}
+@keyframes ck-vision-sweep {
+  from {
+    top: 0%;
+  }
+  to {
+    top: 100%;
+  }
+}
+@keyframes ck-vision-breathe {
+  50% {
+    background: rgba(20, 34, 43, 0.12);
+  }
+}
+
+/* Detection boxes. Out is the story (red, labelled), new is blue, in is quiet context. */
+.ck-vision-box {
+  position: absolute;
+  z-index: 2;
+  border-radius: 6px;
+  transform-origin: center;
+}
+.ck-vision-box.is-in {
+  border: 1.5px solid rgba(255, 255, 255, 0.95);
+  box-shadow: 0 0 0 1px rgba(20, 34, 43, 0.28);
+}
+.ck-vision-box.is-out {
+  border: 3px solid var(--ck-gone);
+  background: rgba(184, 40, 58, 0.1);
+}
+.ck-vision-box.is-new {
+  border: 3px solid var(--ck-lamp);
+  background: rgba(31, 111, 150, 0.1);
+}
+.ck-vision-label {
+  position: absolute;
+  left: -3px;
+  bottom: calc(100% + 3px);
+  padding: 2px 8px 3px;
+  border-radius: 5px;
+  color: #fff;
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+.label-inside .ck-vision-label {
+  bottom: auto;
+  top: 3px;
+  left: 3px;
+}
+.is-out .ck-vision-label {
+  background: var(--ck-gone);
+}
+.is-new .ck-vision-label {
+  background: var(--ck-lamp);
+}
+
+.ck-vision-wait {
+  grid-column: 1 / -1;
+  margin: 10px 0 0;
+  color: var(--ck-mute);
+  font-size: 24px;
+}
+
+.ck-vision-bottom {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.ck-vision-note {
+  margin: 0;
+  color: var(--ck-mute);
+  font-size: 24px;
+}
+
+.ck-vision-error {
+  margin: 0;
+  padding: 16px 20px;
+  border-left: 3px solid var(--ck-soon);
+  background: var(--ck-soon-soft);
+  color: var(--ck-ink);
+  font-size: 22px;
+}
+
+/* The diff: what left the fridge, set big. */
+.ck-vision-diff {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.ck-vision-diff li {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 6px 0 8px;
+  border-bottom: 1px solid var(--ck-line);
+  font-family: "Barlow Semi Condensed", "Barlow", sans-serif;
+}
+.ck-vision-diff li:first-child {
+  border-top: 1px solid var(--ck-line);
+}
+.ck-vision-name {
+  font-size: 40px;
+  font-weight: 600;
+  line-height: 1.1;
+}
+.ck-vision-status {
+  font-size: 34px;
+  font-weight: 600;
+}
+.ck-vision-diff .is-out .ck-vision-status {
+  color: var(--ck-gone);
+}
+.ck-vision-diff .is-new .ck-vision-status {
+  color: var(--ck-lamp);
+}
+.ck-vision-diff .is-none {
+  color: var(--ck-mute);
+  font-size: 28px;
+}
+
+/* The craving drops in at the bottom, the one warm moment on the card. */
+.ck-vision-craving {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 16px 24px 18px;
+  border-radius: 14px;
+  border: 1px solid #b9d6e5;
+  background: var(--ck-lamp-soft);
+}
+.ck-vision-craving-kicker {
+  color: var(--ck-lamp);
+  font-size: 20px;
+  font-weight: 600;
+}
+.ck-vision-craving-dish {
+  font-family: "Barlow Semi Condensed", "Barlow", sans-serif;
+  font-size: 46px;
+  font-weight: 600;
+  line-height: 1.05;
+  color: var(--ck-ink);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ck-vision-scan,
+  .ck-vision-scan i {
+    animation: none;
+  }
+}
