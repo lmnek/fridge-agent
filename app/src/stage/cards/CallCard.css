@@ -1,0 +1,79 @@
+.ck-call-time {
+  font-family: "Barlow Semi Condensed", "Barlow", sans-serif;
+  font-size: 56px;
+  font-weight: 500;
+  line-height: 1;
+  color: var(--ck-ink);
+}
+.ck-call-time.is-ended {
+  color: var(--ck-faint);
+}
+.ck-call-meta {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding-bottom: 22px;
+  border-bottom: 1px solid var(--ck-line);
+  color: var(--ck-mute);
+  font-size: 22px;
+}
+.ck-call-error {
+  margin: 18px 0 0;
+  color: var(--ck-gone);
+  font-size: 22px;
+}
+.ck-call-feed {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 26px;
+  overflow: hidden;
+  padding-top: 24px;
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 90px);
+  mask-image: linear-gradient(to bottom, transparent 0, #000 90px);
+}
+.ck-call-wait {
+  margin: 0 0 auto;
+  color: var(--ck-faint);
+  font-size: 34px;
+}
+.ck-call-line {
+  flex: none;
+  padding-left: 22px;
+  border-left: 3px solid var(--ck-line);
+}
+.ck-call-line.coldex {
+  border-left-color: var(--ck-lamp);
+}
+.ck-call-speaker {
+  display: block;
+  margin-bottom: 4px;
+  color: var(--ck-mute);
+  font-size: 18px;
+  font-weight: 600;
+}
+.ck-call-line.coldex .ck-call-speaker {
+  color: var(--ck-lamp);
+}
+.ck-call-text {
+  margin: 0;
+  font-size: 30px;
+  line-height: 1.25;
+  font-weight: 450;
+}
+.ck-call-line.is-new .ck-call-text {
+  font-size: 42px;
+  font-weight: 500;
+  line-height: 1.2;
+}
+.ck-call-caret {
+  display: inline-block;
+  width: 3px;
+  height: 0.9em;
+  margin-left: 6px;
+  vertical-align: -0.1em;
+  background: var(--ck-lamp);
+  animation: ck-pulse 1s ease-in-out infinite;
+}
