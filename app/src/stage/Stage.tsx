@@ -1,8 +1,8 @@
 /**
- * The stage view, on the projector (docs/DEMO.md, "Stage view"). The orb speaks on the left with subtitles
- * under it, the side panel on the right follows the agent's tool calls, and the kitchen stream is an inset
- * that's large in A and B and fades out for good when the door closes (pick.ts `insetGone`).
- * Open it at /stage (or ?mode=stage).
+ * The stage view, on the projector (docs/DEMO.md, "Stage view"). The orb is the hero, big and dead centre with
+ * its subtitles under it, until something shows: then it glides to the centre of the left half and stays big,
+ * and the right half holds one card (the panel follows the agent's tool calls) or the fridge camera, which
+ * fades out for good when the door closes (pick.ts `insetGone`). Open it at /stage (or ?mode=stage).
  *
  * One session runs B and C, the kitchen's. The stage's own session is only the T-hotkey fallback (and M,
  * the emergency mic): it never starts by itself and its mic never turns on by itself.
@@ -10,7 +10,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Orb } from "../Orb";
 import { FridgeBrain, type Status } from "../realtime";
-import { useBus } from "./bus";
+import { type BusEvent, useBus } from "./bus";
 import { publishCaption } from "./captions";
 import { DevPlayer } from "./DevPlayer";
 import { Hotkeys } from "./Hotkeys";
@@ -21,6 +21,28 @@ import { setVideoAudio, startRelay } from "./relay";
 import { Subtitles } from "./Subtitles";
 import { useOrbVoice } from "./voice";
 import "./stage.css";
+
+/**
+ * Where the fridge camera goes, `?layout=`:
+ *   a (default): it takes the card slot (right half) from B on, the orb beside it, then the B card replaces it
+ *   b: a small picture-in-picture in the top right corner from A on, the orb stays the centred hero
+ *   c: it takes the card slot from A on, so the audience watches the dark fridge from the first second
+ */
+const LAYOUT = ((): "a" | "b" | "c" => {
+  const l = new URLSearchParams(location.search).get("layout");
+  return l === "b" || l === "c" ? l : "a";
+})();
+
+/** B has begun: the presenter forced it (key 2, at "Let's watch it work"), or the kitchen started talking or looking. */
+function kitchenAwake(events: BusEvent[]): boolean {
+  return events.some(
+    (e) =>
+      (e.type === "stage" && e.beat === "B") ||
+      (e.type === "caption" && (e.who === "actor" || e.who === "coldex")) ||
+      e.type === "vision" ||
+      e.type === "look",
+  );
+}
 
 export default function Stage() {
   const events = useBus();
@@ -83,12 +105,25 @@ export default function Stage() {
   // Gone once the door closed, or whenever a beat past B is forced without one (H passes: a forced beat
   // shows idle for one render before its card).
   const gone = insetGone(events) || !(beat === "A" || beat === "B" || beat === "H");
+  // The composition (stage.css): the orb is the hero, dead centre, until something shows. Then it glides to the
+  // centre of the left half and the card, or the fridge camera, takes the right half.
+  const camera = !gone && (LAYOUT !== "a" || kitchenAwake(events));
+  const cardUp = card !== "idle" && !camera;
+  const split = cardUp || (camera && LAYOUT !== "b");
   const orb = useOrbVoice(brain, status, events);
   const system = events.findLast((e) => e.type === "system");
   const line = error ?? (system ? String(system.message ?? "") : null);
 
   return (
-    <div className="stage-view" data-beat={beat} data-card={card} data-inset={gone ? "gone" : "large"} data-orb={orb.status}>
+    <div
+      className="stage-view"
+      data-layout={LAYOUT}
+      data-split={split}
+      data-beat={beat}
+      data-card={card}
+      data-inset={camera ? "large" : "gone"}
+      data-orb={orb.status}
+    >
       <p className="stage-mark">Coldex</p>
       <div className="stage-orb">
         <Orb status={orb.status} levels={orb.levels} onToggle={() => {}} />
@@ -96,10 +131,10 @@ export default function Stage() {
       <div className="stage-subs">
         <Subtitles events={events} />
       </div>
-      <section className="stage-panel">
+      <section className="stage-panel" data-hidden={!cardUp}>
         <Panel card={card} events={events} />
       </section>
-      <KitchenInset size={gone ? "hidden" : "large"} muted={!videoAudio} />
+      <KitchenInset size={camera ? "large" : "hidden"} muted={!videoAudio} />
       {videoAudio ? <p className="stage-audio">Actor on the camera mic</p> : null}
       {line ? <p className="stage-error">{line}</p> : null}
       <Hotkeys brain={brain} wake={wake} />
