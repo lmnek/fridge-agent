@@ -10,11 +10,11 @@ import { publishCaption } from "./captions";
 import "./hotkeys.css";
 
 const BEAT_KEYS: Record<string, string> = { "1": "A", "2": "B", "3": "C", "4": "DE", "5": "F", "6": "G", "7": "H" };
-const C_LINE = "Let's order now, please.";
+const C_LINE = "Coldex, order what we need.";
 
 const HELP: [string, string][] = [
   ["D", "Door closed: replay the B frames"],
-  ["M", "Stage mic on / off"],
+  ["M", "Stage mic on / off (emergency)"],
   ["T", "Type the C line"],
   ["K", "Call the courier"],
   ["Shift K", "Fake courier call (scripted)"],
@@ -100,6 +100,8 @@ export function Hotkeys({ brain, wake }: { brain: FridgeBrain; wake: () => Promi
 
       switch (lower) {
         case "d":
+          // The door closed: the inset fades out (pick.ts insetGone), then the B frames replay.
+          void publish({ type: "stage", action: "door" });
           fetch("/api/vision/replay?name=b", { method: "POST" })
             .then((r) => (r.ok ? say("Door closed: analysing") : say(`Door replay failed (${r.status})`)))
             .catch(() => say("Door replay failed: no bridge"));

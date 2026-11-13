@@ -53,7 +53,7 @@ Anything that should show up on stage goes through the bridge. Screens never tal
 | `vision` | `phase` (captured, analysing, done), `run`, `reason`, `frames` (`when` before or after, `camera`, `url`), `boxes` (`frame` index, `label`, `status` out, new or in, `x`, `y`, `w`, `h` from 0 to 1), `removed`, `added`, `tell`, `error` | part 4 | B card, kitchen page |
 | `caption` | `who` (coldex, actor, presenter, courier), `id`, `text` (so far), `final` | both apps (part 1), part 6 | subtitles, F card |
 | `call` | `phase` (dialing, ringing, answered, ended), `number` (masked) | part 6 | F card, Telegram |
-| `stage` | `beat` (A, B, C, DE, F, G, H, idle), `action` | hotkeys (part 1) | forces a card, fallbacks |
+| `stage` | `beat` (A, B, C, DE, F, G, H, idle), `action` (`reset` clears every screen, `door` = the D hotkey: the door closed, the kitchen inset fades out) | hotkeys (part 1) | forces a card, fallbacks |
 | `system` | `message` | bridge | error line |
 
 Audio is too heavy for the bus. Part 6 exposes its own WebSocket for the call, part 1 one for the kitchen relay,

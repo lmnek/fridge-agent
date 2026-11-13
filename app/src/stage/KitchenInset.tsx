@@ -1,5 +1,7 @@
 /**
- * The kitchen stream inset: large in A and B, small from C on, muted from C on. Owned by part 1, sub-task 1.
+ * The kitchen stream inset: large in A and B, then faded out for good when the door closes. Always muted:
+ * the audience hears the kitchen through the stage's audio relay, and unmuting this is the relay's fallback,
+ * so the element stays mounted (opacity 0) once it's gone. Owned by part 1, sub-task 1.
  *
  * The source comes from `?kitchen=<room>` on the stage URL, else `VITE_KITCHEN_ROOM`:
  * - a VDO.Ninja room: the kitchen phone opens `https://vdo.ninja/?push=<room>`, and the stage embeds the
@@ -8,12 +10,10 @@
  * - a video path (`.mp4` / `.webm`): a local looping clip instead.
  * - nothing: an empty dark slot, so a call window can be laid over it (the documented fallback).
  *
- * The element is always laid out at the large size and scaled down with a transform (stage.css), so the
- * stream never reflows mid-transition.
  */
 import { useEffect, useRef, useState } from "react";
 
-type Size = "large" | "small" | "hidden";
+type Size = "large" | "hidden";
 
 function source(): string {
   const param = new URLSearchParams(window.location.search).get("kitchen");
