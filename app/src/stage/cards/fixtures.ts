@@ -152,7 +152,7 @@ export const demoRun: Timed[] = [
   ...tool(26.7, "update_inventory", { removed: [{ name: "Lactose-free milk" }, { name: "Eggs" }], source: "camera" }),
   at(26.8, { type: "inventory", items: fridgeAfterB, source: "camera" }),
   ...say(27.5, "coldex", "b-1", "That was the last of the milk and the eggs.", 2.5),
-  ...say(30.5, "actor", "b-2", "Ugh, again. And I'm craving carbonara tonight.", 3),
+  ...say(30.2, "actor", "b-2", "Ugh, the last milk again. And I'm craving carbonara tonight. Coldex, order what we need.", 4),
   at(34, { type: "tool", name: "remember", args: { fact: "Craving carbonara tonight", category: "craving" }, phase: "start" }),
   at(34.1, { type: "learned", fact: "Craving carbonara tonight", category: "craving" }),
   at(34.2, { type: "tool", name: "remember", args: { fact: "Craving carbonara tonight", category: "craving" }, phase: "done", ok: true }),
@@ -160,7 +160,6 @@ export const demoRun: Timed[] = [
 
   // C: order (0:40–1:20)
   at(40, { type: "stage", beat: "C", action: "start" }),
-  ...say(41, "presenter", "c-0", "Let's order now, please.", 1.5),
   // Part 3's choreography (bridge/memory/instructions.md, "Ordering"): "Ordering three things." with
   // get_inventory and get_household, the whole narration, then show_recipe, show_shops and show_cart in one
   // batch (milliseconds apart), then only the total.
