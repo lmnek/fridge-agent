@@ -6,7 +6,7 @@ import type { Levels } from "./types";
 /**
  * HACK(demo): a dev control for judging orb variants without a live session. On when the URL has
  * `?orb=` (or `?orbdev`). Press O to step live -> idle -> listening -> thinking -> speaking -> live,
- * or tap the small panel in the bottom-left corner (for the tablet). `&state=speaking` starts in a
+ * or tap the small panel in the top-left corner (for the tablet). `&state=speaking` starts in a
  * state, `&big` blows the orb up to stage size. The panel also shows the frame rate.
  */
 const params = new URLSearchParams(window.location.search);
@@ -84,7 +84,7 @@ function DevPanel({
       style={{
         position: "fixed",
         left: 12,
-        bottom: 12,
+        top: 12,
         zIndex: 50,
         display: "flex",
         alignItems: "center",

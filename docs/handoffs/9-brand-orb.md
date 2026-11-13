@@ -42,6 +42,18 @@ at 14:00, pick one and polish it. Directions worth trying:
 2. **Raymarched shader:** one fragment shader that raymarches an ice tesseract with refraction. No 3D library.
 3. **Nested cubes:** recursive cubes inside cubes with the endless-depth illusion, cheaper and very smooth.
 
+## Status (13:20): the experiment is built
+
+- `/stage?orb=a|b|c` (or `/?orb=…` on the kitchen page) picks a variant: a glass mesh, b raymarched shader,
+  c nested cubes. Without `?orb` the old fridge light still renders, until one is picked.
+- With `?orb` set, a small panel in the top-left corner (or the O key) steps idle, listening, thinking and
+  speaking with fake levels (`orb/fake.ts`), `big` blows the orb up to stage size, and it shows the fps.
+  `&state=speaking` starts in a state, `&big` starts big.
+- The variants live in `app/src/orb/` and only get `status` and `levels` (`orb/types.ts`). `Orb.tsx` keeps the
+  button, the click and the aria label.
+- The brand: `public/coldex-mark.svg` (the line mark), `public/favicon.svg` (the mark on an ice-blue tile),
+  `public/apple-touch-icon.png`, and the title and kitchen page strings say Coldex.
+
 ## Where
 
 `app/src/Orb.tsx` (or `app/src/orb/`), `app/public/` for the logo and favicon, and `app/index.html`.
