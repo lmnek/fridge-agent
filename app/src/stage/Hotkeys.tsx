@@ -6,7 +6,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { FridgeBrain } from "../realtime";
 import { publish, useBus } from "./bus";
-import { endCallAudio, startCourierCall } from "./call";
+import { endCallAudio, joinCourierCall, startCourierCall } from "./call";
 import { publishCaption } from "./captions";
 import { fallbackPlaying, playFallback, stopFallback } from "./fallbackRun";
 import { RECOG_HELP } from "./Recognition";
@@ -74,8 +74,11 @@ export function Hotkeys({ brain, wake }: { brain: FridgeBrain; wake: () => Promi
     for (let i = seen.current; i < events.length; i++) {
       if (events[i].type === "call" && events[i].phase === "ended") endCallAudio();
     }
+    // A live call that started without K (a voice ask): play it here too. The fake call has no audio.
+    const last = events.findLast((e) => e.type === "call");
+    if (seen.current < events.length && last && last.phase !== "ended" && !last.fake) joinCourierCall(brain);
     seen.current = events.length;
-  }, [events]);
+  }, [events, brain]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
