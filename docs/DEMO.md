@@ -10,7 +10,8 @@ recorded or replayed fallback.
 ## Setup
 
 - **Kitchen** (separate room): the fridge with 2 Reolink cameras inside, the hub, and the backend laptop on our
-  own travel router. A tablet or phone at the fridge runs Coldex voice. A second phone on a tripod streams the
+  own travel router. A tablet or phone at the fridge runs Coldex voice, and a small Bluetooth speaker on the fridge plays it, so the
+  fridge itself talks back (the tablet's own speaker is the fallback). A second phone on a tripod streams the
   kitchen to the stage over a video call.
 - **Stage:** the presenter's laptop and the projector, running the **stage view** (below). The app is opened
   through the Cloudflare Tunnel URL, which Twilio also needs for the live call in F.
@@ -103,7 +104,7 @@ from A to H. If the audio fails, the text still carries the story.
 | | Kryštof | Honza |
 |---|---|---|
 | **By 12:00** | Pick the language. Seed the household profile. | Check that the hub returns snapshots, and capture the B frames. Get the Rohlík OAuth token. Get a Twilio account and number, and ask about the courier's language. |
-| **By 13:30** | The craving is saved where every conversation sees it. Coldex's voice in the browser sounds good (ElevenLabs). | Real camera → inventory works end to end. A real cart fills from the agent. The tunnel is up. |
+| **By 13:30** | Get a small Bluetooth speaker for the fridge (borrow one at the venue, or buy one). The craving is saved where every conversation sees it. Coldex's voice in the browser sounds good (ElevenLabs). | Real camera → inventory works end to end. A real cart fills from the agent. The tunnel is up. |
 | **13:30–15:30** | The C turn, fast and narrated, with reasons on each item. The stage view: the B analysis card, the C cards, subtitles, hotkeys, the mini browser, and the Telegram push for H. | The courier call: briefing prompt, allowlist, audio to the stage, both-sides transcript. Record the D/E checkout. Remove the emoji and sparkle icons from the UI. |
 | **15:30–17:45** | Record the backup video and the B and C clips. Rehearse at least 3 runs. Code freeze at 16:45. | The same. Also brief the courier and agree on a cue. |
 
@@ -112,6 +113,7 @@ from A to H. If the audio fails, the text still carries the story.
 - [ ] The language is decided, and the lines and voice match it.
 - [ ] C's timing has been checked in rehearsal.
 - [ ] The cameras are on USB power, and the B replay frames are loaded.
+- [ ] The fridge speaker is charged and paired with the fridge tablet, loud enough for the kitchen stream.
 - [ ] The travel router is up, and the tunnel URL opens on the stage laptop.
 - [ ] The video call is connected, with the stage mic muted.
 - [ ] A test call reaches the courier, and the audio plays on stage.
