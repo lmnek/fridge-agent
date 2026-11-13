@@ -1,6 +1,6 @@
 import { useEffect, useId, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
-import { ExternalLink, Plus, Search, ShoppingCart, Sparkles, Trash2 } from "lucide-react";
+import { ExternalLink, Plus, Search, ShoppingCart, ListPlus, Trash2 } from "lucide-react";
 import { api } from "../../lib/api";
 import type { DeliverySlot, GroceryProduct } from "../../lib/types";
 import { isDemoMode, useApp } from "../../store/app";
@@ -219,7 +219,7 @@ export function CartPanel({ fill, filling }: { fill: () => Promise<void>; fillin
 
       <Button
         variant="glass"
-        icon={<Sparkles className="size-4 text-glacier" aria-hidden />}
+        icon={<ListPlus className="size-4 text-glacier" aria-hidden />}
         busy={filling}
         onClick={() => void fill()}
         className="w-full"

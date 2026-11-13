@@ -86,7 +86,7 @@ export function AddItemForm({
         price_czk: price ? Number(price.replace(",", ".")) : null,
         barcode: prefill.barcode ?? null,
       });
-      toast({ title: `${item.emoji} ${item.name} je v lednici`, tone: "success" });
+      toast({ title: `${item.name} je v lednici`, tone: "success" });
       onDone();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Uložení se nepovedlo.");

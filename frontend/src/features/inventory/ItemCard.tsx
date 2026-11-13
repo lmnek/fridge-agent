@@ -4,7 +4,7 @@ import { CalendarClock, Check, Pin, Plus, Trash2 } from "lucide-react";
 import type { InventoryItem } from "../../lib/types";
 import { api } from "../../lib/api";
 import { useApp } from "../../store/app";
-import { cx, daysLabel, FRESH_COLOR, freshness, itemAmount, STATUS_LABEL } from "../../lib/format";
+import { cx, daysLabel, FRESH_COLOR, freshness, initial, itemAmount, STATUS_LABEL } from "../../lib/format";
 import { FillBar, Ring } from "../../ui/bits";
 
 type Action = "eat" | "waste" | "restock" | "pin";
@@ -77,8 +77,8 @@ export function ItemCard({ item, onEdit }: { item: InventoryItem; onEdit: (item:
     >
       <div className="flex items-start justify-between gap-2">
         <Ring value={out ? 0 : ringValue} size={54} stroke={3.5} color={color} label={out ? "došlo" : daysLabel(item.days_left)}>
-          <span className="text-[26px] leading-none" aria-hidden>
-            {item.emoji}
+          <span className="text-[19px] leading-none font-semibold text-frost" aria-hidden>
+            {initial(item.name)}
           </span>
         </Ring>
         <div className="flex flex-col items-end gap-1.5">

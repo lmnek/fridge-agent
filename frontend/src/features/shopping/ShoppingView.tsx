@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Sparkles } from "lucide-react";
+import { Route } from "lucide-react";
 import { PageHeader } from "../../components/shell/PageHeader";
 import { api } from "../../lib/api";
 import type { Deal, GeoPoint, ShoppingPlan, Store, UserPreferences } from "../../lib/types";
@@ -107,7 +107,7 @@ export function ShoppingView() {
         title="Nákup"
         lead="Akce v okolí, nejvýhodnější cesta po obchodech a košík v Rohlíku."
         actions={
-          <Button variant="glass" icon={<Sparkles className="size-4 text-glacier" aria-hidden />} onClick={() => void askFrida("Naplánuj nákup")}>
+          <Button variant="glass" icon={<Route className="size-4 text-glacier" aria-hidden />} onClick={() => void askFrida("Naplánuj nákup")}>
             Naplánuj se mnou
           </Button>
         }

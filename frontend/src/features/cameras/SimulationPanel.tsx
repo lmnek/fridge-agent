@@ -131,7 +131,6 @@ export function SimulationPanel() {
                   const hasFill = o.fill_level !== null && o.fill_level !== undefined;
                   return (
                     <li key={o.key} className="frost-chip flex items-center gap-1 rounded-full py-1 pr-1 pl-2.5 text-[13px]">
-                      <span aria-hidden>{o.emoji}</span>
                       <span className="max-w-[120px] truncate text-frost">{o.name}</span>
                       <button
                         type="button"
@@ -180,7 +179,6 @@ export function SimulationPanel() {
                     aria-label={`Dát do lednice: ${o.name}`}
                   >
                     <PackagePlus className="size-3.5 text-glacier" aria-hidden />
-                    <span aria-hidden>{o.emoji}</span>
                     {o.name}
                   </button>
                 </li>

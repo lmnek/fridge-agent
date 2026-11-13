@@ -67,12 +67,7 @@ export function ItemEditor({ item, onClose }: { item: InventoryItem | null; onCl
       size="sm"
       title={
         item ? (
-          <span>
-            <span aria-hidden className="mr-2">
-              {item.emoji}
-            </span>
-            {item.name}
-          </span>
+          <span>{item.name}</span>
         ) : (
           ""
         )

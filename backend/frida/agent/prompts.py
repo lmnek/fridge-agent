@@ -32,7 +32,7 @@ Pravidla:
 - Kamera v lednici špatně čte malá data na obalech. Když datum chybí, doporuč funkci „Skenovat datum“ v mobilu.
 """
 
-TEXT_STYLE = """Styl pro chat: krátké odstavce, případně jednoduchý seznam. Žádné nadpisy. Emoji jen střídmě u potravin."""
+TEXT_STYLE = """Styl pro chat: krátké odstavce, případně jednoduchý seznam. Žádné nadpisy a žádné emoji."""
 
 VOICE_STYLE = """Teď mluvíš po telefonu nebo hlasem. Odpovídej krátce (jedna až tři věty), bez markdownu, bez emoji a bez odkazů.
 Čísla a ceny vyslovuj přirozeně („čtyřicet devět korun“ můžeš psát i číslicemi, převod do řeči to zvládne).

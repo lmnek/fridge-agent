@@ -4,7 +4,7 @@ import { useApp } from "../../store/app";
 import { useRoute } from "../../store/route";
 import { DemoTag, Panel, Ring, SectionTitle } from "../../ui/bits";
 import { Button } from "../../ui/Button";
-import { cx, daysShort, FRESH_COLOR, freshness, itemAmount } from "../../lib/format";
+import { cx, daysShort, FRESH_COLOR, freshness, initial, itemAmount } from "../../lib/format";
 import { CameraFrame } from "../cameras/CameraFrame";
 import { CameraMeta, DoorBadge } from "../cameras/CameraMeta";
 import { ActivityTimeline } from "./ActivityTimeline";
@@ -44,8 +44,8 @@ function UseFirst() {
                   className="flex w-full items-center gap-3 rounded-xl px-1 py-1.5 text-left hover:bg-white/[0.03]"
                 >
                   <Ring value={v} size={38} stroke={3} color={color}>
-                    <span className="text-[17px]" aria-hidden>
-                      {i.emoji}
+                    <span className="text-[14px] font-semibold text-frost" aria-hidden>
+                      {initial(i.name)}
                     </span>
                   </Ring>
                   <span className="min-w-0 flex-1">

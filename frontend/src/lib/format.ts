@@ -155,6 +155,11 @@ export function cx(...parts: (string | false | null | undefined)[]): string {
 const LEADING_EMOJI = /^((?:\p{Extended_Pictographic}|\p{Regional_Indicator})(?:️|‍|\p{Extended_Pictographic}|\p{Emoji_Modifier})*)\s*(.*)$/su;
 
 /** Rozdělí "🥛 Došlo: Mléko" na emoji a text, aby šlo emoji odsadit. */
+/** First letter of a food name, shown inside the freshness ring instead of an emoji. */
+export function initial(name: string): string {
+  return name.trim().charAt(0).toLocaleUpperCase("cs-CZ");
+}
+
 export function splitEmoji(text: string): [string | null, string] {
   const m = LEADING_EMOJI.exec(text);
   return m && m[2] ? [m[1], m[2]] : [null, text];

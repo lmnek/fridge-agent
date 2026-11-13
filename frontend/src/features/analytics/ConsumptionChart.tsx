@@ -20,9 +20,6 @@ function Row({ c, max }: { c: ConsumptionStat; max: number }) {
   return (
     <li className="grid grid-cols-[minmax(0,9.5rem)_1fr_auto] items-center gap-3 py-1.5 sm:grid-cols-[minmax(0,12rem)_1fr_auto]">
       <span className="flex min-w-0 items-center gap-2">
-        <span className="text-[17px]" aria-hidden>
-          {c.emoji}
-        </span>
         <span className="truncate text-sm text-frost">{c.name}</span>
       </span>
       <span className="relative block w-full bg-white/[0.04]" style={{ height: BAR_H }} aria-hidden>

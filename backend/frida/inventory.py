@@ -210,7 +210,7 @@ class InventoryService:
         if emit:
             self.events.emit(
                 "item_added",
-                f"{item.emoji} {item.name} je v lednici",
+                f"{item.name} je v lednici",
                 detail=f"Zdroj: {source}",
                 severity="success",
                 item_id=item.id,
@@ -282,7 +282,7 @@ class InventoryService:
             item = self._save(item.model_copy(update={"quantity": 0, "fill_level": None, "bbox": None}))
             self.events.emit(
                 "item_out",
-                f"{item.emoji} Došlo: {item.name}",
+                f"Došlo: {item.name}",
                 detail="Je to základní potravina, dávám ji do nákupu.",
                 severity="warning",
                 item_id=item.id,
@@ -292,7 +292,7 @@ class InventoryService:
             self.store.delete(ITEMS, item_id)
             self.events.emit(
                 "item_removed",
-                f"{item.emoji} {'Vyhozeno' if wasted else 'Zmizelo z lednice'}: {item.name}",
+                f"{'Vyhozeno' if wasted else 'Zmizelo z lednice'}: {item.name}",
                 severity="warning" if wasted else "info",
                 item_id=item.id,
                 data={"canonical": item.canonical, "reason": "wasted" if wasted else reason},
@@ -321,7 +321,7 @@ class InventoryService:
             )
         )
         self.events.emit(
-            "item_added", f"{item.emoji} Doplněno: {item.name}", severity="success", item_id=item.id
+            "item_added", f"Doplněno: {item.name}", severity="success", item_id=item.id
         )
         self.broadcast()
         return item
@@ -409,7 +409,7 @@ class InventoryService:
         if changed:
             self.events.emit(
                 "item_changed",
-                f"{new.emoji} {new.name}: změna",
+                f"{new.name}: změna",
                 detail=self._describe_change(item, new),
                 item_id=new.id,
                 camera_id=new.camera_id,
@@ -455,7 +455,7 @@ class InventoryService:
         item = self._save(item)
         self.events.emit(
             "item_added",
-            f"{item.emoji} Přibylo: {item.name}",
+            f"Přibylo: {item.name}",
             detail=f"{obs.camera_name or obs.camera_id}, jistota {round(det.confidence * 100)} %"
             + (
                 f", spotřebuj do {_short_date(item.expires_on, obs.taken_at.date())}"
@@ -493,7 +493,7 @@ class InventoryService:
         if item.status == "low" and self._alert_once("low", item):
             self.events.emit(
                 "item_low",
-                f"{item.emoji} Dochází: {item.name}",
+                f"Dochází: {item.name}",
                 detail=self._low_detail(item),
                 severity="warning",
                 item_id=item.id,
@@ -508,7 +508,7 @@ class InventoryService:
             )
             self.events.emit(
                 "item_expiring",
-                f"{item.emoji} Končí {when}: {item.name}",
+                f"Končí {when}: {item.name}",
                 detail="Navrhnu recept, ve kterém to spotřebuješ.",
                 severity="warning",
                 item_id=item.id,
@@ -517,7 +517,7 @@ class InventoryService:
         elif item.status == "expired" and self._alert_once("expired", item):
             self.events.emit(
                 "item_expired",
-                f"{item.emoji} Po datu spotřeby: {item.name}",
+                f"Po datu spotřeby: {item.name}",
                 detail="Zkontroluj to, než to sníš.",
                 severity="critical",
                 item_id=item.id,

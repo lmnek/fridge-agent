@@ -1,4 +1,20 @@
-# Frida, chytrá lednice
+# Fridge Agent
+
+**Start here. The new version is in `app/` + `bridge/`:** one screen, and one OpenAI Realtime session as
+the whole brain (voice, camera photos, tools). Frida further down is the older, bigger build in
+`frontend/` + `backend/`.
+
+```bash
+cp bridge/.env.example bridge/.env       # add OPENAI_API_KEY, every key is in SETUP.md
+cd bridge && uv run uvicorn main:app --port 8100
+cd app && npm install && npm run dev     # open http://localhost:5174 (not 5173, that is Frida)
+```
+
+How it works: [REALTIME.md](REALTIME.md). All keys and how to check them: [SETUP.md](SETUP.md).
+
+---
+
+## Frida, chytrá lednice (starší verze)
 
 Frida hlídá, co je v lednici, a stará se, aby nic nedošlo a nic se nevyhodilo. Dvě malé kamery Reolink v lednici poznají, co přibylo a co ubylo. Agent nad Claude najde nejlevnější akce v obchodech kolem tebe v Praze, naplánuje nákup, naplní košík v Rohlíku, vymyslí, co uvařit z věcí, které je potřeba spotřebovat, a když něco dojde, napíše nebo zavolá.
 

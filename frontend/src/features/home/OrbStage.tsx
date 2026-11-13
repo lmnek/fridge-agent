@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
-import { Mic, Sparkles } from "lucide-react";
+import { Mic, MessageCircle } from "lucide-react";
 import { Orb } from "../../components/orb/Orb";
 import { ORB_CAPTION, useOrbState } from "../../components/orb/useOrbState";
 import { useApp } from "../../store/app";
@@ -227,7 +227,7 @@ export function OrbStage() {
           onClick={() => void askFrida(brief.prompt)}
           className="inline-flex h-9 items-center gap-1.5 rounded-full bg-glacier/12 px-4 text-sm text-glacier shadow-[inset_0_0_0_1px_rgb(110_240_216/0.3)] transition-colors hover:bg-glacier/20"
         >
-          <Sparkles className="size-4" aria-hidden />
+          <MessageCircle className="size-4" aria-hidden />
           {brief.promptLabel}
         </button>
         {SUGGESTIONS.slice(0, 4).map((s) => (

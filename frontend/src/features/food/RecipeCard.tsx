@@ -19,8 +19,8 @@ export function RescueRing({ recipe, size = 56 }: { recipe: RecipeSuggestion; si
       color={rescueColor(recipe.rescue_score)}
       label={`Zachrání ${recipe.rescue_score} % z věcí, které se brzy zkazí`}
     >
-      <span className={size > 50 ? "text-[26px]" : "text-[20px]"} aria-hidden>
-        {recipe.emoji}
+      <span className={size > 50 ? "text-[15px] font-semibold text-frost" : "text-[13px] font-semibold text-frost"} aria-hidden>
+        {recipe.rescue_score} %
       </span>
     </Ring>
   );

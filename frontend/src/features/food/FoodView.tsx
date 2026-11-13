@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { AnimatePresence, motion } from "motion/react";
-import { Bike, CookingPot, RotateCcw, ShoppingBasket, ShoppingCart, Sparkles } from "lucide-react";
+import { Bike, CookingPot, RotateCcw, ShoppingBasket, ShoppingCart, ChefHat } from "lucide-react";
 import { PageHeader } from "../../components/shell/PageHeader";
 import { api } from "../../lib/api";
 import type { CravingAnswer, RecipeSuggestion } from "../../lib/types";
@@ -193,7 +193,7 @@ export function FoodView() {
           size="lg"
           disabled={!text.trim()}
           busy={answer.status === "loading"}
-          icon={<Sparkles className="size-4.5" aria-hidden />}
+          icon={<ChefHat className="size-4.5" aria-hidden />}
         >
           Poradit
         </Button>
