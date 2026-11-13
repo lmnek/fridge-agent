@@ -103,6 +103,20 @@ class Services:
                 )
         await self.cameras.start()
         self._tasks.append(asyncio.create_task(self.notify.run_scheduler()))
+        local = getattr(self.vision, "local", self.vision)
+        if hasattr(local, "warmup"):
+            # Lokální modely se načtou (případně stáhnou) na pozadí, ať první snímek nečeká.
+            self._tasks.append(asyncio.create_task(self._warmup_vision(local)))
+
+    async def _warmup_vision(self, provider: object) -> None:
+        try:
+            await provider.warmup()  # type: ignore[attr-defined]
+            log.info("Lokální vision modely jsou načtené")
+        except Exception as exc:
+            log.warning("Lokální vision modely se nenačetly: %s", exc)
+            self.events.emit(
+                "system", "Lokální rozpoznávání nedostupné", detail=str(exc)[:200], severity="warning"
+            )
 
     async def stop(self) -> None:
         for t in self._tasks:

@@ -77,7 +77,7 @@ class Settings(BaseSettings):
     local_vision_device: str = "auto"  # auto | cpu | mps | cuda
     local_vision_detector: str = "google/owlv2-base-patch16-ensemble"
     local_vision_classifier: str = "google/siglip2-base-patch16-224"
-    local_vision_ocr: str = "microsoft/trocr-base-printed"
+    local_vision_ocr: str = "florence-community/Florence-2-base"  # prázdné = bez čtení data
     local_detection_threshold: float = 0.18
     cascade_escalate_below: float = 0.55  # pod touto jistotou pošle kaskáda snímek i Claudovi
 

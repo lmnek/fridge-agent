@@ -214,9 +214,10 @@ class RohlikMcpProvider:
             raise GroceryError(f"{tool}: {exc}") from exc
         if result.is_error:
             raise GroceryError(f"{tool}: {_content_text(result)[:500]}")
-        if result.structured_content:
-            return result.structured_content
-        text = _content_text(result)
+        structured = result.structured_content
+        if structured and not _is_wrapped_text(structured):
+            return structured
+        text = _content_text(result) or (structured or {}).get("result", "")
         try:
             return json.loads(text)
         except (json.JSONDecodeError, TypeError):
@@ -310,6 +311,15 @@ class RohlikMcpProvider:
 # hledají typické klíče kdekoli ve stromu JSONu. Agent navíc vždy dostane i
 # surovou odpověď, takže mu nic neuteče.
 # ---------------------------------------------------------------------------
+
+
+def _is_wrapped_text(structured: Any) -> bool:
+    """Python MCP servery balí textový výstup do {"result": "<json>"}, data jsou pak v textu."""
+    return (
+        isinstance(structured, dict)
+        and set(structured) == {"result"}
+        and isinstance(structured["result"], str)
+    )
 
 
 def _content_text(result: Any) -> str:
