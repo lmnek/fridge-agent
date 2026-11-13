@@ -189,6 +189,7 @@ def tool_show_shops(shops: Shops) -> dict[str, Any]:
 class ProductAsk(BaseModel):
     item: str
     query_cs: str = ""
+    where: str = "shops"  # "rohlik": the Rohlík product and price, "shops": the cheapest shop near the flat
 
 
 @router.post("/tools/show_product")
@@ -196,8 +197,10 @@ async def tool_show_product(ask: ProductAsk) -> dict[str, Any]:
     """A small product card on the kitchen screen: where the food is cheapest near the flat today, from the shops'
     leaflets (akcniceny.cz). Staples are saved ahead by the scrape and instant, anything else is searched now."""
     name = ask.item.strip()
-    best = next((s for s in deals().get("sales", []) if s["item"].lower() == name.lower()), None)
-    if not best:
+    best = None
+    if ask.where.lower() != "rohlik":
+        best = next((s for s in deals().get("sales", []) if s["item"].lower() == name.lower()), None)
+    if not best and ask.where.lower() != "rohlik":
         best = await asyncio.to_thread(leaflets.search_live, ask.query_cs.strip() or name)
     if not best:  # no shop has it in a leaflet this week: Rohlík has nearly everything
         hit = await rohlik_find(ask.query_cs.strip() or name)
@@ -373,6 +376,11 @@ TOOLS = [
         {
             "item": {"type": "string", "description": "The food in English, e.g. 'Tomatoes' or 'Butter'."},
             "query_cs": {"type": "string", "description": "The same food in Czech for the shop leaflets, e.g. 'rajčata'."},
+            "where": {
+                "type": "string",
+                "enum": ["shops", "rohlik"],
+                "description": "rohlik when they ask about Rohlík, shops (the cheapest shop near the flat) otherwise.",
+            },
         },
         ["item"],
     ),
