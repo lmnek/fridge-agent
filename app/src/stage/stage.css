@@ -12,7 +12,7 @@
  *   hero  [         (   orb 780   )          ]       split  [  ( orb 720 )  ][  card 800x800  ]
  *         [   subtitles, 1320 wide, centred   ]             [  subtitles 840 ][                ]
  *
- * The fridge camera (KitchenInset) by `data-layout`: a and c put it in the card slot as a 16:9 frame (a from
+ * The fridge camera (KitchenInset) by `data-layout`: a and c put it in the card slot as a 9:16 portrait frame (a from
  * B on, c from A on); b keeps it as a small picture-in-picture top right while the orb stays the hero. It fades
  * out for good when the door closes and stays mounted at opacity 0, because its audio can stay on (U).
  *
@@ -174,11 +174,11 @@
   border: 1.5px solid var(--ice-line);
   border-radius: 22px;
   background: var(--ink);
-  /* a, c: a 16:9 frame in the card slot, centred on it */
-  left: 1040px;
-  top: 315px;
-  width: 800px;
-  height: 450px;
+  /* a, c: a 9:16 portrait frame (the phone stands upright in the fridge), centred on the card slot's x */
+  left: 1192px;
+  top: 100px;
+  width: 495px;
+  height: 880px;
   transition:
     opacity 1000ms cubic-bezier(0.4, 0, 0.2, 1),
     transform 420ms var(--rise);
@@ -186,10 +186,10 @@
 
 /* b: picture-in-picture, top right, while the orb stays the hero */
 .stage-view[data-layout="b"] .kitchen-inset {
-  left: 1412px;
+  left: 1608px;
   top: 60px;
-  width: 448px;
-  height: 252px;
+  width: 252px;
+  height: 448px;
   border-radius: 16px;
 }
 
