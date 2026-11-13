@@ -67,12 +67,13 @@ export default function Stage() {
 
   return (
     <div className="stage-view" data-beat={beat} data-card={card}>
-      <section className="stage-voice">
-        <div className="stage-orb">
-          <Orb status={orb.status} levels={orb.levels} onToggle={toggle} />
-        </div>
+      <p className="stage-mark">Coldex</p>
+      <div className="stage-orb">
+        <Orb status={orb.status} levels={orb.levels} onToggle={toggle} />
+      </div>
+      <div className="stage-subs">
         <Subtitles events={events} />
-      </section>
+      </div>
       <section className="stage-panel">
         <Panel card={card} events={events} />
       </section>
