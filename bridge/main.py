@@ -480,6 +480,10 @@ import show  # noqa: E402  (it imports main back, so it comes after emit, STATE 
 
 app.include_router(show.router)
 
+import loop  # noqa: E402  (PLAN §6: records the bus, reviews itself, proposes memory edits a person approves)
+
+app.include_router(loop.router)
+
 
 @app.get("/realtime/token")
 async def realtime_token() -> dict[str, Any]:
