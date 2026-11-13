@@ -4,7 +4,7 @@ Per voice and style it writes data/voices/fun/<voice>-<style>.wav in the main ch
 verbatim, ~0.6 s of silence, then a live judge Q&A answer ("What's about to expire?") from the real prompt.
 
     cd bridge && uv run python try_voices.py [--voices ballad,ash] [--styles plain,cheeky]
-    cd bridge && uv run python try_voices.py --narration cedar   # only the C opener, to app/public/demo/c-narration.wav
+    cd bridge && uv run python try_voices.py --narration marin   # only the C opener, cheeky, to app/public/demo/c-narration.wav
 
 Uses a throwaway data dir and the fake cart, like try_demo.py.
 """
@@ -50,7 +50,7 @@ room: short sentences, plain words.
 ap = argparse.ArgumentParser()
 ap.add_argument("--voices", default="ballad,verse,ash,echo,shimmer,cedar,marin")
 ap.add_argument("--styles", default="plain,cheeky")
-ap.add_argument("--narration", metavar="VOICE", help="render only the C opener, plain, to app/public/demo/c-narration.wav")
+ap.add_argument("--narration", metavar="VOICE", help="render only the C opener, cheeky, to app/public/demo/c-narration.wav")
 ap.add_argument("--parallel", type=int, default=4)
 ap.add_argument("--opener-only", action="store_true", help="only the C opener, no Q&A answer (half the sessions)")
 ARGS = ap.parse_args()
@@ -182,7 +182,7 @@ async def run() -> None:
 
 
 async def narration(voice: str) -> None:
-    pcm, said = await opener(voice, "plain")
+    pcm, said = await opener(voice, "cheeky")  # the prompt's own ## Personality, as live
     write(NARRATION, pcm)
     print(f"{NARRATION}  {len(pcm) / 2 / RATE:.1f}s  peak/rms {level(pcm)[0]:.1f}/{level(pcm)[1]:.1f} dBFS\n  {said}")
 

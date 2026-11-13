@@ -101,7 +101,7 @@ Make this the main `try_demo.py` scenario, and keep the old stage-session C as t
 ## Measured 13. 11. ~14:35 (`try_demo.py`, "heard" = when the last audio ends, "gap" = longest silence)
 
 - **Kitchen order (`--scenario demo`, 4 runs):** milk and eggs in the cart every time, 7 items, 685 Kč
-  (DEMO.md still says 812, from before the real prices). The camera note mid-C never started a reply.
+  (DEMO.md and the scripted run now say 685 too). The camera note mid-C never started a reply.
 - **Dead air is the open problem.** Tools first leaves the model silent while it writes the show_* calls:
   gaps of 8.3 and 12.0 s. Saying "What just ran out…" in step 1 brings them to 7.6 and 5.6 s, and C is
   heard until about 30 s. Narration first (as before) was worse: one run ignored the complaint (428 Kč),
@@ -112,3 +112,18 @@ Make this the main `try_demo.py` scenario, and keep the old stage-session C as t
 - **Judge Q&A:** "What's in my fridge?" and "What's expiring?" now answer by voice in about 1 s, with no
   card and no opener (fixed ~14:55). Open: in 1 run "What can I cook tonight?" opened with "Let me
   think…" and picked a yogurt bowl (an earlier run gave a spinach omelette, no preamble).
+
+## Voice: marin, cheeky delivery (13. 11. ~15:30)
+
+- **Voice** is `marin` everywhere: `REALTIME_VOICE` defaults to it in `main.py` (kitchen and stage sessions both
+  use `session_config`) and in `courier.py`, and `bridge/.env` doesn't override it.
+- **Cheeky delivery** is a short `## Personality` section in `instructions.md`: dry, playful, clear, at most one
+  short quip after an answer, never in an order turn. `try_voices.py --narration marin` now renders cheeky.
+- **The repeat fix:** step 4 now says to start with "For tonight:" if what ran out was already said in step 1.
+- **The total is 685 Kč** in DEMO.md, the fixture cart (real picks: 4 milk, 2× guanciale 100 g, 4 yogurts,
+  6 bananas) and try_demo.py. `c-narration.wav` re-rendered, marin cheeky, 25.5 s, read verbatim with 685.
+- **Measured (`--scenario demo`, 2 runs):** "What just ran out" said once, before the tools, in both runs. 7 items,
+  688 Kč (the bridge's real prices: bananas 10.24 Kč, not 9.68), first words 0.6 / 0.5 s, gaps 0.0 / 3.2 s,
+  C heard until 23.2 / 26.9 s, the camera note started no reply. Both runs said "Albert is 60 meters away" and
+  no banana sale, from today's real `deals.json`, so they don't match DEMO.md's Lidl and sale lines.
+- `test_main.py::test_demo_cart_from_names_comes_to_the_picks_total` fails (688 != 685) for the same banana price.
