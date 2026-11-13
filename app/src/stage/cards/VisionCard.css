@@ -218,8 +218,10 @@
 }
 
 /* The diff: what left the fridge, set big. */
+/* Fixed width, so the craving drops into its own reserved slot and the diff never reflows under it. */
 .ck-vision-diff {
-  flex: 1;
+  flex: none;
+  width: calc(66% - 24px);
   min-width: 0;
   margin: 0;
   padding: 0;

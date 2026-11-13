@@ -137,6 +137,7 @@ export default function VisionCard({ events }: { events: BusEvent[] }) {
               ["top", "door"].map((c) => (
                 <div key={`${w}-${c}`} className="ck-vision-frame is-idle">
                   {w === "before" && <span className="ck-vision-osd is-cam">{cameraName(c)}</span>}
+                  <span className="ck-vision-osd is-when">{w === "before" ? "Before" : "After"}</span>
                 </div>
               )),
             )}
