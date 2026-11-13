@@ -97,3 +97,16 @@ into C. Check that:
   with part 4's `tell_line`.
 
 Make this the main `try_demo.py` scenario, and keep the old stage-session C as the fallback scenario.
+
+## Measured 13. 11. ~14:35 (`try_demo.py`, "heard" = when the last audio ends, "gap" = longest silence)
+
+- **Kitchen order (`--scenario demo`, 4 runs):** milk and eggs in the cart every time, 7 items, 685 Kč
+  (DEMO.md still says 812, from before the real prices). The camera note mid-C never started a reply.
+- **Dead air is the open problem.** Tools first leaves the model silent while it writes the show_* calls:
+  gaps of 8.3 and 12.0 s. Saying "What just ran out…" in step 1 brings them to 7.6 and 5.6 s, and C is
+  heard until about 30 s. Narration first (as before) was worse: one run ignored the complaint (428 Kč),
+  and one skipped the narration. Next lever: smaller show_* arguments (the bridge fills product ID, price and
+  image from the picks) so that step is faster.
+- **Stage fallback:** B lines matched exactly, C had 685 Kč, a 3.7 s gap, heard until 26.6 s.
+- **Judge Q&A:** cook and carbonara answers are good. "What's in my fridge?" and "What's expiring?" call
+  show_recipe with an empty card ("Fridge check"), list everything, and one had a preamble. Fix next.
