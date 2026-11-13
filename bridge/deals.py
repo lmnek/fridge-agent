@@ -9,9 +9,10 @@ Coldex never waits for a scrape: show_shops (show.py) only reads the saved resul
 - The shops: deals from akcniceny.cz, through the old Frida scraper (backend/frida/deals/akcniceny.py, it keeps to
   robots.txt's crawl delay), run with backend/.venv's Python. A deal counts only for a similar pack size, so a tray
   of 30 eggs doesn't beat a box of ten, and loyalty card prices don't count.
-- Which shops: the chains with the most matching deals that have a supermarket within RADIUS_M of COLDEX_HOME
+- Which shops: the two chains with the most matching deals that have a supermarket within RADIUS_M of COLDEX_HOME
   ("lat,lon", default náměstí Míru in Prague), from OpenStreetMap. The nearest store of each chain sets its distance.
 
+The bridge reruns the scrape every DEALS_REFRESH_MIN minutes (default 30) in the background, into data/deals.json.
 bridge/replay/deals.json is committed, so a fresh checkout shows the last real scrape instead of the sample.
 """
 
@@ -44,7 +45,8 @@ SAVED = ROOT / "replay" / "deals.json"
 BACKEND = ROOT.parent / "backend"
 HOME = tuple(float(v) for v in os.getenv("COLDEX_HOME", "50.0755,14.4378").split(","))
 RADIUS_M = 1500
-SHOPS = 3  # the card has a column per store, Rohlík plus three fits
+SHOPS = 2  # the card has a column per store, Rohlík plus two keeps the item names on one line
+REFRESH_MIN = float(os.getenv("DEALS_REFRESH_MIN", "30"))  # the bridge rescrapes in the background, 0 turns it off
 DELIVERY_MIN = 60
 UA = "Mozilla/5.0 (compatible; coldex-deals)"  # akcniceny.cz
 OSM_UA = "coldex-deals/0.1"  # Overpass answers 406 to a Mozilla User-Agent
@@ -239,7 +241,8 @@ def pick_shops(deals: list[dict[str, Any]], around: dict[str, dict[str, Any]]) -
 # --------------------------------------------------------------------------- CLI
 
 
-async def scrape() -> dict[str, Any]:
+async def scrape(keep: bool = True) -> dict[str, Any]:
+    """Scrapes and saves to data/deals.json, and with keep also to the committed bridge/replay/deals.json."""
     print("Rohlík, live over MCP ...")
     rohlik = await rohlik_prices()
     print(f"  {len(rohlik)} prices")
@@ -253,13 +256,26 @@ async def scrape() -> dict[str, Any]:
         "scraped_at": datetime.now().astimezone().isoformat(timespec="seconds"),
         "home": ",".join(str(v) for v in HOME),
         "stores": [{"name": "Rohlík", "distance_m": None, "delivery_min": DELIVERY_MIN}, *stores],
-        "items": rohlik + [d for d in shops if d["store"] in names],
+        "items": [],
     }
-    for path in (DATA, SAVED):
+    shown = [d for d in shops if d["store"] in names]
+    rows = {d["item"] for d in shown}  # only the rows a shop has a price for, the card stays short
+    result["items"] = [d for d in rohlik if d["item"] in rows] + shown
+    for path in (DATA, SAVED) if keep else (DATA,):
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(json.dumps(result, ensure_ascii=False, indent=1) + "\n")
-    print(f"Saved {DATA} and {SAVED.relative_to(ROOT.parent)}")
+    print(f"Saved {DATA}" + (f" and {SAVED.relative_to(ROOT.parent)}" if keep else ""))
     return result
+
+
+async def refresh_forever() -> None:
+    """The bridge's background refresh: Coldex reads the newest saved scrape and never waits for one."""
+    while REFRESH_MIN > 0:
+        try:
+            await scrape(keep=False)
+        except (Exception, SystemExit) as e:  # keep the last good file
+            print(f"[deals] refresh failed, keeping the saved scrape: {e}")
+        await asyncio.sleep(REFRESH_MIN * 60)
 
 
 def show(result: dict[str, Any]) -> None:

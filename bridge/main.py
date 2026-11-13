@@ -26,6 +26,7 @@ from pydantic import BaseModel
 
 import camera
 import courier
+import deals
 import kitchen_audio
 import telegram
 import vision
@@ -50,7 +51,9 @@ NOTES_FILE = DATA_DIR / "notes.md"  # what the agent noted itself
 @asynccontextmanager
 async def lifespan(_: FastAPI):
     task = asyncio.create_task(vision.watch()) if camera.configured() else None
+    refresh = asyncio.create_task(deals.refresh_forever())  # part 8: today's prices for C3, saved ahead
     yield
+    refresh.cancel()
     if task:
         task.cancel()
 

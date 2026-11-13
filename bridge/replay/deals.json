@@ -1,5 +1,5 @@
 {
- "scraped_at": "2026-11-13T14:45:27+01:00",
+ "scraped_at": "2026-11-13T14:51:16+01:00",
  "home": "50.0755,14.4378",
  "stores": [
   {
@@ -14,20 +14,9 @@
   {
    "name": "Billa",
    "distance_m": 820
-  },
-  {
-   "name": "Penny",
-   "distance_m": 1170
   }
  ],
  "items": [
-  {
-   "item": "Lactose-free milk",
-   "store": "Rohlík",
-   "price_czk": 47.9,
-   "was_czk": null,
-   "product": "Mlékárna Kunín Lehké ráno mléko bez laktózy 1,5%"
-  },
   {
    "item": "Eggs",
    "store": "Rohlík",
@@ -50,33 +39,11 @@
    "product": "Barilla pasta Spaghetti"
   },
   {
-   "item": "Gluten-free spaghetti",
-   "store": "Rohlík",
-   "price_czk": 95.9,
-   "was_czk": null,
-   "product": "Barilla Spaghetti bezlepkové těstoviny"
-  },
-  {
-   "item": "Greek yogurt",
-   "store": "Rohlík",
-   "price_czk": 22.9,
-   "was_czk": null,
-   "product": "Milko Řecký jogurt 5 % bílý"
-  },
-  {
    "item": "Bananas, per kg",
    "store": "Rohlík",
    "price_czk": 53.9,
    "was_czk": null,
    "product": "Banán k dozrání 1ks"
-  },
-  {
-   "item": "Lactose-free milk",
-   "store": "Penny",
-   "price_czk": 19.9,
-   "was_czk": 24.87,
-   "product": "TRVANLIVÉ PLNOTUČNÉ MLÉKO BEZ LAKTÓZY 3,5%, 1 l",
-   "valid_to": "2026-11-17"
   },
   {
    "item": "Eggs",
@@ -101,14 +68,6 @@
    "was_czk": null,
    "product": "BILLA Premium Špagety 500 g",
    "valid_to": "2026-12-31"
-  },
-  {
-   "item": "Bananas, per kg",
-   "store": "Penny",
-   "price_czk": 24.9,
-   "was_czk": 40.16,
-   "product": "Banány 1kg",
-   "valid_to": "2026-11-15"
   },
   {
    "item": "Bananas, per kg",
