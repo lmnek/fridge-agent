@@ -58,6 +58,23 @@ Anything that should show up on stage goes through the bridge. Screens never tal
 The call audio is too heavy for the bus. Part 6 exposes its own WebSocket, and the stage view plays it.
 **If you change a shape, update this table in the same commit.** Until a producer exists, fake its events.
 
+## Stage contract (parts 1 and 2)
+
+- **`app/src/stage/bus.ts`** (part 1) exports `export type BusEvent = { type: string; [k: string]: any };` and
+  `useBus(): BusEvent[]`, which holds every event since the stage was reset (the SSE stream plus anything the dev
+  player feeds in). If part 2 needs the type before part 1 has pushed, create the file with exactly that type line.
+- **`app/src/stage/cards/index.ts`** (part 2) exports `type CardId = "B" | "C1" | "C2" | "C3" | "C4" | "DE" | "F" | "G"`
+  and `cards: Record<CardId, ComponentType<{ events: BusEvent[] }>>`. A card gets the whole list and derives its
+  own state from it. Cards fill whatever box the panel gives them and are designed for a 1920×1080 projector.
+- **Which card shows** is part 1's call: the newest event that maps to a card wins, per the "Driven by" column in
+  `2-cards.md`, and a `stage` event with a `beat` forces one.
+- **`app/src/stage/cards/fixtures.ts`** (part 2) exports `demoRun: { at: number; event: BusEvent }[]`, the whole
+  A–H run as bus events with millisecond offsets that follow DEMO.md. Part 1's dev player plays it, and a
+  recording from a real run replaces it later.
+- **Ports while several agents run at once:** part 1 uses app 5181 and bridge 8101, part 2 5182/8102, part 3
+  5183/8103, part 9 5184/8104 (`BRIDGE_URL=http://127.0.0.1:8101 npm run dev -- --port 5181`, and
+  `uv run uvicorn main:app --port 8101`). 5174 and 8100 stay free for the humans.
+
 ## Rules
 
 - Stay in your files and prefer new files over edits to shared ones. The hot spots are `bridge/main.py`,
