@@ -42,7 +42,7 @@ ROHLIK_TOKEN = os.getenv("ROHLIK_TOKEN", "")
 DATA_DIR = Path(os.getenv("DATA_DIR", ROOT.parent / "data"))
 STATE_FILE = DATA_DIR / "state.json"
 MEMORY_DIR = ROOT / "memory"  # seeded by hand: instructions, household profile, product picks
-NOTES_FILE = DATA_DIR / "notes.md"  # what the agent noted itself; delete it to reset a rehearsal
+NOTES_FILE = DATA_DIR / "notes.md"  # what the agent noted itself
 
 
 @asynccontextmanager

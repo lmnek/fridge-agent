@@ -42,3 +42,28 @@ Beats B and C. This part covers what Coldex knows, what it says and which tools 
 
 - The model varies between runs, so judge it by several runs, never one.
 - Every extra tool call in C costs time. Stay under about 25 s.
+
+## Update: gaps after the first implementation
+
+Checked against everything decided since this handoff was written (English, no minimum, cameras maybe not
+live, the judge's feedback, Telegram, scraping). The rest is aligned. In priority order:
+
+1. **Free conversation for the judge.** The judge likes talking to the fridge, so Q&A matters as much as the
+   script. The prompt covers cravings, complaints and ordering, but not questions. Add a short section:
+   "what's in my fridge?" (get_inventory, one sentence, expiring items first), "what can I cook?" (one dish
+   from what's there, expiring first, show_recipe, then offer to order what's missing) and "what's
+   expiring?". Test 3–4 judge-style lines in `try_demo.py`.
+2. **B without cameras.** In speech-only mode the actor says "I just took the last milk and eggs". Treat
+   that like the camera: update_inventory and the same line ("That was the last of the milk and the eggs.").
+   Add a `try_demo.py` scenario with no camera message.
+3. **Rehearsal reset.** Deleting `data/` now also wipes the scraped deals (`data/deals.json`) and the vision
+   runs. Add a reset that restores the seed inventory and clears the cart, the approvals and the notes, but
+   keeps the deals and the frames. Trigger it from the stage reset hotkey (the `stage` event with `action: "reset"` already exists).
+4. **The camera line asks for a second update.** `vision.py` already applies the diff, but `tell_line` still
+   says "Update the inventory". Agree with part 4 on "The inventory is updated, react briefly". That saves a
+   tool call before Coldex speaks in B.
+5. **The checkout link for Telegram.** Part 7 wants "cart ready, total, checkout link", but the `cart` event has
+   no link. In real Rohlík mode, have the bridge fetch it in `show_cart` (`rohlik.py` already can), not the
+   model, and add `checkout_url` to the event and the README table. Coordinate with parts 5 and 7.
+6. **Low: a text channel later.** Telegram step 2 (part 7) reuses `instructions.md`. Keep the voice-only rules
+   (the narration shape, "in the same breath") in their own section, so a text channel can skip them.

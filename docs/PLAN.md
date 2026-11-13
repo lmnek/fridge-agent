@@ -86,7 +86,7 @@ self-improvement loop in §6 is only for the side prize, if there's time.
 - **Should:** design cleanup (no emoji or sparkles), English (if chosen).
 - **Leave as is, don't invest:** deals, price history, analytics, delivery links, local ViT, and the expiry scan
   (the store radar is reused in C3). They're fine as B-roll and not part of the 3 minutes.
-- **Cut:** Hermes, Telegram, Apify, the 3D fridge, and the self-edit and learning-curve beats (side prize only, §6).
+- **Cut:** Hermes, the 3D fridge, and the self-edit and learning-curve beats (side prize only, §6). Telegram is back for H (handoffs, part 7).
 
 ## 6. Self-driving + self-improving: the side prize
 

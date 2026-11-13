@@ -37,7 +37,7 @@ Memory is markdown in `bridge/memory/`: `instructions.md` (the prompt, including
 order), `household.md` (people, diets, brands, usual stock, weekly basics, shops) and `products.md`
 (Rohlík product picks). All three are read fresh when a session starts, so edits need no restart.
 `remember` appends dated lines to `data/notes.md`, and `get_household` returns everything fresh, so a
-session that started before the craving still sees it. Delete `data/` to reset a rehearsal.
+session that started before the craving still sees it. Don't delete `data/` to reset a rehearsal, because it also holds the scraped deals. Use the reset (handoffs, part 3).
 
 ## Real and fake
 
