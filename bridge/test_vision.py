@@ -48,6 +48,8 @@ def test_tell_line_matches_the_kitchen_prompt() -> None:
         "[camera] The fridge door just closed. Vision saw these taken out: Lactose-free milk, Eggs. "
         "The inventory is updated, react briefly."
     )
+    note = vision.note_line(["Lactose-free milk", "Eggs"], [])
+    assert note and "Background only" in note and "react" not in note
 
 
 def test_pipeline_updates_inventory_and_emits_the_b_card(monkeypatch) -> None:
@@ -66,7 +68,7 @@ def test_pipeline_updates_inventory_and_emits_the_b_card(monkeypatch) -> None:
     out = [b for b in done["boxes"] if b["status"] == "out"]
     assert out[0]["frame"] == 0 and out[0]["x"] == 0.1 and out[0]["h"] == 0.4
     assert done["frames"][0]["url"].startswith("/api/vision/runs/") and "jpeg" not in done["frames"][0]
-    assert "taken out" in done["tell"]
+    assert "taken out" in done["tell"] and "Background only" in done["note"]
 
 
 @respx.mock

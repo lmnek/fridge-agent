@@ -3,7 +3,8 @@
 The door opens (motion starts) and the hub's cameras take BEFORE frames. While it stays open the newest lit
 frames become AFTER. When motion settles, one vision call compares them and returns boxes plus what was
 removed or added. The bridge updates the inventory, and the `vision` events drive the B card. The `done`
-event carries `tell`, the line the kitchen app hands to its Realtime session so Coldex reacts.
+event carries `tell`, the line the kitchen app hands to its Realtime session so Coldex reacts, and `note`,
+the same news as context only, for when Coldex is already talking (the actor ordered before the door closed).
 
     POST /vision/look            manual: hub snapshots, or {"frames": [data URL]} from the webcam
     POST /vision/replay          runs the saved B frames through the same pipeline (the fallback hotkey)
@@ -11,7 +12,7 @@ event carries `tell`, the line the kitchen app hands to its Realtime session so 
     GET  /vision/runs/<run>/<file>.jpg
 
 Events (docs/handoffs/README.md): vision {phase: captured | analysing | done, run, reason, frames, boxes,
-removed, added, tell}. Every box has frame (index into frames), label, x, y, w, h (0..1) and status
+removed, added, tell, note}. Every box has frame (index into frames), label, x, y, w, h (0..1) and status
 (out, new or in).
 """
 
@@ -195,8 +196,7 @@ def _boxes(result: dict[str, Any], count: int) -> list[dict[str, Any]]:
     return out
 
 
-def tell_line(removed: list[str], added: list[str]) -> str | None:
-    """What the kitchen session hears. The wording matches try_demo.py, which part 3 tunes the prompt with."""
+def _seen(removed: list[str], added: list[str]) -> str | None:
     if not removed and not added:
         return None
     parts = []
@@ -204,7 +204,19 @@ def tell_line(removed: list[str], added: list[str]) -> str | None:
         parts.append(f"Vision saw these taken out: {', '.join(removed)}.")
     if added:
         parts.append(f"Vision saw these put in: {', '.join(added)}.")
-    return f"[camera] The fridge door just closed. {' '.join(parts)} The inventory is updated, react briefly."
+    return f"[camera] The fridge door just closed. {' '.join(parts)} The inventory is updated"
+
+
+def tell_line(removed: list[str], added: list[str]) -> str | None:
+    """For a quiet kitchen: Coldex reacts out loud. Wording agreed with part 3 (try_demo.py uses the same)."""
+    seen = _seen(removed, added)
+    return f"{seen}, react briefly." if seen else None
+
+
+def note_line(removed: list[str], added: list[str]) -> str | None:
+    """For when Coldex is already talking, as in C: context only, the app sends it without asking for a reply."""
+    seen = _seen(removed, added)
+    return f"{seen}. Background only: don't answer this and don't repeat anything you already said." if seen else None
 
 
 async def pipeline(
@@ -257,6 +269,7 @@ async def pipeline(
             "lit": result.get("lit", True),
             "seconds": round(time.monotonic() - t0, 1),
             "tell": tell_line(removed, added),
+            "note": note_line(removed, added),
         }
         hooks.emit("vision", phase="done", **payload)
         return payload

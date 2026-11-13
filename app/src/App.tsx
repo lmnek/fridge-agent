@@ -104,7 +104,11 @@ export default function App() {
         const frame = ev.frames.find((f: { when: string }) => f.when === "after") ?? ev.frames[0];
         if (frame) setPeek({ src: frame.url, at: Date.now() });
       }
-      if (ev.type === "vision" && ev.phase === "done" && ev.tell && brain.connected) brain.tell(ev.tell);
+      if (ev.type === "vision" && ev.phase === "done" && ev.tell && brain.connected) {
+        // The actor usually orders before the door closes, so the result lands mid-C: context only, no second reply.
+        if (brain.activeWithin(45_000)) brain.note(ev.note);
+        else brain.tell(ev.tell);
+      }
       if (ev.type === "recipe") setRecipe(ev.recipe);
       if (ev.type === "system") setError(ev.message);
       if (ev.type === "learned") {

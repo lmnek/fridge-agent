@@ -38,6 +38,7 @@ export class FridgeBrain {
   private dc: RTCDataChannel | null = null;
   private outbox: Json[] = [];
   private busy = false;
+  private lastActive = 0; // when the last response ended
   private wantResponse = false;
   private seen = new Set<string>();
   private captionText = "";
@@ -189,8 +190,18 @@ export class FridgeBrain {
 
   /** A note from the app (approval tapped, order placed). The model answers out loud. */
   tell(text: string) {
-    this.send({ type: "conversation.item.create", item: { type: "message", role: "user", content: [{ type: "input_text", text }] } });
+    this.note(text);
     this.respond();
+  }
+
+  /** Context only: the model reads it on its next turn but isn't asked to answer now. */
+  note(text: string) {
+    this.send({ type: "conversation.item.create", item: { type: "message", role: "user", content: [{ type: "input_text", text }] } });
+  }
+
+  /** Talking, thinking or running tools now, or did within `ms`. A camera result then goes in as a note. */
+  activeWithin(ms: number) {
+    return this.busy || Date.now() - this.lastActive < ms;
   }
 
   /** Fresh camera frames plus the current inventory, so the model can diff them itself. */
@@ -292,6 +303,7 @@ export class FridgeBrain {
       return;
     }
     this.busy = false;
+    this.lastActive = Date.now();
     this.h.status("listening");
     if (this.wantResponse) {
       this.wantResponse = false;

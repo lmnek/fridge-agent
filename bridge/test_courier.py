@@ -32,7 +32,9 @@ def configure(monkeypatch) -> None:
     courier._call.clear()
 
 
-def test_call_needs_setup() -> None:
+def test_call_needs_setup(monkeypatch) -> None:
+    for name in ("TWILIO_SID", "TWILIO_TOKEN", "TWILIO_FROM", "COURIER_NUMBER", "PUBLIC_URL"):
+        monkeypatch.setattr(courier, name, "")  # the real bridge/.env may have them
     res = client.post("/courier/call")
     assert res.status_code == 503 and "TWILIO_ACCOUNT_SID" in res.json()["detail"]
 
