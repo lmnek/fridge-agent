@@ -1,18 +1,103 @@
-/* C2 recipe: what to add (red) above what's already in (green, quieter), the steps as a small two-column footer. */
-.ck-recipe-list { margin: 0; padding: 0; list-style: none; border-bottom: 1px solid var(--ck-line); }
-.ck-recipe-row {
-  display: flex; align-items: center; gap: 18px;
-  padding: 11px 0; border-top: 1px solid var(--ck-line);
+/* C2 recipe. Three bands on one left edge: the missing block (red, the thing the eye lands on), what's already in
+   (one quiet green line), the method (a 2x2 sequence at the foot). Rhythm in steps of 8. */
+
+.ck-recipe-aside { color: var(--ck-slate); }
+
+/* Band labels: sentence case, one size, coloured by what they mean. */
+.ck-recipe-label {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin: 0 0 4px;
+  font-size: var(--ck-t-label);
+  font-weight: 600;
+  line-height: 1.2;
 }
-.ck-recipe-icon { display: grid; place-items: center; flex: none; width: 28px; }
-.ck-recipe-name { flex: 1; font-size: 28px; font-weight: 500; line-height: 1.15; }
-.ck-recipe-name small { display: block; margin-top: 2px; color: var(--ck-slate); font-size: var(--ck-t-label); font-weight: 400; }
-.ck-recipe-row.is-missing { color: var(--ck-gone); }
-.ck-recipe-row.is-missing .ck-recipe-name { font-weight: 600; color: var(--ck-ink); }
-.ck-recipe-row.is-have { color: var(--ck-ok); }
-.ck-recipe-row.is-have .ck-recipe-name { color: var(--ck-mute); font-weight: 400; }
+.ck-recipe-label.is-gone { color: var(--ck-gone); }
+.ck-recipe-label.is-ok { color: var(--ck-ok); }
+
+/* The missing block: a pale red field, rows on hairlines inside it. */
+.ck-recipe-missing {
+  padding: 16px 24px 8px;
+  border-radius: var(--ck-r-inner);
+  background: var(--ck-gone-soft);
+}
+.ck-recipe-list { margin: 0; padding: 0; list-style: none; }
+.ck-recipe-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-height: 60px;
+  border-top: 1px solid rgba(184, 40, 58, 0.16);
+}
+.ck-recipe-row:first-child { border-top: 0; }
+.ck-recipe-mark {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--ck-r-chip);
+  background: var(--ck-gone);
+  color: #fff;
+}
+.ck-recipe-name {
+  flex: 1;
+  min-width: 0;
+  color: var(--ck-ink);
+  font-family: "Barlow Semi Condensed", "Barlow", sans-serif;
+  font-size: 34px;
+  font-weight: 600;
+  line-height: 1.1;
+}
+.ck-recipe-note {
+  flex: none;
+  color: var(--ck-gone);
+  font-size: var(--ck-t-label);
+  font-weight: 600;
+}
+
+/* Already in: one line of names with green checks, quieter than the block above. */
+.ck-recipe-have { margin-top: 24px; padding: 0 24px; }
+.ck-recipe-have ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 32px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.ck-recipe-have li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--ck-mute);
+  font-size: var(--ck-t-body);
+  font-weight: 500;
+}
+.ck-recipe-check { display: grid; color: var(--ck-ok); }
+
+/* Method: the four steps as a 2x2 sequence at the foot, numbered because they are an order. */
 .ck-recipe-steps {
-  margin: auto 0 0; padding: 20px 0 0 26px;
-  color: var(--ck-slate); font-size: var(--ck-t-label); line-height: 1.35;
-  display: grid; grid-template-columns: 1fr 1fr; gap: 8px 36px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px 32px;
+  margin: auto 0 0;
+  padding: 24px 24px 0;
+  border-top: 1px solid var(--ck-line);
+  list-style: none;
+}
+.ck-recipe-steps li {
+  display: flex;
+  gap: 12px;
+  color: var(--ck-mute);
+  font-size: var(--ck-t-label);
+  line-height: 1.3;
+}
+.ck-recipe-step-n {
+  flex: none;
+  width: 16px;
+  color: var(--ck-lamp);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
 }
