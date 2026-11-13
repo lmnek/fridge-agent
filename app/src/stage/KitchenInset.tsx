@@ -35,6 +35,10 @@ function source(): string {
   return (param ?? import.meta.env.VITE_KITCHEN_ROOM ?? "").trim();
 }
 
+// HACK(demo): the ham scan (Recognition + its hidden second VDO.Ninja viewer, hamTracker.ts) is off unless the
+// stage URL has `&scan`; without it neither mounts, so there's no second pull of the stream and S/C do nothing.
+const SCAN = new URLSearchParams(window.location.search).has("scan");
+
 const isClip = (s: string) => /\.(mp4|webm)(\?.*)?$/i.test(s);
 const camera = (s: string) => /^reolink(\d?)$/i.exec(s);
 
@@ -65,7 +69,7 @@ export function KitchenInset({ size, muted }: { size: Size; muted: boolean }) {
       ) : (
         <Viewer room={src} muted={muted} />
       )}
-      {src ? <Recognition visible={size === "large"} room={!cam && !isClip(src) ? src : undefined} /> : null}
+      {src && SCAN ? <Recognition visible={size === "large"} room={!cam && !isClip(src) ? src : undefined} /> : null}
     </div>
   );
 }
