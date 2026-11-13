@@ -20,7 +20,6 @@ from __future__ import annotations
 
 import asyncio
 import base64
-import contextlib
 import hashlib
 import hmac
 import json
@@ -282,11 +281,10 @@ class Relay:
                 hooks.emit("system", message=f"Courier call: {ev['error'].get('message')}")
 
     async def greet(self, oai: Any) -> None:
-        """People usually answer with "Hello?". If the courier says nothing, Coldex starts after 2 s."""
-        with contextlib.suppress(TimeoutError):
-            await asyncio.wait_for(self.courier_spoke.wait(), 2)
-            return
-        await oai.send(json.dumps({"type": "response.create"}))
+        """HACK(demo): the story is the courier calling in, so Coldex answers first, like whoever picks up."""
+        await asyncio.sleep(0.4)
+        if not self.courier_spoke.is_set():
+            await oai.send(json.dumps({"type": "response.create"}))
 
 
 @router.websocket("/media")
@@ -324,16 +322,12 @@ SCRIPT = [
     (0.0, "call", {"phase": "dialing"}),
     (1.5, "call", {"phase": "ringing"}),
     (4.0, "call", {"phase": "answered"}),
-    (4.8, "courier", "Hello?"),
-    (
-        5.8,
-        "coldex",
-        "Hi, this is Kryštof's agent. You're delivering his Rohlík order. "
-        "Skip the door and come straight onto the stage.",
-    ),
-    (12.0, "courier", "Onto the stage? Okay, I'm coming in now."),
-    (14.5, "coldex", "Perfect, thank you, see you in a minute."),
-    (18.0, "call", {"phase": "ended"}),
+    (4.4, "coldex", "Hi, Coldex here, Kryštof's fridge."),
+    (7.0, "courier", "Hi, it's the Rohlík courier. I'm at the building with the order, where do I go?"),
+    (11.5, "coldex", "Thanks for calling. Skip the door and come straight onto the stage, we're waiting for you."),
+    (17.0, "courier", "Onto the stage? Okay, I'm coming in now."),
+    (19.5, "coldex", "Perfect, see you in a minute."),
+    (22.5, "call", {"phase": "ended"}),
 ]
 
 

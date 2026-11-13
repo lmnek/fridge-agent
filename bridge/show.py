@@ -355,9 +355,9 @@ TOOLS = [
     ),
     bridge._fn(
         "call_courier",
-        "Phone the Rohlík courier who is bringing the order. A second voice of yours talks to them, and the kitchen "
-        "hears both sides. Call it when they ask you to call the courier, after a few words like 'Calling the "
-        "courier now.' Then stay quiet until the call ends.",
+        "Pick up the Rohlík courier's phone call about the order. A second voice of yours talks to them, and the "
+        "kitchen hears both sides. Call it for any ask about a phone call, after 'That's the courier calling, I'll "
+        "pick up.' Then stay quiet until the call ends.",
         {},
     ),
     bridge._fn(

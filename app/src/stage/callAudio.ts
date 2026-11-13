@@ -78,6 +78,11 @@ const pct = (xs: number[], p: number) => {
 
 export function playCallAudio(path = "/api/courier/listen", { format = "mulaw8k", maxLag, reconnect }: Options = {}): CallAudio {
   const ctx = new AudioContext();
+  // Started from a bus event, not a tap: Chrome lets it run once the page had any tap, else the next tap does.
+  const unblock = () => void ctx.resume().catch(() => {});
+  unblock();
+  window.addEventListener("pointerdown", unblock);
+  window.addEventListener("keydown", unblock);
   const out = ctx.createGain();
   out.connect(ctx.destination);
   const all = ctx.createAnalyser();
@@ -140,6 +145,8 @@ export function playCallAudio(path = "/api/courier/listen", { format = "mulaw8k"
   return {
     stop() {
       stopped = true;
+      window.removeEventListener("pointerdown", unblock);
+      window.removeEventListener("keydown", unblock);
       ws?.close();
       void ctx.close();
     },

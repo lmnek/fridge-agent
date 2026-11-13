@@ -5,8 +5,9 @@ import { CardFrame, latest } from "./ui";
 import "./CallCard.css";
 
 const PHASE_LABEL: Record<string, string> = {
-  dialing: "Dialing",
-  ringing: "Ringing",
+  // HACK(demo): Coldex really dials out, but the story is the courier calling in and Coldex picking up.
+  dialing: "Incoming call",
+  ringing: "Incoming call",
   answered: "Connected",
   ended: "Call ended",
 };
@@ -52,7 +53,7 @@ export default function CallCard({ events }: { events: BusEvent[] }) {
   return (
     <CardFrame
       icon="F"
-      kicker="Phone call"
+      kicker="Incoming call"
       title="Rohlík courier"
       live={live}
       aside={<span className={`ck-call-time${answered && !ended ? " is-running" : ""}`}>{clock}</span>}
@@ -83,8 +84,8 @@ export default function CallCard({ events }: { events: BusEvent[] }) {
               : phase === "answered"
                 ? "Listening…"
                 : phase === "ringing"
-                  ? "Waiting for the courier to pick up…"
-                  : "Coldex is calling the courier…"}
+                  ? "Coldex is picking up…"
+                  : "The Rohlík courier is calling…"}
           </p>
         </div>
       ) : (
