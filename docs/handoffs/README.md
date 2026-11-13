@@ -56,6 +56,7 @@ Anything that should show up on stage goes through the bridge. Screens never tal
 | `status` | `screen` (kitchen), `status` (off, connecting, listening, thinking, speaking) | kitchen page (part 1) | the stage orb |
 | `stage` | `beat` (A, B, C, DE, F, G, H, idle), `action` (`reset` clears every screen, `door` = the D hotkey: the door closed, the kitchen inset fades out) | hotkeys (part 1) | forces a card, fallbacks, Telegram (DE, G) |
 | `system` | `message` | bridge | error line |
+| `loop` | `phase` (proposed, approved, rejected), `proposal` (`id`, `file`, `find`, `replace`, `reason`, `metric`, `expected`, `status`) | learning loop (`bridge/loop.py`, PLAN §6.5) | Telegram (optional) |
 
 Audio is too heavy for the bus. Part 6 exposes its own WebSocket for the call (`/courier/listen`, mu-law 8 kHz),
 part 1 one for the kitchen relay (the tablet sends to `/kitchen/audio`, the stage listens on `/kitchen/listen`,

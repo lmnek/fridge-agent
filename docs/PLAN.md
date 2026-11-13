@@ -145,6 +145,32 @@ rising, corrections and tool calls per cart falling), charted in the panel and l
 6. **Waste learning:** items that get binned lead to smaller packs.
 7. **Nightly reflection:** a changelog of her own rules.
 
+### 6.5 Built (13. 11.): the loop on the Realtime bridge
+§6.1–6.3 were written for the old Frida build. What exists is the smallest real loop on `bridge/`, in
+`bridge/loop.py` (mounted from `main.py` in two lines). Open **`/loop`** on the bridge (`:8100/loop`, or
+`/api/loop` through the app).
+1. **Signals.** A recorder sits on the bus like an SSE client and appends `tool`, `cart`, `approval`,
+   `learned`, `recipe` and `stage` events with timestamps to `data/bus.jsonl`, so every rehearsal is real data.
+   An order is a session (split at the stage reset or 10 idle minutes) that showed a cart. Metrics per order:
+   tool calls and seconds until the cart showed, repeated tool calls, and whether a person changed the cart.
+2. **Review.** One LLM call (`LOOP_LLM=1`, `LOOP_MODEL`, default `gpt-5.5`) reads the orders since the last
+   change, every past proposal with its measured result, and `bridge/memory/*.md`, and returns one exact
+   find/replace edit with a reason, a metric and the value it expects. **HACK(demo): off by default** (the
+   OpenAI key has no credit); a rule stands in (the tool most often called twice per order gets a "call it
+   once" line in `instructions.md`). It runs from the page and on its own after every 5 orders.
+3. **Human review.** Approve or Reject on `/loop` (or `POST /loop/proposals/{id}` with `{"approved": true}`).
+   Nothing writes a memory file except an approval. Every step publishes a `loop` event on the bus.
+4. **Measure.** The orders after the change against the ones before it, on the proposal's metric: "helped",
+   "no change" or "worse" after 3 orders. The result goes into the next review.
+
+`cd bridge && uv run python try_loop.py [--pending] [--serve 8108]` runs it once on recorded data in a
+throwaway dir with a copy of `memory/`: six demo orders where `get_inventory` runs twice in four (the vision
+diff landing mid-C), the proposal, the approval, four orders after, and "6.8 → 6.2 tool calls, 12.7 → 10.2 s,
+helped". **HACK(demo):** those orders (`bridge/replay/loop/`) are hand-made in the recorder's shape after
+try_demo's live runs; the after-orders can't come from a live run until the Realtime key works.
+An approval on the stage laptop edits the real `instructions.md`, so don't approve during rehearsals without
+part 3 (`git checkout bridge/memory/` undoes it).
+
 ## 7. Workstreams
 
 See the build table in [DEMO.md](DEMO.md#build-owners-suggested-swap-freely).
