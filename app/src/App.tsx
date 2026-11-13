@@ -6,6 +6,9 @@ import { FridgeBrain, type Status } from "./realtime";
 import { publish } from "./stage/bus";
 import { publishCaption } from "./stage/captions";
 
+const AWAKE = "coldex-awake"; // sessionStorage: this tab was woken, so it wakes again after a reload
+let autoWoke = false; // StrictMode runs effects twice, and two sessions would answer twice
+
 interface Item {
   id: string;
   name: string;
@@ -135,11 +138,36 @@ export default function App() {
     setError(null);
     try {
       await brain.start();
+      try {
+        sessionStorage.setItem(AWAKE, "1");
+      } catch {}
     } catch (e) {
       brain.stop();
       setError(e instanceof Error ? e.message : String(e));
     }
   };
+
+  // A page reload (Vite reloads on every realtime.ts change, so on every git pull) used to leave Coldex asleep
+  // until someone tapped again. Once woken, this tab wakes itself after a reload. If the browser blocks the
+  // voice's autoplay without a gesture, the next tap or key anywhere plays it.
+  useEffect(() => {
+    let awake = false;
+    try {
+      awake = sessionStorage.getItem(AWAKE) === "1";
+    } catch {}
+    if (awake && !autoWoke) {
+      autoWoke = true;
+      void toggle();
+    }
+    const unblock = () => void brain.audio.play().catch(() => {});
+    window.addEventListener("pointerdown", unblock);
+    window.addEventListener("keydown", unblock);
+    return () => {
+      window.removeEventListener("pointerdown", unblock);
+      window.removeEventListener("keydown", unblock);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [brain]);
 
   const decide = async (ok: boolean) => {
     if (!approval) return;
