@@ -59,7 +59,7 @@ export function Kitchen(props: {
   cam: boolean;
   inputLevel: () => number;
 }) {
-  const { status, caption, learned, error, approval, peek } = props;
+  const { status, caption, learned, error, approval } = props;
   const { card, events } = useKitchenCard();
   const product = useFresh(events, "product", 9_000);
   const nearby = useFresh(events, "nearby", 14_000);
@@ -87,10 +87,6 @@ export function Kitchen(props: {
           <span className="mark-cube" aria-hidden>{"\u{1F9CA}"}</span>
           <span className="mark-name">Coldex</span>
         </span>
-        <button type="button" className="peek" onClick={props.onLook} title="Look inside now (L)">
-          {peek ? <img src={peek.src} alt="Last camera frame" /> : <span className="peek-empty" aria-hidden />}
-          <span className="peek-text">{peek ? `Looked ${ago(peek.at)}` : "Look inside"}</span>
-        </button>
       </header>
 
       {/* The orb's column: the whole width when idle, the left half while a card shows, so the orb glides from
@@ -209,7 +205,3 @@ function Fit({ children }: { children: ReactNode }) {
   );
 }
 
-function ago(at: number): string {
-  const min = Math.round((Date.now() - at) / 60_000);
-  return min < 1 ? "just now" : min === 1 ? "a minute ago" : `${min} minutes ago`;
-}
