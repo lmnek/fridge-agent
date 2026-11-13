@@ -61,8 +61,12 @@ From the old Frida build: `frontend/src/components/orb/` and `frontend/src/featu
   through the door seal), auto-lock and battery saver off, the browser in front, one tap after it starts.
 - **The dark fridge drops the camera's frame rate**, and it takes a moment to ramp up when the light comes on.
   Check that `videodevice=back` really picks the outward camera on the actual phone.
-- **The relay starts on the first click or key on the stage.** Click the stage once before A. If the relay dies,
-  U plays the video call's audio instead, but only if the phone pushes audio (DEMO.md Setup has it off).
+- **The relay starts on the first click or key on the stage.** Click the stage once before A. If the relay's
+  kitchen mic dies, U puts the actor on the inset's own mic (the Reolink camera's, or the phone's if it pushes
+  audio). That path runs through MSE, so it lags the relay's Coldex by about a second or more: keep the relay
+  as the default, or the actor and Coldex can overlap.
+- **The Reolink inset needs go2rtc running** (`infra/go2rtc.sh`) on the laptop that serves the app, and the
+  battery cameras take a few seconds to wake for the stream. Open `/stage?kitchen=reolink` well before A.
 - **Echo mostly goes away:** the actor hears Coldex in an earbud (the tablet's echo cancellation handles the
   rest), and the stage mic stays off, so the stage speakers feed nothing back.
 - **Audio has one path at a time** (DEMO.md, Setup): the kitchen relay in B and C, the phone call in F (the
