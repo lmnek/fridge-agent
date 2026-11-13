@@ -154,3 +154,25 @@
 .hk-dev-src {
   opacity: 0.6;
 }
+
+/* The order approval (place_order): small, bottom centre, until the presenter presses A. */
+.hk-approve {
+  position: fixed;
+  bottom: 28px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 55;
+  padding: 14px 22px;
+  border-color: #c6dbe5;
+  font-size: 18px;
+}
+.hk-approve p {
+  margin: 0;
+}
+.hk-approve kbd {
+  font: inherit;
+  font-weight: 600;
+  padding: 0 6px;
+  border: 1px solid #c6dbe5;
+  border-radius: 4px;
+}

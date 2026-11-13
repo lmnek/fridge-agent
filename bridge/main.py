@@ -331,7 +331,7 @@ def decide(approval_id: str, decision: Decision) -> dict[str, Any]:
     approval["status"] = "approved" if decision.approved else "declined"
     order = None
     if decision.approved:
-        # HACK(demo): the fake cart "places" the order. The real one goes through Rohlík MCP approvals.
+        # HACK(demo): a staged order id only. Nothing here calls Rohlík, so no real order or payment ever happens.
         order = {
             "id": f"R-{secrets.randbelow(900000) + 100000}",
             "items": approval["items"],
@@ -444,16 +444,16 @@ def session_config(rohlik: bool = True) -> dict[str, Any]:
                 "require_approval": "never",
             }
         )
-    else:
-        # HACK(demo): no Rohlík token, so show_cart fills the fake cart (add_to_cart and view_cart only cost
-        # the model extra rounds) and place_order puts it up for approval.
-        tools.append(
-            _fn(
-                "place_order",
-                "Ask the household to approve the cart. The order is placed only after they tap approve.",
-                {},
-            )
+    # HACK(demo): place_order is the order step in both modes. It only puts show_cart's cart up for a person's
+    # approval (the stage's A key, or the kitchen card). Approving never calls Rohlík: the order is staged (the
+    # D/E card plays the checkout recording), and a person completes any real order on rohlik.cz.
+    tools.append(
+        _fn(
+            "place_order",
+            "Ask the household to approve the cart. The order is placed only after they approve.",
+            {},
         )
+    )
     instructions = (MEMORY_DIR / "instructions.md").read_text()
     today = f"Today is {date.today():%A %d %B %Y}."
     return {

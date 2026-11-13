@@ -1,6 +1,7 @@
 /**
  * Stage hotkeys and their overlays (type the C line, the fallback runs, help, mic state). Owned by part 1, sub-task 3.
- * Press ? on the stage for the key map. Nothing here can place an order: the worst a key does is fill the bus.
+ * Press ? on the stage for the key map. Nothing here can place a real order: A approves Coldex's place_order,
+ * which only stages one (bridge decide(), no Rohlík call) and brings up the D/E checkout recording.
  */
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { FridgeBrain } from "../realtime";
@@ -19,6 +20,7 @@ const HELP: [string, string][] = [
   ["M", "Wake Coldex (the fridge phone is its ear) / input on, off"],
   ["T", "Type the C line"],
   ["U", "Coldex hears the fridge phone / the laptop mic"],
+  ["A", "Approve the order Coldex asks for (then the D/E checkout plays)"],
   ["K", "Call the courier"],
   ["Shift K", "Fake courier call (scripted)"],
   ["1 – 7", "Force beat A, B, C, D/E, F, G, H"],
@@ -47,6 +49,12 @@ export function Hotkeys({ brain, wake }: { brain: FridgeBrain; wake: () => Promi
   const [help, setHelp] = useState(false);
   const toastTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
   const seen = useRef(0);
+
+  // The order Coldex put up for approval (place_order), while nobody decided. Nothing happens until A.
+  const lastApproval = [...events].reverse().find((ev) => ev.type === "approval")?.approval;
+  const pending = lastApproval?.status === "pending" ? (lastApproval as { id: string; total_czk: number }) : null;
+  const pendingRef = useRef(pending);
+  pendingRef.current = pending;
 
   const say = useCallback((msg: string) => {
     setToast(msg);
@@ -119,6 +127,18 @@ export function Hotkeys({ brain, wake }: { brain: FridgeBrain; wake: () => Promi
           e.preventDefault(); // don't type the "t" into the field that opens
           setTyped(C_LINE);
           break;
+        case "a": {
+          const p = pendingRef.current;
+          if (!p) break;
+          fetch(`/api/approvals/${p.id}`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ approved: true }),
+          })
+            .then((r) => say(r.ok ? "Order approved" : `Approve failed (${r.status})`))
+            .catch(() => say("Approve failed: no bridge"));
+          break;
+        }
         case "k":
           startCourierCall(brain).catch((err) => say(String(err?.message ?? err)));
           break;
@@ -160,6 +180,15 @@ export function Hotkeys({ brain, wake }: { brain: FridgeBrain; wake: () => Promi
       {toast ? (
         <div className="hk-toast" role="status">
           {toast}
+        </div>
+      ) : null}
+
+      {pending ? (
+        <div className="hk-panel hk-approve" role="status">
+          <p className="hk-label">Coldex asks to order</p>
+          <p>
+            Rohlík, {pending.total_czk} Kč. Press <kbd>A</kbd> to approve.
+          </p>
         </div>
       ) : null}
 

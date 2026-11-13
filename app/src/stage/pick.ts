@@ -63,6 +63,9 @@ export function cardFor(ev: BusEvent): PanelId | null {
       return "NB";
     case "cart":
       return "C4";
+    case "approval":
+      // HACK(demo): the presenter approved place_order (A on the stage), so the staged checkout plays.
+      return ev.approval?.status === "approved" ? "DE" : null;
     case "call":
       return "F";
     case "caption":

@@ -67,7 +67,7 @@ def test_token_sends_full_session(monkeypatch):
     assert mcp and mcp[0]["authorization"] == "rohlik-oauth"
     # only read and cart tools reach the session, so nothing in it can order, cancel or claim
     assert "add_items_to_cart" in mcp[0]["allowed_tools"] and "cancel_order" not in mcp[0]["allowed_tools"]
-    assert "place_order" not in {t.get("name") for t in tools}
+    assert "place_order" in {t.get("name") for t in tools}  # staged approval only, never calls Rohlík
 
 
 def test_camera_without_hub_is_404():
