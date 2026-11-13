@@ -272,11 +272,18 @@ def pick_shops(deals: list[dict[str, Any]], around: dict[str, dict[str, Any]]) -
 # --------------------------------------------------------------------------- CLI
 
 
+def _no_exit(fn):  # ponytail: sys.exit in a to_thread task escapes asyncio's except and kills uvicorn, so turn it into an Exception
+    try:
+        return fn()
+    except SystemExit as e:
+        raise RuntimeError(e) from None
+
+
 async def scrape(keep: bool = True) -> dict[str, Any]:
     """Scrapes and saves to data/deals.json, and with keep also to the committed bridge/replay/deals.json."""
     t0 = time.monotonic()
     rohlik, raw, around = await asyncio.gather(  # all three at once, akcniceny.cz sets the pace
-        rohlik_prices(), asyncio.to_thread(scrape_akcniceny), asyncio.to_thread(stores_nearby)
+        rohlik_prices(), asyncio.to_thread(_no_exit, scrape_akcniceny), asyncio.to_thread(_no_exit, stores_nearby)
     )
     shops = shop_deals(raw)
     print(f"{len(rohlik)} Rohlík prices, {len(shops)} matching deals, {len(around)} chains nearby")
