@@ -81,8 +81,9 @@ MCP setup, the bridge falls back to the fake cart and the app shows "Rohlík MCP
 1. In the Twilio console, copy the Account SID and Auth Token, and buy or pick a number. Under Voice
    Geographic Permissions, allow calls to the Czech Republic.
 2. A trial account can only call verified numbers, so verify the courier's number or upgrade.
-3. Start a quick tunnel to the app: `brew install cloudflared`, then
-   `cloudflared tunnel --url http://localhost:5174`. Put the printed address plus `/api` into `PUBLIC_URL`.
+3. Start a quick tunnel to the app: `brew install cloudflared` (without Homebrew, unpack
+   `cloudflared-darwin-arm64.tgz` from github.com/cloudflare/cloudflared/releases), then
+   `cloudflared tunnel --no-autoupdate --url http://localhost:5174`. Put the printed address plus `/api` into `PUBLIC_URL`.
    The address changes on every start, so restart the bridge after updating it.
 4. Test without a phone: `curl -X POST localhost:8100/courier/fake` plays a scripted call on the bus.
 
