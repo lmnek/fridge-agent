@@ -132,8 +132,11 @@ def deals_markdown() -> str:
 
 @router.post("/tools/show_shops")
 def tool_show_shops(shops: Shops) -> dict[str, Any]:
-    bridge.emit("deals", **deals(), choice=shops.choice, why=shops.why)
-    return {"ok": True, "shown": True}
+    d = deals()
+    bridge.emit("deals", **d, choice=shops.choice, why=shops.why)
+    # The prices back to the model too, so "how much are eggs today?" gets an answer and not only a card.
+    prices = [{k: i.get(k) for k in ("item", "store", "price_czk", "was_czk")} for i in d["items"]]
+    return {"ok": True, "shown": True, "scraped_at": d.get("scraped_at"), "prices": prices}
 
 
 TOOLS = [
@@ -160,7 +163,8 @@ TOOLS = [
     ),
     bridge._fn(
         "show_shops",
-        "Show where to buy on the panel: today's prices and deals across Rohlík and the nearby shops, and your pick.",
+        "Show where to buy on the panel: today's prices and deals across Rohlík and the nearby shops, and your pick. "
+        "Also call it when someone asks what food costs or where it's cheaper, and answer from the prices it returns.",
         {
             "choice": {"type": "string", "description": "The shop you pick, e.g. 'Rohlík'."},
             "why": {"type": "string", "description": "A few words, e.g. 'delivers within the hour'."},
