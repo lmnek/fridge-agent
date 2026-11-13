@@ -58,7 +58,7 @@ export function Kitchen(props: {
   const product = useFresh(events, "product", 9_000);
   const nearby = useFresh(events, "nearby", 14_000);
   const quick = [product, nearby].filter(Boolean).sort((a, b) => (b?.ts ?? 0) - (a?.ts ?? 0))[0] ?? null;
-  const side = approval ? "approval" : quick ? "quick" : card;
+  const side = approval ? "approval" : quick ? "quick" : card === "PR" || card === "NB" ? "idle" : card;
 
   return (
     <div className="kitchen" data-side={side === "idle" ? "off" : "on"}>

@@ -12,8 +12,9 @@ import CartCard from "./CartCard";
 import CheckoutCard from "./CheckoutCard";
 import CallCard from "./CallCard";
 import DeliveredCard from "./DeliveredCard";
+import { NearbyQuick, ProductQuick } from "./QuickCards";
 
-export type CardId = "B" | "C1" | "C2" | "C3" | "C4" | "DE" | "F" | "G";
+export type CardId = "B" | "C1" | "C2" | "C3" | "C4" | "DE" | "F" | "G" | "PR" | "NB";
 
 export const cards: Record<CardId, ComponentType<{ events: BusEvent[] }>> = {
   B: VisionCard,
@@ -24,4 +25,6 @@ export const cards: Record<CardId, ComponentType<{ events: BusEvent[] }>> = {
   DE: CheckoutCard,
   F: CallCard,
   G: DeliveredCard,
+  PR: ProductQuick,
+  NB: NearbyQuick,
 };

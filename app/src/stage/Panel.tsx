@@ -23,6 +23,8 @@ const DWELL_MS = 2600;
  * C3 pass briskly and C4 is up while the total is spoken.
  */
 const BATCH_DWELL_MS = 1500;
+/** The quick answers (a price, the nearby shops) leave on their own after this long, as on the kitchen page. */
+const QUICK_MS: Partial<Record<PanelId, number>> = { PR: 9_000, NB: 14_000 };
 const BATCH_GAP_MS = 1000;
 
 /**
@@ -104,6 +106,15 @@ export function usePanelCard(events: BusEvent[]): PanelId {
     }, wait);
     return () => clearTimeout(t);
   });
+
+  useEffect(() => {
+    const ms = QUICK_MS[shown];
+    if (!ms) return;
+    const t = setTimeout(() => {
+      if (!queue.current.length) setShown("idle");
+    }, ms);
+    return () => clearTimeout(t);
+  }, [shown]);
 
   return shown;
 }

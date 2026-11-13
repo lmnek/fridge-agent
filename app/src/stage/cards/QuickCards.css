@@ -1,0 +1,17 @@
+/* Honza's quick cards (kitchen/product.css) are sized for the kitchen side column; on the stage they sit centred in
+   the 800x800 panel box, scaled up so they read from the back of the room. */
+.ck-quick {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+}
+.ck-quick > * {
+  transform-origin: center;
+}
+.ck-quick.is-product > * {
+  transform: scale(1.45);
+}
+.ck-quick.is-nearby > * {
+  transform: scale(1.35);
+}
