@@ -12,8 +12,14 @@ export default defineConfig({
     proxy: {
       // ws: the courier call's audio (Twilio in, the stage out) goes through the same proxy
       "/api": { target: bridge, changeOrigin: true, ws: true, rewrite: (p) => p.replace(/^\/api/, "") },
-      // go2rtc (infra/go2rtc.sh): the Reolink player for the stage inset, same origin and through the tunnel
-      "/go2rtc": { target: go2rtc, changeOrigin: true, ws: true, rewrite: (p) => p.replace(/^\/go2rtc/, "") },
+      // go2rtc (infra/go2rtc.sh): the Reolink player for the stage inset, same origin and through the tunnel.
+      // Only the player and its stream socket: the rest of go2rtc's API can rewrite its config, and the tunnel is public.
+      "^/go2rtc/(stream\\.html|video-stream\\.js|video-rtc\\.js|api/ws)(\\?|$)": {
+        target: go2rtc,
+        changeOrigin: true,
+        ws: true,
+        rewrite: (p) => p.replace(/^\/go2rtc/, ""),
+      },
     },
   },
 });

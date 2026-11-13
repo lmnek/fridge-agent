@@ -2,7 +2,7 @@
 # Reolink stream) stand in for both cameras, so the stage inset and its audio can be tried without the hub.
 
 api:
-  listen: ":1984"
+  listen: "127.0.0.1:1984"
   origin: "*"
 
 rtsp:

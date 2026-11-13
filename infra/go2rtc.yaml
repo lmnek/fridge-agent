@@ -6,7 +6,7 @@
 # Kanál 0 = první kamera na Home Hubu, kanál 1 = druhá.
 
 api:
-  listen: ":1984"
+  listen: "127.0.0.1:1984" # only the app's /go2rtc proxy reaches it, not the rest of the Wi-Fi
   origin: "*"
 
 webrtc:
