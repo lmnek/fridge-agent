@@ -20,11 +20,23 @@
  * curve (Panel.tsx), a beat after the orb starts moving, so the orb leads and the card follows.
  */
 
+/* Fills the viewport in the stage colour; the 1920x1080 composition sits in it scaled to fit (useFit in
+   Stage.tsx), so a 3:2 laptop or a 1280 tablet letterboxes it instead of cutting the card off. */
+.stage-fit {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  background: var(--enamel);
+}
+
 .stage-view {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform-origin: 50% 50%;
   --glide: 760ms cubic-bezier(0.3, 0, 0, 1);
   --rise: cubic-bezier(0.2, 0, 0, 1);
   --ice-line: #c6dbe5;
-  position: relative;
   width: 1920px;
   height: 1080px;
   overflow: hidden;

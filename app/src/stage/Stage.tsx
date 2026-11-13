@@ -44,6 +44,18 @@ function kitchenAwake(events: BusEvent[]): boolean {
   );
 }
 
+/** The composition is drawn at 1920x1080; this scales it to fit any viewport, centred and letterboxed (stage.css). */
+function useFit(): number {
+  const get = () => Math.min(window.innerWidth / 1920, window.innerHeight / 1080);
+  const [k, setK] = useState(get);
+  useEffect(() => {
+    const on = () => setK(get());
+    window.addEventListener("resize", on);
+    return () => window.removeEventListener("resize", on);
+  }, []);
+  return k;
+}
+
 export default function Stage() {
   const events = useBus();
   const [status, setStatus] = useState<Status>("off");
@@ -113,10 +125,13 @@ export default function Stage() {
   const orb = useOrbVoice(brain, status, events);
   const system = events.findLast((e) => e.type === "system");
   const line = error ?? (system ? String(system.message ?? "") : null);
+  const fit = useFit();
 
   return (
+    <div className="stage-fit">
     <div
       className="stage-view"
+      style={{ transform: `translate(-50%, -50%) scale(${fit})` }}
       data-layout={LAYOUT}
       data-split={split}
       data-beat={beat}
@@ -139,6 +154,7 @@ export default function Stage() {
       {line ? <p className="stage-error">{line}</p> : null}
       <Hotkeys brain={brain} wake={wake} />
       <DevPlayer />
+    </div>
     </div>
   );
 }
