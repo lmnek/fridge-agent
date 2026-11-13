@@ -65,7 +65,7 @@ export function KitchenInset({ size, muted }: { size: Size; muted: boolean }) {
       ) : (
         <Viewer room={src} muted={muted} />
       )}
-      {src ? <Recognition visible={size === "large"} /> : null}
+      {src ? <Recognition visible={size === "large"} room={!cam && !isClip(src) ? src : undefined} /> : null}
     </div>
   );
 }

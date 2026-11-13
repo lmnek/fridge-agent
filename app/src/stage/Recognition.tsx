@@ -1,11 +1,14 @@
 /**
- * HACK(demo): staged item recognition over the kitchen inset. The fridge phone and the ham are both static, so a
- * calibrated, fixed box looks the same as real detection. No pixels are read (the stream is a cross-origin iframe).
+ * HACK(demo): item recognition over the kitchen inset, staged around a real template match. A hidden second viewer
+ * of the VDO.Ninja stream (hamTracker.ts) gives pixels; the box follows the best NCC match of a taught template and
+ * the label shows its score. No SDK, no frames, no template, or a weak match: the calibrated box, as before.
  *
  * Runs ~3 s after the inset first shows; the box stays until the inset hides (door close).
- * S replays the scan. C toggles calibration: drag a rectangle over the item, it saves to localStorage.
+ * S replays the scan. C toggles calibration: drag a rectangle over the item; the box and (if frames come in) the
+ * cropped template save to localStorage.
  */
 import { useEffect, useRef, useState } from "react";
+import { crop, FW, grab, loadTemplate, match, photoTemplate, saveTemplate, startFeed, type Gray } from "./hamTracker";
 
 // Everything the label says, in one place.
 const ITEM = {
@@ -20,6 +23,9 @@ const STORE = "coldex.recog.box";
 const DEFAULT_BOX: Box = { x: 0.36, y: 0.52, w: 0.24, h: 0.26 };
 const DELAY_MS = 3000;
 const SCAN_MS = 1300;
+const TRACK_MS = 300;
+const MATCH_MIN = 0.6; // NCC score to move the box
+const MISSES_TO_RESET = 10; // weak matches in a row before the box goes back to the calibrated spot
 
 function loadBox(): Box {
   try {
@@ -36,7 +42,7 @@ export const RECOG_HELP: [string, string][] = [
   ["C", "Kitchen camera: calibrate the box (drag over the item, C again to finish)"],
 ];
 
-export function Recognition({ visible }: { visible: boolean }) {
+export function Recognition({ visible, room }: { visible: boolean; room?: string }) {
   const [box, setBox] = useState(loadBox);
   const [run, setRun] = useState(0); // 0 = nothing showing; each replay bumps it so the animation restarts
   const [locked, setLocked] = useState(false);
@@ -44,6 +50,49 @@ export function Recognition({ visible }: { visible: boolean }) {
   const [calib, setCalib] = useState(false);
   const layer = useRef<HTMLDivElement>(null);
   const drag = useRef<{ x: number; y: number } | null>(null);
+  const [track, setTrack] = useState<{ box: Box; score: number } | null>(null);
+  const frame = useRef<Gray | null>(null);
+  const tpl = useRef<Gray | null>(loadTemplate());
+  const calibRef = useRef(calib);
+  calibRef.current = calib;
+
+  // Pixels: a hidden viewer of the same stream, matched every TRACK_MS while the inset shows.
+  useEffect(() => {
+    if (!room || !visible) return;
+    const feed = startFeed(room);
+    let misses = 0;
+    let fh = 90;
+    const r = layer.current?.getBoundingClientRect();
+    if (r?.width) fh = Math.round((FW * r.height) / r.width);
+    if (!tpl.current) {
+      const b = loadBox();
+      void photoTemplate(b.w * FW, b.h * fh).then((t) => (tpl.current ??= t));
+    }
+    const t = setInterval(() => {
+      const f = grab(feed.video, fh);
+      frame.current = f;
+      if (!f || !tpl.current || calibRef.current) return;
+      const m = match(f, tpl.current);
+      if (m && m.score >= MATCH_MIN) {
+        misses = 0;
+        const nb = { x: m.x / f.w, y: m.y / f.h, w: m.w / f.w, h: m.h / f.h };
+        setTrack((p) => {
+          if (!p) return { box: nb, score: m.score };
+          const l = (a: number, b: number) => a + (b - a) * 0.8; // ease toward the match so the box doesn't jitter
+          return { box: { x: l(p.box.x, nb.x), y: l(p.box.y, nb.y), w: l(p.box.w, nb.w), h: l(p.box.h, nb.h) }, score: m.score };
+        });
+      } else if (++misses >= MISSES_TO_RESET) {
+        setTrack(null);
+      }
+      (window as unknown as { __recog?: unknown }).__recog = { score: m?.score ?? null, misses };
+    }, TRACK_MS);
+    return () => {
+      clearInterval(t);
+      feed.stop();
+      frame.current = null;
+      setTrack(null);
+    };
+  }, [room, visible]);
 
   // First show: start after a beat. Hiding clears it.
   useEffect(() => {
@@ -66,7 +115,7 @@ export function Recognition({ visible }: { visible: boolean }) {
       const t0 = performance.now();
       const tick = (now: number) => {
         const p = Math.min(1, (now - t0) / 900);
-        setConf(0.41 + (ITEM.confidence - 0.41) * (1 - (1 - p) ** 3));
+        setConf(1 - (1 - p) ** 3); // eased progress; the shown value climbs to the live score
         if (p < 1) raf = requestAnimationFrame(tick);
       };
       raf = requestAnimationFrame(tick);
@@ -113,13 +162,22 @@ export function Recognition({ visible }: { visible: boolean }) {
     drag.current = null;
     setBox((b) => {
       localStorage.setItem(STORE, JSON.stringify(b));
+      // Teach: the item as the fridge camera sees it right now becomes the template.
+      const f = frame.current;
+      if (f && b.w > 0.02 && b.h > 0.02) {
+        tpl.current = crop(f, b.x * f.w, b.y * f.h, b.w * f.w, b.h * f.h);
+        saveTemplate(tpl.current);
+      }
       return b;
     });
+    setTrack(null);
     setRun((r) => r + 1);
   };
 
   const showing = calib || run > 0;
-  const labelLeft = box.x + box.w > 0.62; // no room on the right: hang the label on the left
+  const shown = calib ? box : (track?.box ?? box);
+  const target = track?.score ?? ITEM.confidence;
+  const labelLeft = shown.x + shown.w > 0.62; // no room on the right: hang the label on the left
   const pct = (n: number) => `${n * 100}%`;
 
   return (
@@ -137,7 +195,7 @@ export function Recognition({ visible }: { visible: boolean }) {
           key={run}
           className="recog-box"
           data-locked={locked || calib}
-          style={{ left: pct(box.x), top: pct(box.y), width: pct(box.w), height: pct(box.h) }}
+          style={{ left: pct(shown.x), top: pct(shown.y), width: pct(shown.w), height: pct(shown.h) }}
         >
           <i className="c tl" />
           <i className="c tr" />
@@ -145,7 +203,7 @@ export function Recognition({ visible }: { visible: boolean }) {
           <i className="c br" />
           {!locked && !calib ? <span className="recog-sweep" /> : null}
           <span className="recog-tag">
-            {locked || calib ? `${ITEM.tag} ${conf.toFixed(2)}` : "scanning"}
+            {locked || calib ? `${ITEM.tag} ${(0.41 + (target - 0.41) * conf).toFixed(2)}` : "scanning"}
           </span>
           {locked && !calib ? (
             <div className="recog-label" data-side={labelLeft ? "left" : "right"}>
@@ -169,7 +227,7 @@ const ICE = "#a9dcf0";
 const CSS = `
 .recog { position: absolute; inset: 0; pointer-events: none; font-family: "Barlow Semi Condensed", "Barlow", sans-serif; }
 .recog[data-calib="true"] { pointer-events: auto; cursor: crosshair; background: rgba(20, 34, 43, 0.25); }
-.recog-box { position: absolute; transition: transform 260ms cubic-bezier(0.2, 0, 0, 1); transform: scale(1.12); }
+.recog-box { position: absolute; transition: transform 260ms cubic-bezier(0.2, 0, 0, 1), left ${TRACK_MS}ms linear, top ${TRACK_MS}ms linear, width ${TRACK_MS}ms linear, height ${TRACK_MS}ms linear; transform: scale(1.12); }
 .recog-box[data-locked="true"] { transform: scale(1); }
 .recog-box .c { position: absolute; width: 22px; height: 22px; border: 0 solid ${ICE}; opacity: 0.55; transition: opacity 200ms; }
 .recog-box[data-locked="true"] .c { opacity: 1; }
