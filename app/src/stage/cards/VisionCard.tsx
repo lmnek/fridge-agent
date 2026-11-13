@@ -128,7 +128,7 @@ export default function VisionCard({ events }: { events: BusEvent[] }) {
       : clock(captured?.ts);
 
   return (
-    <CardFrame kicker="Fridge cameras" title={title} live={phase === "waiting" || phase === "analysing" || phase === "captured"} aside={aside}>
+    <CardFrame icon="B" kicker="Fridge cameras" title={title} live={phase === "waiting" || phase === "analysing" || phase === "captured"} aside={aside}>
       <div className="ck-vision">
         <Steps steps={STEPS} at={at} done={phase === "done" && diffShown && !error} />
 

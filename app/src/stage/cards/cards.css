@@ -56,6 +56,28 @@
   margin-bottom: 28px;
 }
 
+/* The card type's icon, left of the kicker and title: a pale ice tile with a lamp-blue line glyph (icons.tsx). */
+.ck-head-main {
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  min-width: 0;
+}
+.ck-head-text {
+  min-width: 0;
+}
+.ck-icon {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 76px;
+  height: 76px;
+  border: 1.5px solid var(--ck-edge);
+  border-radius: var(--ck-r-inner);
+  background: var(--ck-lamp-soft);
+  color: var(--ck-lamp);
+}
+
 /* A quiet sentence-case line above the title (no tracked caps), with the live dot where it means live. */
 .ck-kicker {
   display: flex;

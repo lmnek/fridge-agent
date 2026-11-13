@@ -53,6 +53,7 @@ export default function CheckoutCard({ events }: { events: BusEvent[] }) {
 
   return (
     <CardFrame
+      icon="DE"
       kicker="Rohlík checkout"
       title={placed ? "Checkout complete" : "Checking out"}
       live={!placed}

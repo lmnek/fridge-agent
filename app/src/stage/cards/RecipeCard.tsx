@@ -19,14 +19,14 @@ const Cross = () => (
 export default function RecipeCard({ events }: { events: BusEvent[] }) {
   const recipe: Recipe | undefined =
     latest(events, "recipe")?.recipe ?? latest(events, "tool", (e) => e.name === "show_recipe")?.args;
-  if (!recipe) return <CardFrame kicker="Recipe" title="Picking a recipe" live />;
+  if (!recipe) return <CardFrame icon="C2" kicker="Recipe" title="Picking a recipe" live />;
 
   const have = recipe.have ?? [];
   const missing = recipe.missing ?? [];
   const gf = (n: string) => /gluten/i.test(n);
 
   return (
-    <CardFrame kicker="Recipe for tonight" title={recipe.title} live={false} aside={`${missing.length} to add`}>
+    <CardFrame icon="C2" kicker="Recipe for tonight" title={recipe.title} live={false} aside={`${missing.length} to add`}>
       <motion.ul className="ck-recipe-list" variants={stagger} initial="hidden" animate="show">
         {missing.map((n) => (
           <motion.li key={n} variants={rise} className="ck-recipe-row is-missing">

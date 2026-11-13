@@ -3,7 +3,10 @@
 import { animate, motion, useMotionValue, useTransform } from "motion/react";
 import { useEffect, type ReactNode } from "react";
 import type { BusEvent } from "../bus";
+import { CardIcon, type IconId } from "./icons";
 import "./cards.css";
+
+export type { IconId };
 
 /** The newest event of a type (optionally matching a predicate). */
 export function latest(events: BusEvent[], type: string, pred?: (e: BusEvent) => boolean): BusEvent | undefined {
@@ -25,8 +28,10 @@ export function czk(n: number): string {
   return `${n.toLocaleString("cs-CZ", { minimumFractionDigits: whole ? 0 : 2, maximumFractionDigits: whole ? 0 : 2 })} Kč`;
 }
 
-/** The card surface: kicker (a quiet sentence-case line, with a pulsing dot while live), title, optional aside on the right, body, optional footer. */
+/** The card surface: the card type's icon, kicker (a quiet sentence-case line, with a pulsing dot while live), title,
+ *  optional aside on the right, body, optional footer. */
 export function CardFrame({
+  icon,
   kicker,
   title,
   aside,
@@ -34,6 +39,7 @@ export function CardFrame({
   foot,
   children,
 }: {
+  icon?: IconId;
   kicker: string;
   title: ReactNode;
   aside?: ReactNode;
@@ -46,12 +52,19 @@ export function CardFrame({
     // content builds inside it (rows rise with `stagger`/`rise`), so the two never stack.
     <motion.section className="ck">
       <header className="ck-head">
-        <div>
-          <p className="ck-kicker">
-            {live && <span className="ck-dot is-live" />}
-            {kicker}
-          </p>
-          <h2 className="ck-title">{title}</h2>
+        <div className="ck-head-main">
+          {icon && (
+            <span className="ck-icon">
+              <CardIcon id={icon} />
+            </span>
+          )}
+          <div className="ck-head-text">
+            <p className="ck-kicker">
+              {live && <span className="ck-dot is-live" />}
+              {kicker}
+            </p>
+            <h2 className="ck-title">{title}</h2>
+          </div>
         </div>
         {aside && <div className="ck-aside">{aside}</div>}
       </header>

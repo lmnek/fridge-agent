@@ -54,7 +54,7 @@ export default function FridgeCard({ events }: { events: BusEvent[] }) {
   const vision = latest(events, "vision", (e) => e.phase === "done");
   const removed: string[] = vision?.removed ?? [];
 
-  if (!items) return <CardFrame kicker="Fridge check" title="Looking inside" live />;
+  if (!items) return <CardFrame icon="C1" kicker="Fridge check" title="Looking inside" live />;
 
   const has = (key: string) => items.some((i) => i.name.toLowerCase().includes(key));
   const out: string[] = STAPLES.filter((s) => !has(s.key)).map((s) => s.name);
@@ -68,7 +68,7 @@ export default function FridgeCard({ events }: { events: BusEvent[] }) {
   const title = count ? `${count === 1 ? "One thing" : count === 2 ? "Two things" : `${count} things`} ran out` : "Nothing ran out";
 
   return (
-    <CardFrame kicker="Fridge check" title={title} live={false} aside={`${items.length} items inside`}>
+    <CardFrame icon="C1" kicker="Fridge check" title={title} live={false} aside={`${items.length} items inside`}>
       <motion.div className="ck-fridge-body" variants={stagger} initial="hidden" animate="show">
         {count > 0 && (
           <div className="ck-fridge-out">

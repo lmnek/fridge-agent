@@ -73,7 +73,7 @@ function useClock(times: number[]) {
 
 function Building() {
   return (
-    <CardFrame kicker="Rohlík cart" title="Building the cart" live>
+    <CardFrame icon="C4" kicker="Rohlík cart" title="Building the cart" live>
       <ul className="ck-cart-list is-building">
         {[0, 1, 2, 3, 4].map((i) => (
           <li key={i} className="ck-cart-row" style={{ animationDelay: `${i * 0.15}s` }}>
@@ -131,6 +131,7 @@ function Cart({ events, cartAt }: { events: BusEvent[]; cartAt: number }) {
 
   return (
     <CardFrame
+      icon="C4"
       kicker="Rohlík cart"
       title="Tonight's order"
       live={false}

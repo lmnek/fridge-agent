@@ -145,6 +145,7 @@ export default function ShopsCard({ events }: { events: BusEvent[] }) {
 
   return (
     <CardFrame
+      icon="C3"
       kicker="Where to buy"
       live={!ev}
       title={ev ? `${winner.name}, within ${winner.delivery_min && winner.delivery_min !== 60 ? `${winner.delivery_min} min` : "the hour"}` : "Checking prices nearby"}

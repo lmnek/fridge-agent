@@ -48,6 +48,7 @@ export default function CallCard({ events }: { events: BusEvent[] }) {
 
   return (
     <CardFrame
+      icon="F"
       kicker="Phone call"
       title="Rohlík courier"
       live={live || !call}
