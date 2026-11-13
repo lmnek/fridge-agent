@@ -50,11 +50,11 @@ Anything that should show up on stage goes through the bridge. Screens never tal
 | `deals` | `items` (`item`, `store`, `price_czk`, `was_czk`), `stores` (`name`, `distance_m`, or `delivery_min` for Rohlík), `scraped_at`, `choice` (the shop Coldex picked), `why` | `show_shops` tool (part 3), from part 8's scrape in `data/deals.json` (same shape, without `choice` and `why`), else a `HACK(demo)` sample | C3 overview |
 | `approval` | `approval`, `order` | bridge | Telegram |
 | `look` | `reason` (motion, manual, replay) | bridge | kitchen page or the vision pipeline |
-| `vision` | `phase` (captured, analysing, done), `run`, `reason`, `frames` (`when` before or after, `camera`, `url`), `boxes` (`frame` index, `label`, `status` out, new or in, `x`, `y`, `w`, `h` from 0 to 1), `removed`, `added`, `tell` (Coldex reacts), `note` (the same news as context only), `error` | part 4 | B card, kitchen page |
+| `vision` | `phase` (captured, analysing, done), `run`, `reason`, `frames` (`when` before or after, `camera`, `url`), `boxes` (`frame` index, `label`, `status` out, new or in, `x`, `y`, `w`, `h` from 0 to 1), `removed`, `added`, `tell` (Coldex reacts), `note` (the same news as context only), `error` | part 4 | B card, kitchen page, Telegram (`removed`) |
 | `caption` | `who` (coldex, actor, presenter, courier), `id`, `text` (so far), `final` | both apps (part 1), part 6 | subtitles, F card |
 | `call` | `phase` (dialing, ringing, answered, ended), `number` (masked) | part 6 | F card, Telegram |
 | `status` | `screen` (kitchen), `status` (off, connecting, listening, thinking, speaking) | kitchen page (part 1) | the stage orb |
-| `stage` | `beat` (A, B, C, DE, F, G, H, idle), `action` (`reset` clears every screen, `door` = the D hotkey: the door closed, the kitchen inset fades out) | hotkeys (part 1) | forces a card, fallbacks |
+| `stage` | `beat` (A, B, C, DE, F, G, H, idle), `action` (`reset` clears every screen, `door` = the D hotkey: the door closed, the kitchen inset fades out) | hotkeys (part 1) | forces a card, fallbacks, Telegram (DE, G) |
 | `system` | `message` | bridge | error line |
 
 Audio is too heavy for the bus. Part 6 exposes its own WebSocket for the call (`/courier/listen`, mu-law 8 kHz),
