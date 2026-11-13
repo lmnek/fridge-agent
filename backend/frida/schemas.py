@@ -463,6 +463,7 @@ class ChatRequest(BaseModel):
     conversation_id: str | None = None
     channel: Literal["text", "voice"] = "text"
     location: GeoPoint | None = None
+    call_session_id: str | None = None  # hlasový hovor v prohlížeči (přijatý simulovaný hovor)
 
 
 # ---------------------------------------------------------------------------

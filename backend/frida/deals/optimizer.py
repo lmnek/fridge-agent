@@ -136,7 +136,7 @@ def plan_shopping(
                 best_single = result
 
     def make(strategy: str, title: str, res, explanation: str) -> ShoppingPlan:
-        cost, stops, missing, goods, regular_total, travel = res
+        cost, stops, missing, _goods, regular_total, travel = res
         total = round(sum(s.subtotal_czk for s in stops), 1)
         return ShoppingPlan(
             strategy=strategy,  # type: ignore[arg-type]
@@ -144,7 +144,9 @@ def plan_shopping(
             stops=stops,
             total_czk=total,
             regular_total_czk=round(regular_total, 1),
-            savings_czk=round(max(0.0, sum(i.regular_price_czk or 0 for s in stops for i in s.items) - total), 1),
+            savings_czk=round(
+                max(0.0, sum(i.regular_price_czk or 0 for s in stops for i in s.items) - total), 1
+            ),
             travel_m=travel,
             missing=missing,
             score=round(cost, 1),

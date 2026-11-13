@@ -82,7 +82,7 @@ class CameraManager:
                     await self.handle_trigger(trig)
             except asyncio.CancelledError:
                 raise
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 log.warning("camera events: %s, zkusím to znovu za 15 s", exc)
                 await asyncio.sleep(15)
 
@@ -110,7 +110,11 @@ class CameraManager:
         if is_open:
             self.opened_at[camera_id] = utcnow()
             now = utcnow()
-            self.store.put(DOOR_OPENS, f"{camera_id}_{now.timestamp():.0f}", {"camera_id": camera_id, "ts": now.isoformat()})
+            self.store.put(
+                DOOR_OPENS,
+                f"{camera_id}_{now.timestamp():.0f}",
+                {"camera_id": camera_id, "ts": now.isoformat()},
+            )
         else:
             self.opened_at.pop(camera_id, None)
 
@@ -127,10 +131,13 @@ class CameraManager:
         async with self._locks[camera_id]:
             try:
                 frame = await cam.snapshot()
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 log.warning("snapshot %s selhal: %s", camera_id, exc)
                 self.events.emit(
-                    "system", f"Kamera {cam.name} neodpovídá", detail=str(exc)[:200], severity="warning",
+                    "system",
+                    f"Kamera {cam.name} neodpovídá",
+                    detail=str(exc)[:200],
+                    severity="warning",
                     camera_id=camera_id,
                 )
                 return None
@@ -144,11 +151,15 @@ class CameraManager:
             await asyncio.sleep(5)
             now = utcnow()
             for cam_id, since in list(self.opened_at.items()):
-                if (now - since).total_seconds() > self.settings.door_open_alert_seconds and cam_id not in alerted:
+                if (
+                    now - since
+                ).total_seconds() > self.settings.door_open_alert_seconds and cam_id not in alerted:
                     alerted.add(cam_id)
                     self.events.emit(
                         "door_open_too_long",
-                        "Lednice je otevřená už přes " + str(self.settings.door_open_alert_seconds // 60) + " minuty",
+                        "Lednice je otevřená už přes "
+                        + str(self.settings.door_open_alert_seconds // 60)
+                        + " minuty",
                         detail="Zavři dveře, ať se nezkazí jídlo a lednice zbytečně nežere proud.",
                         severity="critical",
                         camera_id=cam_id,
@@ -169,7 +180,9 @@ class CameraManager:
         return hours
 
     # ------------------------------------------------------------- demo
-    async def simulate(self, action: str, item: str, *, amount: float = 0.35, expires_in_days: int | None = None) -> dict:
+    async def simulate(
+        self, action: str, item: str, *, amount: float = 0.35, expires_in_days: int | None = None
+    ) -> dict:
         """Demo: otevře dveře, provede akci ve scéně, vyfotí a zavře."""
         if self.demo_world is None:
             raise RuntimeError("Simulace je dostupná jen v demo režimu kamery.")

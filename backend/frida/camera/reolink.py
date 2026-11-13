@@ -40,7 +40,9 @@ class ReolinkError(RuntimeError):
 class ReolinkCgiClient:
     """Minimální klient HTTP API Reolinku (bez závislosti na reolink_aio)."""
 
-    def __init__(self, host: str, username: str, password: str, *, https: bool = True, timeout: float = 40) -> None:
+    def __init__(
+        self, host: str, username: str, password: str, *, https: bool = True, timeout: float = 40
+    ) -> None:
         scheme = "https" if https else "http"
         self.base = f"{scheme}://{host}/cgi-bin/api.cgi"
         self.username = username
@@ -52,7 +54,13 @@ class ReolinkCgiClient:
         self._lock = asyncio.Lock()
 
     async def _login(self) -> str:
-        body = [{"cmd": "Login", "action": 0, "param": {"User": {"userName": self.username, "password": self.password}}}]
+        body = [
+            {
+                "cmd": "Login",
+                "action": 0,
+                "param": {"User": {"userName": self.username, "password": self.password}},
+            }
+        ]
         r = await self.http.post(self.base, params={"cmd": "Login"}, json=body)
         r.raise_for_status()
         data = r.json()[0]
@@ -108,7 +116,7 @@ class ReolinkCgiClient:
         if self._token:
             try:
                 await self.command("Logout")
-            except Exception:  # noqa: BLE001
+            except Exception:
                 pass
         await self.http.aclose()
 
@@ -129,7 +137,7 @@ class ReolinkHub:
         try:
             from reolink_aio.api import Host  # type: ignore[import-not-found]
         except ImportError:
-            Host = None  # noqa: N806
+            Host = None
         if Host is not None:
             host = Host(
                 self.settings.reolink_host,
@@ -158,7 +166,9 @@ class ReolinkHub:
         if self._host is not None:
             data = await self._host.get_snapshot(channel, "main")
             if not data:
-                raise ReolinkError(f"Kanál {channel}: snímek se nepodařilo získat (kamera spí nebo je mimo dosah)")
+                raise ReolinkError(
+                    f"Kanál {channel}: snímek se nepodařilo získat (kamera spí nebo je mimo dosah)"
+                )
             return data
         assert self._cgi is not None
         return await self._cgi.snapshot(channel)
@@ -187,7 +197,8 @@ class ReolinkHub:
                         self._motion[ch] = now_moving
                         kind = "door_open" if now_moving else "door_closed"
                         loop.call_soon_threadsafe(
-                            queue.put_nowait, CameraTrigger(f"cam{ch}", kind, utcnow(), {"source": "reolink-push"})
+                            queue.put_nowait,
+                            CameraTrigger(f"cam{ch}", kind, utcnow(), {"source": "reolink-push"}),
                         )
 
             host.baichuan.register_callback("frida", on_push, cmd_id=33)
@@ -203,13 +214,16 @@ class ReolinkHub:
                 for ch in channels:
                     try:
                         moving = await self._cgi.motion_state(ch)
-                    except Exception as exc:  # noqa: BLE001
+                    except Exception as exc:
                         log.debug("reolink poll ch%s: %s", ch, exc)
                         continue
                     if moving != self._motion.get(ch, False):
                         self._motion[ch] = moving
                         yield CameraTrigger(
-                            f"cam{ch}", "door_open" if moving else "door_closed", utcnow(), {"source": "reolink-poll"}
+                            f"cam{ch}",
+                            "door_open" if moving else "door_closed",
+                            utcnow(),
+                            {"source": "reolink-poll"},
                         )
                 await asyncio.sleep(self.settings.reolink_poll_seconds)
 

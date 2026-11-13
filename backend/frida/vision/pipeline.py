@@ -52,7 +52,7 @@ class CascadeProvider:
             return local
         try:
             smart = await self.smart.analyze(frame, context)
-        except Exception as exc:  # noqa: BLE001 - kaskáda nesmí spadnout kvůli cloudu
+        except Exception as exc:
             log.warning("cascade: Claude selhal (%s), zůstávám u lokálního výsledku", exc)
             return local
         # Claude pojmenovává přesněji, lokální model ale může mít navíc věci, které Claude přehlédl.
@@ -124,7 +124,7 @@ class VisionPipeline:
                 detections = await self.provider.analyze(frame, context)
             except VisionUnavailable as exc:
                 note = f"Rozpoznávání nedostupné: {exc}"
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 log.exception("vision provider failed")
                 note = f"Chyba rozpoznávání: {type(exc).__name__}"
         if not dark:
@@ -151,7 +151,10 @@ class VisionPipeline:
             if diff.added or diff.removed or diff.changed:
                 log.info(
                     "inventory diff cam=%s +%d -%d ~%d",
-                    frame.camera_id, len(diff.added), len(diff.removed), len(diff.changed),
+                    frame.camera_id,
+                    len(diff.added),
+                    len(diff.removed),
+                    len(diff.changed),
                 )
         return obs
 

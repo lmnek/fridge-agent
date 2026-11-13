@@ -47,9 +47,12 @@ class DocStore:
         self._conn.executescript(_SCHEMA)
 
     # -- zápis -------------------------------------------------------------
-    def put(self, collection: str, doc_id: str, data: BaseModel | dict[str, Any], ts: datetime | None = None) -> None:
+    def put(
+        self, collection: str, doc_id: str, data: BaseModel | dict[str, Any], ts: datetime | None = None
+    ) -> None:
         payload = data.model_dump(mode="json") if isinstance(data, BaseModel) else data
-        stamp = (ts or utcnow()).isoformat()
+        # vždy UTC: časy se v SQLite porovnávají jako text, smíchaná pásma by řadila špatně
+        stamp = (ts or utcnow()).astimezone(UTC).isoformat()
         with self._lock:
             self._conn.execute(
                 "INSERT INTO docs (collection, id, ts, data) VALUES (?, ?, ?, ?) "
@@ -90,7 +93,7 @@ class DocStore:
         args: list[Any] = [collection]
         if since is not None:
             sql += " AND ts >= ?"
-            args.append(since.isoformat())
+            args.append(since.astimezone(UTC).isoformat())
         sql += " ORDER BY ts " + ("DESC" if newest_first else "ASC")
         if limit is not None:
             sql += " LIMIT ?"
@@ -115,7 +118,11 @@ class DocStore:
 
     def count(self, collection: str) -> int:
         with self._lock:
-            return int(self._conn.execute("SELECT COUNT(*) FROM docs WHERE collection = ?", (collection,)).fetchone()[0])
+            return int(
+                self._conn.execute(
+                    "SELECT COUNT(*) FROM docs WHERE collection = ?", (collection,)
+                ).fetchone()[0]
+            )
 
     def put_many(self, collection: str, docs: Iterable[tuple[str, BaseModel | dict[str, Any]]]) -> None:
         for doc_id, data in docs:

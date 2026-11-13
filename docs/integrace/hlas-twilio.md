@@ -85,7 +85,7 @@ Frida tuhle cestu záměrně nepoužívá, protože mozkem je Claude a Conversat
 
 ## Alternativa: ElevenLabs Agents
 
-ElevenLabs umí Twilio nativně (import čísla), odchozí hovor přes `POST https://api.elevenlabs.io/v1/convai/twilio/outbound-call` a jako LLM lze zvolit Claude. Čeština je v modelech Multilingual v2 a Flash v2.5. Hodí se, pokud bys chtěl hlasovou část úplně outsourcovat.
+ElevenLabs umí Twilio nativně (import čísla), odchozí hovor přes `POST https://api.elevenlabs.io/v1/convai/twilio/outbound-call` a jako LLM lze zvolit Claude. Čeština je v modelech Multilingual v2 a Flash v2.5. Hodí se, pokud má být hlasová část úplně outsourcovaná.
 
 ## Co nastavit
 

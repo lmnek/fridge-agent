@@ -45,7 +45,9 @@ class VoiceService:
             from twilio.rest import Client
 
             assert self.settings.twilio_auth_token is not None
-            self._client = Client(self.settings.twilio_account_sid, self.settings.twilio_auth_token.get_secret_value())
+            self._client = Client(
+                self.settings.twilio_account_sid, self.settings.twilio_auth_token.get_secret_value()
+            )
         return self._client
 
     # ------------------------------------------------------------- relace
@@ -84,7 +86,9 @@ class VoiceService:
         if task:
             task.cancel()
         secs = int((session.ended_at - session.started_at).total_seconds())
-        self.events.emit("call_ended", "Hovor s Fridou skončil", detail=f"Délka {secs} s", data={"session_id": session_id})
+        self.events.emit(
+            "call_ended", "Hovor s Fridou skončil", detail=f"Délka {secs} s", data={"session_id": session_id}
+        )
 
     # ------------------------------------------------------------- hovory
     def greeting(self, reason: str) -> str:
@@ -117,8 +121,13 @@ class VoiceService:
             session.status = "refused"
             session.ended_at = utcnow()
             self.save(session)
-            self.events.emit("system", "Hovor neproběhl", detail=decision.reason, severity="warning",
-                             data={"session_id": session.id})
+            self.events.emit(
+                "system",
+                "Hovor neproběhl",
+                detail=decision.reason,
+                severity="warning",
+                data={"session_id": session.id},
+            )
             return session
 
         twiml = conversation_relay_twiml(
@@ -139,7 +148,7 @@ class VoiceService:
             )
         try:
             call = await asyncio.to_thread(self._twilio().calls.create, **kwargs)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             log.exception("twilio call failed")
             session.status = "failed"
             session.ended_at = utcnow()
@@ -160,7 +169,9 @@ class VoiceService:
             return
         if self.live and session.twilio_sid and session.ended_at is None:
             with contextlib.suppress(Exception):
-                await asyncio.to_thread(lambda: self._twilio().calls(session.twilio_sid).update(status="completed"))
+                await asyncio.to_thread(
+                    lambda: self._twilio().calls(session.twilio_sid).update(status="completed")
+                )
         log.info("hangup %s (%s)", session_id, reason)
         self.finish(session_id)
 
@@ -176,9 +187,16 @@ class VoiceService:
         if session is None:
             return
         mapping = {
-            "queued": "queued", "initiated": "queued", "ringing": "ringing", "in-progress": "in-progress",
-            "answered": "in-progress", "completed": "completed", "busy": "failed", "no-answer": "failed",
-            "failed": "failed", "canceled": "failed",
+            "queued": "queued",
+            "initiated": "queued",
+            "ringing": "ringing",
+            "in-progress": "in-progress",
+            "answered": "in-progress",
+            "completed": "completed",
+            "busy": "failed",
+            "no-answer": "failed",
+            "failed": "failed",
+            "canceled": "failed",
         }
         new = mapping.get(status, session.status)
         if new in ("completed", "failed"):
@@ -211,7 +229,9 @@ class VoiceService:
         number = normalize_phone(to or self.settings.user_phone)
         msg = await asyncio.to_thread(
             self._twilio().messages.create,
-            to=f"whatsapp:{number}", from_=self.settings.twilio_whatsapp_from, body=body[:1000],
+            to=f"whatsapp:{number}",
+            from_=self.settings.twilio_whatsapp_from,
+            body=body[:1000],
         )
         return msg.sid
 
@@ -224,7 +244,9 @@ class VoiceService:
         from twilio.request_validator import RequestValidator
 
         assert self.settings.twilio_auth_token is not None
-        return RequestValidator(self.settings.twilio_auth_token.get_secret_value()).validate(url, params, signature)
+        return RequestValidator(self.settings.twilio_auth_token.get_secret_value()).validate(
+            url, params, signature
+        )
 
     @staticmethod
     def duration(session: CallSession, now: datetime | None = None) -> int:

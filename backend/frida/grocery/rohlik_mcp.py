@@ -45,27 +45,60 @@ log = logging.getLogger(__name__)
 ALLOWED_TOOLS: frozenset[str] = frozenset(
     {
         # oficiální server
-        "batch_search_products", "get_product_details", "get_products_composition_batch",
-        "get_cart", "add_items_to_cart", "update_cart_item", "remove_cart_item",
-        "get_checkout", "get_checkout_link", "get_timeslots_checkout",
-        "get_discounted_items", "get_all_user_favorites", "fetch_orders", "get_typical_order",
-        "search_recipes_by_vector_similarity", "get_recipe_detail",
-        "get_user_shopping_lists_preview", "get_user_shopping_list_detail",
+        "batch_search_products",
+        "get_product_details",
+        "get_products_composition_batch",
+        "get_cart",
+        "add_items_to_cart",
+        "update_cart_item",
+        "remove_cart_item",
+        "get_checkout",
+        "get_checkout_link",
+        "get_timeslots_checkout",
+        "get_discounted_items",
+        "get_all_user_favorites",
+        "fetch_orders",
+        "get_typical_order",
+        "search_recipes_by_vector_similarity",
+        "get_recipe_detail",
+        "get_user_shopping_lists_preview",
+        "get_user_shopping_list_detail",
         # komunitní server
-        "search_products", "get_cart_content", "add_to_cart", "remove_from_cart",
-        "get_delivery_slots", "get_delivery_info", "get_frequent_items", "get_meal_suggestions",
-        "get_order_history", "get_shopping_list",
+        "search_products",
+        "get_cart_content",
+        "add_to_cart",
+        "remove_from_cart",
+        "get_delivery_slots",
+        "get_delivery_info",
+        "get_frequent_items",
+        "get_meal_suggestions",
+        "get_order_history",
+        "get_shopping_list",
     }
 )
 BLOCKED_TOOLS: frozenset[str] = frozenset(
-    {"cancel_order", "remove_order_items", "submit_claim", "create_scheduled_task", "get_url_content", "clear_cart"}
+    {
+        "cancel_order",
+        "remove_order_items",
+        "submit_claim",
+        "create_scheduled_task",
+        "get_url_content",
+        "clear_cart",
+    }
 )
 # Nástroje, které agent dostane navíc "průchodem" (jen čtení a plnění košíku).
 PASSTHROUGH_TOOLS: frozenset[str] = frozenset(
     {
-        "get_discounted_items", "search_recipes_by_vector_similarity", "get_recipe_detail",
-        "get_all_user_favorites", "get_typical_order", "fetch_orders", "get_product_details",
-        "get_frequent_items", "get_meal_suggestions", "get_order_history",
+        "get_discounted_items",
+        "search_recipes_by_vector_similarity",
+        "get_recipe_detail",
+        "get_all_user_favorites",
+        "get_typical_order",
+        "fetch_orders",
+        "get_product_details",
+        "get_frequent_items",
+        "get_meal_suggestions",
+        "get_order_history",
     }
 )
 
@@ -101,7 +134,7 @@ class _Connection:
                 self._client = client
                 self._ready.set()
                 await self._stop.wait()
-        except BaseException as exc:  # noqa: BLE001
+        except BaseException as exc:
             self._error = exc
             self._ready.set()
         finally:
@@ -204,9 +237,13 @@ class RohlikMcpProvider:
     async def add_to_cart(self, items: list[tuple[str, int]]) -> Cart:
         await self._ensure_dialect()
         if self.dialect == "official":
-            await self.call("add_items_to_cart", {"items": [{"productId": _num(p), "quantity": q} for p, q in items]})
+            await self.call(
+                "add_items_to_cart", {"items": [{"productId": _num(p), "quantity": q} for p, q in items]}
+            )
         else:
-            await self.call("add_to_cart", {"products": [{"product_id": _num(p), "quantity": q} for p, q in items]})
+            await self.call(
+                "add_to_cart", {"products": [{"product_id": _num(p), "quantity": q} for p, q in items]}
+            )
         return await self.cart()
 
     async def remove_from_cart(self, product_id: str) -> Cart:

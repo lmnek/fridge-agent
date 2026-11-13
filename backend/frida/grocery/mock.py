@@ -20,7 +20,9 @@ def _products() -> dict[str, GroceryProduct]:
     out: dict[str, GroceryProduct] = {}
     for i, spec in enumerate(CATALOG):
         on_sale = i % 4 == 0
-        price = round(spec.typical_price_czk * (0.8 if on_sale else 1.0), 1) if spec.typical_price_czk else 29.9
+        price = (
+            round(spec.typical_price_czk * (0.8 if on_sale else 1.0), 1) if spec.typical_price_czk else 29.9
+        )
         out[f"demo-{spec.key}"] = GroceryProduct(
             id=f"demo-{spec.key}",
             name=f"{spec.name} (demo)",
@@ -80,7 +82,7 @@ class DemoGroceryProvider:
             lines=lines,
             total_czk=total,
             delivery_note="Demo košík. Po připojení Rohlík MCP se plní skutečný košík.",
-            checkout_url=None,
+            checkout_url="https://www.rohlik.cz/objednavka/prehled-kosiku" if lines else None,
         )
 
     async def checkout_link(self) -> str | None:
@@ -93,7 +95,10 @@ class DemoGroceryProvider:
             start = now + timedelta(hours=i)
             slots.append(
                 DeliverySlot(
-                    id=f"slot-{i}", start=start, end=start + timedelta(hours=1), price_czk=0 if i > 6 else 39,
+                    id=f"slot-{i}",
+                    start=start,
+                    end=start + timedelta(hours=1),
+                    price_czk=0 if i > 6 else 39,
                     available=i != 4,
                 )
             )

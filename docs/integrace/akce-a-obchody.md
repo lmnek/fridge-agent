@@ -65,7 +65,7 @@ Wolt i Foodora mají neoficiální JSON endpointy (výpis podniků podle polohy 
 2. co jde uvařit s dokoupením pár věcí (s akcemi nebo košíkem v Rohlíku),
 3. **odkazy do Woltu a Foodory** na vyhledávání dané kuchyně u tebe (deep link, žádné stahování dat).
 
-Rozhraní `DeliveryProvider` je připravené, takže kdybys získal partnerský přístup, doplní se jen adaptér.
+Rozhraní `DeliveryProvider` je připravené, takže kdyby se podařilo získat partnerský přístup, doplní se jen adaptér.
 
 ## Recepty
 

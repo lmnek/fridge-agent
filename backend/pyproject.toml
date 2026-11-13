@@ -52,4 +52,5 @@ target-version = "py312"
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "B", "UP", "ASYNC", "RUF"]
-ignore = ["RUF001", "RUF002", "RUF003"]
+# E501: délku řádků hlídá formátovač, dlouhé české texty v promptech se nelámou
+ignore = ["RUF001", "RUF002", "RUF003", "E501"]

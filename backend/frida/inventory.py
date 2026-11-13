@@ -94,12 +94,18 @@ class InventoryService:
             status = "expired"
         elif days_left is not None and days_left <= EXPIRING_DAYS:
             status = "expiring"
-        elif (item.min_quantity and item.quantity <= item.min_quantity) or (
-            item.fill_level is not None and item.fill_level <= LOW_FILL
+        predicted = self._predict_out(item)
+        if status == "ok" and (
+            # méně kusů/balení než minimum (poslední celé balení ještě není "dochází")
+            (item.min_quantity and item.quantity < item.min_quantity)
+            or (item.fill_level is not None and item.fill_level <= LOW_FILL)
+            # základní potravina, která podle spotřeby dojde do zítřka
+            or (item.staple and predicted is not None and predicted <= today + timedelta(days=1))
         ):
             status = "low"
-        predicted = self._predict_out(item)
-        return item.model_copy(update={"status": status, "days_left": days_left, "predicted_out_on": predicted})
+        return item.model_copy(
+            update={"status": status, "days_left": days_left, "predicted_out_on": predicted}
+        )
 
     def _save(self, item: InventoryItem) -> InventoryItem:
         item = self._with_status(item)
@@ -121,7 +127,9 @@ class InventoryService:
         if not include_out:
             items = [i for i in items if i.status != "out"]
         order = {"expired": 0, "expiring": 1, "out": 2, "low": 3, "ok": 4}
-        return sorted(items, key=lambda i: (order[i.status], i.days_left if i.days_left is not None else 999, i.name))
+        return sorted(
+            items, key=lambda i: (order[i.status], i.days_left if i.days_left is not None else 999, i.name)
+        )
 
     def get(self, item_id: str) -> InventoryItem | None:
         item = self.store.get(ITEMS, item_id, InventoryItem)
@@ -143,7 +151,9 @@ class InventoryService:
         for i in items:
             counts[i.status] += 1
         value = sum((i.price_czk or 0) * (i.fill_level if i.fill_level is not None else 1) for i in present)
-        fresh_penalty = counts["expired"] * 18 + counts["expiring"] * 7 + counts["low"] * 3 + counts["out"] * 2
+        fresh_penalty = (
+            counts["expired"] * 18 + counts["expiring"] * 7 + counts["low"] * 3 + counts["out"] * 2
+        )
         freshness = max(0, min(100, 100 - fresh_penalty)) if items else 100
         month_start = self.today().replace(day=1)
         waste = sum(
@@ -163,7 +173,9 @@ class InventoryService:
         )
 
     # ------------------------------------------------------------------ zápis
-    def create(self, data: InventoryItemCreate, *, source: str = "manual", emit: bool = True) -> InventoryItem:
+    def create(
+        self, data: InventoryItemCreate, *, source: str = "manual", emit: bool = True
+    ) -> InventoryItem:
         spec = find_spec(data.name)
         now = self.clock()
         expires = data.expires_on or estimate_expiry(spec, added=self.today())
@@ -182,7 +194,9 @@ class InventoryService:
             expiry_source="manual" if data.expires_on else ("estimated" if expires else None),
             added_at=now,
             last_seen_at=now,
-            price_czk=data.price_czk if data.price_czk is not None else (spec.typical_price_czk if spec else None),
+            price_czk=data.price_czk
+            if data.price_czk is not None
+            else (spec.typical_price_czk if spec else None),
             barcode=data.barcode,
         )
         item = self._save(item)
@@ -240,7 +254,12 @@ class InventoryService:
             self.store.put(
                 WASTE,
                 f"w_{uuid.uuid4().hex[:10]}",
-                {"canonical": item.canonical, "name": item.name, "czk": round(czk, 1), "ts": self.clock().isoformat()},
+                {
+                    "canonical": item.canonical,
+                    "name": item.name,
+                    "czk": round(czk, 1),
+                    "ts": self.clock().isoformat(),
+                },
                 ts=self.clock(),
             )
         if item.staple:
@@ -283,7 +302,9 @@ class InventoryService:
                 }
             )
         )
-        self.events.emit("item_added", f"{item.emoji} Doplněno: {item.name}", severity="success", item_id=item.id)
+        self.events.emit(
+            "item_added", f"{item.emoji} Doplněno: {item.name}", severity="success", item_id=item.id
+        )
         self.broadcast()
         return item
 
@@ -291,7 +312,9 @@ class InventoryService:
     def apply_observation(self, obs: Observation) -> InventoryDiff:
         """Spáruje detekce s inventářem jedné kamery a vrátí, co přibylo/ubylo/změnilo se."""
         current = [
-            i for i in self.store.list(ITEMS, InventoryItem) if i.camera_id == obs.camera_id and i.quantity > 0
+            i
+            for i in self.store.list(ITEMS, InventoryItem)
+            if i.camera_id == obs.camera_id and i.quantity > 0
         ]
         detections = [d for d in obs.detections if d.confidence >= MIN_DETECTION_CONFIDENCE]
         diff = InventoryDiff()
@@ -339,10 +362,16 @@ class InventoryService:
             self.broadcast()
         return diff
 
-    def _update_from_detection(self, item: InventoryItem, det: Detection, now: datetime) -> InventoryItem | None:
+    def _update_from_detection(
+        self, item: InventoryItem, det: Detection, now: datetime
+    ) -> InventoryItem | None:
         updates: dict[str, Any] = {"last_seen_at": now, "bbox": det.bbox, "confidence": det.confidence}
         changed = False
-        if det.fill_level is not None and item.fill_level is not None and abs(det.fill_level - item.fill_level) >= 0.15:
+        if (
+            det.fill_level is not None
+            and item.fill_level is not None
+            and abs(det.fill_level - item.fill_level) >= 0.15
+        ):
             if det.fill_level < item.fill_level:
                 self._record_consumption(item, item.quantity * (item.fill_level - det.fill_level))
             updates["fill_level"] = det.fill_level
@@ -374,7 +403,9 @@ class InventoryService:
     def _add_from_detection(self, det: Detection, obs: Observation) -> InventoryItem:
         spec = BY_KEY.get(det.canonical) or find_spec(det.label)
         expires = det.expires_on or estimate_expiry(spec, added=self.today())
-        source = "ocr" if det.expires_on and det.expiry_text else ("vision" if det.expires_on else "estimated")
+        source = (
+            "ocr" if det.expires_on and det.expiry_text else ("vision" if det.expires_on else "estimated")
+        )
         item = InventoryItem(
             id=f"itm_{uuid.uuid4().hex[:10]}",
             name=spec.name if spec else det.label.capitalize(),
@@ -399,7 +430,9 @@ class InventoryService:
         # Základní potravina, která došla, se jen "doplní" (zachová se historie).
         for existing in self.store.list(ITEMS, InventoryItem):
             if existing.canonical == item.canonical and existing.quantity <= 0:
-                item = item.model_copy(update={"id": existing.id, "min_quantity": existing.min_quantity, "staple": True})
+                item = item.model_copy(
+                    update={"id": existing.id, "min_quantity": existing.min_quantity, "staple": True}
+                )
                 break
         item = self._save(item)
         self.events.emit(
@@ -445,7 +478,11 @@ class InventoryService:
                 data={"canonical": item.canonical},
             )
         elif item.status == "expiring" and self._alert_once("expiring", item):
-            when = "dnes" if item.days_left == 0 else ("zítra" if item.days_left == 1 else f"za {item.days_left} dny")
+            when = (
+                "dnes"
+                if item.days_left == 0
+                else ("zítra" if item.days_left == 1 else f"za {item.days_left} dny")
+            )
             self.events.emit(
                 "item_expiring",
                 f"{item.emoji} {item.name} expiruje {when}",
@@ -552,6 +589,8 @@ class InventoryService:
         cursor = self.today().replace(day=1)
         for _ in range(months):
             key = cursor.strftime("%Y-%m")
-            out.append({"month": key, "czk": round(buckets[key]["czk"], 1), "items": int(buckets[key]["items"])})
+            out.append(
+                {"month": key, "czk": round(buckets[key]["czk"], 1), "items": int(buckets[key]["items"])}
+            )
             cursor = (cursor - timedelta(days=1)).replace(day=1)
         return list(reversed(out))

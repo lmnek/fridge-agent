@@ -69,7 +69,10 @@ class Settings(BaseSettings):
     # --- vision -------------------------------------------------------------
     vision_provider: str = Field(
         default="auto",
-        description="auto | claude | local | cascade | mock. auto = cascade, když je klíč, jinak mock.",
+        description=(
+            "auto | claude | local | cascade | mock. auto = Claude u skutečných kamer s klíčem, "
+            "u demo kamery mock (zná scénu), Claude na demo scéně zapneš hodnotou claude."
+        ),
     )
     local_vision_device: str = "auto"  # auto | cpu | mps | cuda
     local_vision_detector: str = "google/owlv2-base-patch16-ensemble"
@@ -92,7 +95,10 @@ class Settings(BaseSettings):
     overpass_url: str = "https://overpass-api.de/api/interpreter"
     nominatim_url: str = "https://nominatim.openstreetmap.org"
     geo_live: bool = False
-    delivery_live: bool = False  # neoficiální API rozvozů (Wolt) - vypnuto, viz docs
+    delivery_live: bool = (
+        False  # True = bez demo podniků, jen odkazy do Woltu a foodory (nescrapujeme, viz docs)
+    )
+    barcode_live: bool = False  # dohledávat EAN v Open Food Facts
 
     # --- hlas a notifikace (Twilio) -----------------------------------------
     twilio_account_sid: str = ""
@@ -106,6 +112,10 @@ class Settings(BaseSettings):
     calls_per_day: int = 8
     quiet_hours_start: int = 22  # mezi 22:00 a 7:00 se nevolá, jen tichá notifikace
     quiet_hours_end: int = 7
+    call_when_staples_out: int = 2  # od kolika došlých základních potravin Frida zavolá (max 1x denně)
+    notify_sms: bool = False
+    notify_whatsapp: bool = False
+    digest_hour: int = 8  # ranní souhrn
     voice_language: str = "cs-CZ"
     # Výchozí hodnoty Twilia pro cs-CZ (docs/integrace/hlas-twilio.md). Amazon Polly česky neumí.
     voice_tts_provider: str = "ElevenLabs"
@@ -136,7 +146,7 @@ class Settings(BaseSettings):
     def resolved_vision_provider(self) -> str:
         if self.vision_provider != "auto":
             return self.vision_provider
-        return "claude" if self.has_anthropic else "mock"
+        return "claude" if self.has_anthropic and self.has_reolink else "mock"
 
     @property
     def sqlite_url(self) -> str:
@@ -162,6 +172,7 @@ class Settings(BaseSettings):
             "deals": "live" if self.deals_live else "demo",
             "geo": "live" if self.geo_live else "demo",
             "delivery": "live" if self.delivery_live else "demo",
+            "barcode": "live" if self.barcode_live else "demo",
         }
 
 

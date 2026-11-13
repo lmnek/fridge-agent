@@ -27,9 +27,20 @@ log = logging.getLogger(__name__)
 
 STORES_CACHE = "stores_cache"
 KNOWN_CHAINS = {
-    "albert": "Albert", "lidl": "Lidl", "billa": "Billa", "kaufland": "Kaufland", "penny": "Penny",
-    "penny market": "Penny", "tesco": "Tesco", "globus": "Globus", "coop": "Coop", "žabka": "Žabka",
-    "zabka": "Žabka", "norma": "Norma", "flop": "Flop", "hruška": "Hruška",
+    "albert": "Albert",
+    "lidl": "Lidl",
+    "billa": "Billa",
+    "kaufland": "Kaufland",
+    "penny": "Penny",
+    "penny market": "Penny",
+    "tesco": "Tesco",
+    "globus": "Globus",
+    "coop": "Coop",
+    "žabka": "Žabka",
+    "zabka": "Žabka",
+    "norma": "Norma",
+    "flop": "Flop",
+    "hruška": "Hruška",
 }
 
 
@@ -41,7 +52,26 @@ def haversine_m(a_lat: float, a_lon: float, b_lat: float, b_lon: float) -> int:
     return int(2 * r * math.asin(math.sqrt(h)))
 
 
+WIKIDATA_CHAINS = {
+    "Q9144241": "Albert",
+    "Q42969493": "Billa",
+    "Q151954": "Lidl",
+    "Q685967": "Kaufland",
+    "Q284688": "Penny",
+    "Q487494": "Tesco",
+    "Q98456772": "Tesco",
+    "Q25172225": "Tesco",
+    "Q457503": "Globus",
+    "Q52851660": "Coop",
+    "Q450180": "Norma",
+    "Q133445159": "Žabka",
+}
+
+
 def chain_of(tags: dict) -> str | None:
+    """Řetězec podle brand:wikidata, pak brand, pak názvu (15 z 38 obchodů u nám. Míru nemá brand)."""
+    if tags.get("brand:wikidata") in WIKIDATA_CHAINS:
+        return WIKIDATA_CHAINS[tags["brand:wikidata"]]
     for key in ("brand", "name", "operator"):
         value = (tags.get(key) or "").lower()
         for needle, chain in KNOWN_CHAINS.items():
@@ -66,7 +96,9 @@ class GeoService:
             stores = await self._overpass_cached(point, radius)
         for s in stores:
             s.distance_m = haversine_m(point.lat, point.lon, s.lat, s.lon)
-        return sorted([s for s in stores if (s.distance_m or 0) <= radius * 1.5], key=lambda s: s.distance_m or 0)
+        return sorted(
+            [s for s in stores if (s.distance_m or 0) <= radius * 1.5], key=lambda s: s.distance_m or 0
+        )
 
     def nearest_by_chain(self, stores: list[Store]) -> dict[str, Store]:
         out: dict[str, Store] = {}
@@ -81,13 +113,15 @@ class GeoService:
             return [Store.model_validate(s) for s in cached["stores"]]
         try:
             stores = await self._overpass(point, radius)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             log.warning("overpass: %s", exc)
             if cached:
                 return [Store.model_validate(s) for s in cached["stores"]]
             return self._demo_stores(point)
         self.store.put(
-            STORES_CACHE, key, {"at": utcnow().timestamp(), "stores": [s.model_dump(mode="json") for s in stores]}
+            STORES_CACHE,
+            key,
+            {"at": utcnow().timestamp(), "stores": [s.model_dump(mode="json") for s in stores]},
         )
         return stores
 
@@ -99,7 +133,9 @@ class GeoService:
         );
         out center tags;
         """
-        async with httpx.AsyncClient(timeout=30, headers={"User-Agent": self.settings.http_user_agent}) as http:
+        async with httpx.AsyncClient(
+            timeout=30, headers={"User-Agent": self.settings.http_user_agent}
+        ) as http:
             r = await http.post(self.settings.overpass_url, data={"data": query})
             r.raise_for_status()
             data = r.json()
@@ -130,7 +166,12 @@ class GeoService:
     def _demo_stores(self, point: GeoPoint) -> list[Store]:
         stores = []
         for chain in self.settings.favorite_chains:
-            seed = int(hashlib.sha256(f"{chain}:{round(point.lat, 2)}:{round(point.lon, 2)}".encode()).hexdigest()[:8], 16)
+            seed = int(
+                hashlib.sha256(f"{chain}:{round(point.lat, 2)}:{round(point.lon, 2)}".encode()).hexdigest()[
+                    :8
+                ],
+                16,
+            )
             for n in range(1 + seed % 2):
                 angle = ((seed >> (n * 3)) % 360) * math.pi / 180
                 dist = 250 + ((seed >> (n * 5)) % 1900)
@@ -160,15 +201,22 @@ class GeoService:
                 await asyncio.sleep(wait)
             self._last_nominatim = time.monotonic()
             try:
-                async with httpx.AsyncClient(timeout=15, headers={"User-Agent": self.settings.http_user_agent}) as http:
+                async with httpx.AsyncClient(
+                    timeout=15, headers={"User-Agent": self.settings.http_user_agent}
+                ) as http:
                     r = await http.get(
                         f"{self.settings.nominatim_url}/reverse",
-                        params={"lat": point.lat, "lon": point.lon, "format": "jsonv2", "zoom": 16,
-                                "accept-language": "cs"},
+                        params={
+                            "lat": point.lat,
+                            "lon": point.lon,
+                            "format": "jsonv2",
+                            "zoom": 16,
+                            "accept-language": "cs",
+                        },
                     )
                     r.raise_for_status()
                     addr = r.json().get("address", {})
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 log.warning("nominatim: %s", exc)
                 return self.settings.home_label
         district = addr.get("city_district") or addr.get("suburb") or addr.get("quarter")

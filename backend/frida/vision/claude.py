@@ -127,7 +127,10 @@ class ClaudeVisionProvider:
                 {
                     "role": "user",
                     "content": [
-                        {"type": "image", "source": {"type": "base64", "media_type": "image/jpeg", "data": data}},
+                        {
+                            "type": "image",
+                            "source": {"type": "base64", "media_type": "image/jpeg", "data": data},
+                        },
                         {"type": "text", "text": prompt},
                     ],
                 }
@@ -148,8 +151,14 @@ class ClaudeVisionProvider:
             out.append(
                 Detection(
                     label=it.label,
-                    canonical=spec.key if spec else it.catalog_key if it.catalog_key != "other" else it.label.lower(),
-                    category=(spec.category if spec else (it.category if it.category in CATEGORIES else "other")),  # type: ignore[arg-type]
+                    canonical=spec.key
+                    if spec
+                    else it.catalog_key
+                    if it.catalog_key != "other"
+                    else it.label.lower(),
+                    category=(
+                        spec.category if spec else (it.category if it.category in CATEGORIES else "other")
+                    ),  # type: ignore[arg-type]
                     bbox=BBox(x=_clamp(it.box_x), y=_clamp(it.box_y), w=_clamp(it.box_w), h=_clamp(it.box_h)),
                     confidence=_clamp(it.confidence),
                     quantity=it.count,
@@ -182,8 +191,14 @@ class ClaudeVisionProvider:
                 {
                     "role": "user",
                     "content": [
-                        {"type": "image", "source": {"type": "base64", "media_type": "image/jpeg", "data": data}},
-                        {"type": "text", "text": f"Dnes je {today.isoformat()}. Co je to a do kdy to vydrží?"},
+                        {
+                            "type": "image",
+                            "source": {"type": "base64", "media_type": "image/jpeg", "data": data},
+                        },
+                        {
+                            "type": "text",
+                            "text": f"Dnes je {today.isoformat()}. Co je to a do kdy to vydrží?",
+                        },
                     ],
                 }
             ],
@@ -191,7 +206,13 @@ class ClaudeVisionProvider:
         )
         reading = response.parsed_output
         if response.stop_reason == "refusal" or reading is None:
-            return {"product": None, "canonical": None, "expires_on": None, "expiry_text": None, "confidence": 0}
+            return {
+                "product": None,
+                "canonical": None,
+                "expires_on": None,
+                "expiry_text": None,
+                "confidence": 0,
+            }
         parsed = parse_expiry(reading.expiry_text or reading.expiry_date or "", today=today)
         spec = BY_KEY.get(reading.catalog_key) or find_spec(reading.product)
         return {

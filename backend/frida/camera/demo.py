@@ -74,7 +74,12 @@ class SceneObject:
 def _layout(camera: str) -> list[Slot]:
     slots: list[Slot] = []
     if camera == "cam0":
-        rows = (("top", 250, 150, 5), ("middle", 470, 190, 5), ("bottom", 650, 150, 4), ("drawer", 785, 110, 5))
+        rows = (
+            ("top", 250, 150, 5),
+            ("middle", 470, 190, 5),
+            ("bottom", 650, 150, 4),
+            ("drawer", 785, 110, 5),
+        )
         for shelf, y, h, n in rows:
             margin = 170 if shelf != "drawer" else 200
             span = W - 2 * margin
@@ -289,12 +294,19 @@ class DemoWorld:
         d.rounded_rectangle(s(330, 18, W - 330, 34), radius=8 * SS, fill=(255, 255, 255, 255))
         # skleněné police
         for y in (250, 470, 650):
-            d.polygon([s(150, y), s(W - 150, y), s(W - 120, y + 18), s(120, y + 18)], fill=(205, 232, 240, 170))
+            d.polygon(
+                [s(150, y), s(W - 150, y), s(W - 120, y + 18), s(120, y + 18)], fill=(205, 232, 240, 170)
+            )
             d.line([s(120, y + 18), s(W - 120, y + 18)], fill=(255, 255, 255, 230), width=3 * SS)
             d.line([s(150, y), s(W - 150, y)], fill=(160, 190, 205, 200), width=2 * SS)
         # šuplík na zeleninu
-        d.rounded_rectangle(s(150, 668, W - 150, 798), radius=18 * SS, fill=(220, 233, 240, 120),
-                            outline=(170, 190, 205, 220), width=3 * SS)
+        d.rounded_rectangle(
+            s(150, 668, W - 150, 798),
+            radius=18 * SS,
+            fill=(220, 233, 240, 120),
+            outline=(170, 190, 205, 220),
+            width=3 * SS,
+        )
 
     def _draw_door(self, img: Image.Image, d: ImageDraw.ImageDraw) -> None:
         s = self._s
@@ -302,7 +314,9 @@ class DemoWorld:
             t = i / H
             c = (int(240 - 25 * t), int(243 - 22 * t), int(247 - 18 * t))
             d.line([s(0, i), s(W, i)], fill=c, width=SS)
-        d.rounded_rectangle(s(60, 40, W - 60, H - 20), radius=40 * SS, outline=(200, 210, 220, 255), width=6 * SS)
+        d.rounded_rectangle(
+            s(60, 40, W - 60, H - 20), radius=40 * SS, outline=(200, 210, 220, 255), width=6 * SS
+        )
         glow = Image.new("RGBA", img.size, (255, 255, 255, 0))
         gd = ImageDraw.Draw(glow)
         gd.ellipse(s(-200, -200, 500, 400), fill=(255, 255, 255, 140))
@@ -312,8 +326,13 @@ class DemoWorld:
     def _draw_door_bins_front(self, d: ImageDraw.ImageDraw) -> None:
         s = self._s
         for y in (300, 525, 760):
-            d.rounded_rectangle(s(100, y - 60, W - 100, y + 12), radius=14 * SS, fill=(214, 236, 246, 150),
-                                outline=(170, 196, 212, 230), width=3 * SS)
+            d.rounded_rectangle(
+                s(100, y - 60, W - 100, y + 12),
+                radius=14 * SS,
+                fill=(214, 236, 246, 150),
+                outline=(170, 196, 212, 230),
+                width=3 * SS,
+            )
             d.line([s(120, y - 52), s(W - 120, y - 52)], fill=(255, 255, 255, 200), width=2 * SS)
 
     def _draw_object(self, d: ImageDraw.ImageDraw, obj: SceneObject, slot: Slot) -> tuple[int, int, int, int]:
@@ -324,9 +343,18 @@ class DemoWorld:
         base = slot.y
         shape = spec.shape
         dims = {
-            "bottle": (64, slot.h), "carton": (92, slot.h - 10), "jar": (100, 92), "tub": (120, 70),
-            "pack": (170, 70), "round": (110, 96), "bunch": (150, 80), "eggs": (190, 64),
-            "can": (70, 118), "bag": (170, 120), "block": (130, 56), "box": (150, 86),
+            "bottle": (64, slot.h),
+            "carton": (92, slot.h - 10),
+            "jar": (100, 92),
+            "tub": (120, 70),
+            "pack": (170, 70),
+            "round": (110, 96),
+            "bunch": (150, 80),
+            "eggs": (190, 64),
+            "can": (70, 118),
+            "bag": (170, 120),
+            "block": (130, 56),
+            "box": (150, 86),
         }
         w, h = dims.get(shape, (120, 90))
         w = min(w, slot.w - 16)
@@ -338,15 +366,25 @@ class DemoWorld:
         d.ellipse(s(x0 + 6, y1 - 8, x1 + 10, y1 + 6), fill=(40, 60, 80, 60))
         if shape == "bottle":
             neck = w // 3
-            d.rounded_rectangle(s(x0, y0 + 36, x1, y1), radius=18 * SS, fill=(220, 238, 248, 170),
-                                outline=(150, 175, 195, 255), width=2 * SS)
+            d.rounded_rectangle(
+                s(x0, y0 + 36, x1, y1),
+                radius=18 * SS,
+                fill=(220, 238, 248, 170),
+                outline=(150, 175, 195, 255),
+                width=2 * SS,
+            )
             level = obj.fill_level if obj.fill_level is not None else 1.0
             ly = y1 - int((y1 - y0 - 40) * level)
             d.rounded_rectangle(s(x0 + 4, ly, x1 - 4, y1 - 4), radius=14 * SS, fill=_rgba(col, 235))
-            d.rectangle(s(cx - neck // 2, y0 + 8, cx + neck // 2, y0 + 40), fill=(220, 238, 248, 200),
-                        outline=(150, 175, 195, 255), width=2 * SS)
-            d.rounded_rectangle(s(cx - neck // 2 - 2, y0, cx + neck // 2 + 2, y0 + 12), radius=3 * SS,
-                                fill=_rgba("#2c3e50"))
+            d.rectangle(
+                s(cx - neck // 2, y0 + 8, cx + neck // 2, y0 + 40),
+                fill=(220, 238, 248, 200),
+                outline=(150, 175, 195, 255),
+                width=2 * SS,
+            )
+            d.rounded_rectangle(
+                s(cx - neck // 2 - 2, y0, cx + neck // 2 + 2, y0 + 12), radius=3 * SS, fill=_rgba("#2c3e50")
+            )
             label_y = y0 + (y1 - y0) // 2
         elif shape == "carton":
             d.polygon([s(x0, y0 + 26), s(cx, y0), s(x1, y0 + 26)], fill=_rgba(col), outline=_rgba("#b0bec5"))
@@ -358,18 +396,31 @@ class DemoWorld:
                 d.rectangle(s(x1 - 10, y1 - 8 - bar, x1 - 4, y1 - 8), fill=_rgba("#5dade2", 200))
             label_y = y0 + 85
         elif shape == "jar":
-            d.rounded_rectangle(s(x0, y0 + 14, x1, y1), radius=16 * SS, fill=_rgba(col, 240),
-                                outline=_rgba("#7f8c8d"), width=2 * SS)
+            d.rounded_rectangle(
+                s(x0, y0 + 14, x1, y1),
+                radius=16 * SS,
+                fill=_rgba(col, 240),
+                outline=_rgba("#7f8c8d"),
+                width=2 * SS,
+            )
             d.rounded_rectangle(s(x0 + 6, y0, x1 - 6, y0 + 20), radius=6 * SS, fill=_rgba("#d35400"))
             label_y = y0 + (y1 - y0) // 2 + 6
         elif shape == "tub":
-            d.polygon([s(x0, y0 + 12), s(x1, y0 + 12), s(x1 - 10, y1), s(x0 + 10, y1)], fill=_rgba(col),
-                      outline=_rgba("#95a5a6"))
+            d.polygon(
+                [s(x0, y0 + 12), s(x1, y0 + 12), s(x1 - 10, y1), s(x0 + 10, y1)],
+                fill=_rgba(col),
+                outline=_rgba("#95a5a6"),
+            )
             d.rounded_rectangle(s(x0 - 4, y0, x1 + 4, y0 + 14), radius=5 * SS, fill=_rgba("#3498db"))
             label_y = y0 + (y1 - y0) // 2 + 6
         elif shape == "eggs":
-            d.rounded_rectangle(s(x0, y0 + 16, x1, y1), radius=10 * SS, fill=_rgba("#c8b08a"),
-                                outline=_rgba("#8d7552"), width=2 * SS)
+            d.rounded_rectangle(
+                s(x0, y0 + 16, x1, y1),
+                radius=10 * SS,
+                fill=_rgba("#c8b08a"),
+                outline=_rgba("#8d7552"),
+                width=2 * SS,
+            )
             count = int(obj.quantity or 6)
             for i in range(min(count, 6)):
                 ex = x0 + 18 + i * (w - 36) // 5
@@ -388,8 +439,11 @@ class DemoWorld:
         elif shape == "bunch":
             for i in range(5):
                 ox = x0 + 20 + i * (w - 40) // 4
-                d.ellipse(s(ox - 26, y0 + 10 + (i % 2) * 14, ox + 26, y1), fill=_rgba(col),
-                          outline=_rgba("#00000030"))
+                d.ellipse(
+                    s(ox - 26, y0 + 10 + (i % 2) * 14, ox + 26, y1),
+                    fill=_rgba(col),
+                    outline=_rgba("#00000030"),
+                )
             label_y = None
         elif shape == "can":
             d.rounded_rectangle(s(x0, y0, x1, y1), radius=10 * SS, fill=_rgba(col), outline=_rgba("#7d6608"))
@@ -399,10 +453,17 @@ class DemoWorld:
                 d.rounded_rectangle(s(x0 + 20, y0 - 8, x1 + 20, y1 - 8), radius=10 * SS, fill=_rgba(col, 160))
         else:  # pack, bag, block, box
             radius = 22 if shape == "bag" else 10
-            d.rounded_rectangle(s(x0, y0, x1, y1), radius=radius * SS, fill=_rgba(col), outline=_rgba("#00000040"),
-                                width=2 * SS)
+            d.rounded_rectangle(
+                s(x0, y0, x1, y1),
+                radius=radius * SS,
+                fill=_rgba(col),
+                outline=_rgba("#00000040"),
+                width=2 * SS,
+            )
             if shape == "pack":
-                d.rounded_rectangle(s(x0 + 14, y0 + 12, x1 - 14, y1 - 12), radius=8 * SS, fill=(255, 255, 255, 80))
+                d.rounded_rectangle(
+                    s(x0 + 14, y0 + 12, x1 - 14, y1 - 12), radius=8 * SS, fill=(255, 255, 255, 80)
+                )
             if shape == "box":
                 d.rectangle(s(x0, y0, x1, y0 + 16), fill=_rgba("#ffffff", 110))
             label_y = y0 + (y1 - y0) // 2
@@ -411,9 +472,14 @@ class DemoWorld:
             font = _font(13 * SS, bold=True)
             tw = d.textlength(text, font=font)
             d.rounded_rectangle(
-                (int(cx * SS - tw / 2 - 8 * SS), int((label_y - 11) * SS), int(cx * SS + tw / 2 + 8 * SS),
-                 int((label_y + 11) * SS)),
-                radius=5 * SS, fill=(255, 255, 255, 215),
+                (
+                    int(cx * SS - tw / 2 - 8 * SS),
+                    int((label_y - 11) * SS),
+                    int(cx * SS + tw / 2 + 8 * SS),
+                    int((label_y + 11) * SS),
+                ),
+                radius=5 * SS,
+                fill=(255, 255, 255, 215),
             )
             d.text((int(cx * SS - tw / 2), int((label_y - 9) * SS)), text, font=font, fill=dark)
         return x0, y0, x1, y1
@@ -427,8 +493,10 @@ class DemoWorld:
             canonical=obj.spec.key,
             category=obj.spec.category,
             bbox=BBox(
-                x=max(0.0, x0 / W + jitter), y=max(0.0, y0 / H + jitter),
-                w=min(1.0, (x1 - x0) / W), h=min(1.0, (y1 - y0) / H),
+                x=max(0.0, x0 / W + jitter),
+                y=max(0.0, y0 / H + jitter),
+                w=min(1.0, (x1 - x0) / W),
+                h=min(1.0, (y1 - y0) / H),
             ),
             confidence=conf,
             quantity=obj.quantity,
