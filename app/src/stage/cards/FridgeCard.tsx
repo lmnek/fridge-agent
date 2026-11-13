@@ -2,7 +2,7 @@ import { motion } from "motion/react";
 import { useEffect, useState } from "react";
 import type { BusEvent } from "../bus";
 import { fridgeAfterB } from "./fixtures"; // HACK(demo): last-resort contents if no inventory event and no API
-import { CardFrame, Tag, latest, rise, stagger } from "./ui";
+import { CardFrame, latest, rise, stagger } from "./ui";
 import "./FridgeCard.css";
 
 type Item = { id?: string; name: string; qty?: string; expires?: string | null; note?: string | null };
@@ -54,7 +54,14 @@ export default function FridgeCard({ events }: { events: BusEvent[] }) {
   const vision = latest(events, "vision", (e) => e.phase === "done");
   const removed: string[] = vision?.removed ?? [];
 
-  if (!items) return <CardFrame icon="C1" kicker="Fridge check" title="Looking inside" live />;
+  if (!items)
+    return (
+      <CardFrame icon="C1" kicker="Fridge check" title="Looking inside" live>
+        <div className="ck-fridge-wait" aria-hidden>
+          {[0, 1, 2, 3, 4, 5].map((i) => <span key={i} />)}
+        </div>
+      </CardFrame>
+    );
 
   const has = (key: string) => items.some((i) => i.name.toLowerCase().includes(key));
   const out: string[] = STAPLES.filter((s) => !has(s.key)).map((s) => s.name);
@@ -67,8 +74,9 @@ export default function FridgeCard({ events }: { events: BusEvent[] }) {
   const count = out.length;
   const title = count ? `${count === 1 ? "One thing" : count === 2 ? "Two things" : `${count} things`} ran out` : "Nothing ran out";
 
+  // The eye lands on the red block (what ran out), then reads down the fridge, soonest expiry first.
   return (
-    <CardFrame icon="C1" kicker="Fridge check" title={title} live={false} aside={`${items.length} items inside`}>
+    <CardFrame icon="C1" kicker="Fridge check" title={title} live={false}>
       <motion.div className="ck-fridge-body" variants={stagger} initial="hidden" animate="show">
         {count > 0 && (
           <div className="ck-fridge-out">
@@ -76,20 +84,23 @@ export default function FridgeCard({ events }: { events: BusEvent[] }) {
               <motion.div key={n} variants={rise} className="ck-fridge-outrow">
                 <span className="ck-fridge-x"><Cross /></span>
                 <span className="ck-fridge-outname">{n}</span>
-                <Tag tone="gone">ran out</Tag>
+                <span className="ck-fridge-none">none left</span>
               </motion.div>
             ))}
           </div>
         )}
-        <p className="ck-fridge-label">Still inside</p>
+        <motion.div variants={rise} className="ck-fridge-label">
+          <span>{items.length} {items.length === 1 ? "item" : "items"} still inside</span>
+          <span>Use by</span>
+        </motion.div>
         <ul className="ck-fridge-list">
           {sorted.map((i) => {
             const ex = expiry(daysUntil(i.expires));
             return (
-              <motion.li key={i.id ?? i.name} variants={rise} className="ck-fridge-row">
+              <motion.li key={i.id ?? i.name} variants={rise} className={`ck-fridge-row${ex.soon ? " soon" : ""}`}>
                 <span className="ck-fridge-name">{i.name}</span>
                 <span className="ck-fridge-qty">{i.qty}</span>
-                <span className={`ck-fridge-exp${ex.soon ? " soon" : ""}`}>{ex.soon && i.note ? i.note : ex.text}</span>
+                <span className="ck-fridge-exp">{ex.soon && i.note ? i.note : ex.text}</span>
               </motion.li>
             );
           })}
