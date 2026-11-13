@@ -16,7 +16,7 @@ from fastapi import APIRouter, BackgroundTasks
 from pydantic import BaseModel
 
 import main as bridge  # main imports this module after emit and STATE exist
-from rohlik import _num, read_products, set_cart
+from rohlik import Rohlik, _num, _products_of, read_products, set_cart
 
 router = APIRouter()
 
@@ -42,7 +42,9 @@ def _pick(name: str) -> dict[str, str]:
     key = name.strip().lower()
     rows = [r for r in read_products() if r.get("Item")]
     exact = [r for r in rows if r["Item"].lower() == key]
-    near = sorted((r for r in rows if r["Item"].lower() in key or key in r["Item"].lower()), key=lambda r: -len(r["Item"]))
+    near = sorted(
+        (r for r in rows if r["Item"].lower() in key or key in r["Item"].lower()), key=lambda r: -len(r["Item"])
+    )
     return (exact or near or [{}])[0]
 
 
@@ -156,6 +158,13 @@ def deals_markdown() -> str:
         "# Today's deals\n\nScraped prices around the flat. On sale today:\n\n"
         + "\n".join(sales or ["- nothing"])
         + (f"\n\nNearest shops: {shops}. Rohlík delivers within the hour." if shops else "")
+        + "\n\nRohlík prices today: "
+        + "; ".join(
+            f"{r['Item']} {_live(r) or _num(_col(r, 'price')):g} Kč ({_col(r, 'rohlík product').split(',')[-1].strip()})"
+            for r in read_products()
+            if r.get("Item")
+        )
+        + "."
     )
 
 
@@ -167,6 +176,81 @@ def tool_show_shops(shops: Shops) -> dict[str, Any]:
     prices = [{k: i.get(k) for k in ("item", "store", "price_czk", "was_czk")} for i in d["items"]]
     stores = [{"name": st["name"], "distance_m": st.get("distance_m")} for st in d["stores"]]  # the real nearest shop
     return {"ok": True, "shown": True, "scraped_at": d.get("scraped_at"), "stores": stores, "prices": prices}
+
+
+class ProductAsk(BaseModel):
+    item: str
+
+
+@router.post("/tools/show_product")
+async def tool_show_product(ask: ProductAsk) -> dict[str, Any]:
+    """A small product card on the kitchen screen for a price question: the photo, today's Rohlík price and the
+    cheapest shop deal. A product pick is instant (saved scrape). Anything else is searched on Rohlík live."""
+    pick = _pick(ask.item) if ask.item.strip() else {}
+    d = deals()
+    if pick:
+        card = {
+            "item": pick["Item"],
+            "product": _col(pick, "rohlík product"),
+            "image_url": _col(pick, "image").strip("<>"),
+            "price_czk": _live(pick) or _num(_col(pick, "price")),
+        }
+    else:
+        try:
+            async with Rohlik() as r:
+                raw = await r.call("batch_search_products", {"queries": [{"keyword": ask.item}]})
+            hit = next((h for h in _products_of(raw) if h.get("price")), None)
+        except Exception as e:  # no token or Rohlík down: say so instead of hanging
+            return {"ok": False, "error": f"Rohlík search failed: {e}"[:300]}
+        if not hit:
+            return {"ok": False, "error": f"Nothing on Rohlík for {ask.item}."}
+        pid = hit.get("productId")
+        card = {
+            "item": ask.item,
+            "product": f"{hit.get('productName', '')}, {hit.get('textualAmount', '')}".strip(", "),
+            "image_url": "",
+            "price_czk": hit.get("price"),
+        }
+        bridge.emit("product", **card, deal=None)
+        _image_later(pid, card)
+        return {"ok": True, **{k: card[k] for k in ("item", "product", "price_czk")}}
+    name = card["item"].lower()
+    shop = [i for i in d["items"] if i["store"] != "Rohlík" and i["item"].lower().startswith(name)]
+    deal = min(shop, key=lambda i: i["price_czk"], default=None)
+    card["deal"] = (
+        {
+            "store": deal["store"],
+            "price_czk": deal["price_czk"],
+            "was_czk": deal.get("was_czk"),
+            "per": "kg" if "per kg" in deal["item"] else None,
+        }
+        if deal
+        else None
+    )
+    bridge.emit("product", **card)
+    return {"ok": True, "item": card["item"], "price_czk": card["price_czk"], "deal": card["deal"]}
+
+
+def _image_later(pid: Any, card: dict[str, Any]) -> None:
+    """Search replies carry no picture, so fetch it from the product page and update the card when it lands."""
+    import threading
+
+    def run() -> None:
+        try:
+            import re
+
+            import httpx
+
+            html = httpx.get(
+                f"https://www.rohlik.cz/{pid}", headers={"User-Agent": "Mozilla/5.0"}, timeout=6, follow_redirects=True
+            ).text
+            m = re.search(rf"https://cdn\.rohlik\.cz/images/grocery/products/{pid}/[^\"'\s?]+\.(?:jpg|png|webp)", html)
+            if m:
+                bridge.emit("product", **{**card, "image_url": m.group(0)}, deal=None)
+        except Exception:
+            pass
+
+    threading.Thread(target=run, daemon=True).start()
 
 
 TOOLS = [
@@ -183,7 +267,10 @@ TOOLS = [
                         "name": {"type": "string", "description": "The pick's item name, e.g. 'Lactose-free milk'."},
                         "qty": {"type": "number"},
                         "reason": {"type": "string", "description": "One reason tag from the instructions."},
-                        "price_czk": {"type": "number", "description": "Only for an item with no pick: your guess per unit."},
+                        "price_czk": {
+                            "type": "number",
+                            "description": "Only for an item with no pick: your guess per unit.",
+                        },
                     },
                     "required": ["name", "qty", "reason"],
                 },
@@ -192,9 +279,16 @@ TOOLS = [
         ["items"],
     ),
     bridge._fn(
+        "show_product",
+        "Show one food's photo and price on the kitchen screen, with the cheapest nearby deal. Call it for a "
+        "question about one food's price, in the same response as your spoken answer.",
+        {"item": {"type": "string", "description": "The food in English, e.g. 'Eggs' or 'Butter'."}},
+        ["item"],
+    ),
+    bridge._fn(
         "show_shops",
         "Show where to buy on the panel: today's prices and deals across Rohlík and the nearby shops, and your pick. "
-        "Also call it when someone asks what food costs or where it's cheaper, and answer from the prices it returns.",
+        "Call it during an order, not for a single price question (that's show_product).",
         {
             "choice": {"type": "string", "description": "The shop you pick, e.g. 'Rohlík'."},
             "why": {"type": "string", "description": "A few words, e.g. 'delivers within the hour'."},

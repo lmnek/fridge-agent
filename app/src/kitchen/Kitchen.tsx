@@ -15,6 +15,7 @@ import { type BusEvent, useBus } from "../stage/bus";
 import { Panel, usePanelCard } from "../stage/Panel";
 import { cardFor } from "../stage/pick";
 import { type Approval, ApprovalCard } from "./ApprovalCard";
+import { ProductCard } from "./ProductCard";
 import "./kitchen.css";
 
 export type { Approval };
@@ -53,7 +54,8 @@ export function Kitchen(props: {
 }) {
   const { status, caption, learned, error, approval, peek } = props;
   const { card, events } = useKitchenCard();
-  const side = approval ? "approval" : card;
+  const product = useProduct(events);
+  const side = approval ? "approval" : product ? "product" : card;
 
   return (
     <div className="kitchen" data-side={side === "idle" ? "off" : "on"}>
@@ -94,6 +96,10 @@ export function Kitchen(props: {
               <div className="k-approval">
                 <ApprovalCard approval={approval} onDecide={props.onDecide} />
               </div>
+            ) : product ? (
+              <div className="k-approval">
+                <ProductCard ev={product} />
+              </div>
             ) : (
               <Fit>
                 <Panel card={card} events={events} />
@@ -110,6 +116,22 @@ export function Kitchen(props: {
  * The stage's card picking, plus two kitchen rules: an inventory change asks for the fridge card (C1), and
  * the card goes back to idle IDLE_MS after the last ask. Returns the card id and the bus for the cards.
  */
+const PRODUCT_MS = 9_000;
+
+/** The newest `product` event while it's fresh: the price card shows for PRODUCT_MS, then leaves. */
+function useProduct(events: BusEvent[]) {
+  const ev = events.findLast((e) => e.type === "product");
+  const [, rerender] = useState(0);
+  const ts = ev?.ts ?? 0;
+  useEffect(() => {
+    const left = ts + PRODUCT_MS - Date.now();
+    if (left <= 0) return;
+    const t = setTimeout(() => rerender((n) => n + 1), left + 50);
+    return () => clearTimeout(t);
+  }, [ts]);
+  return ev && Date.now() - ts < PRODUCT_MS ? ev : null;
+}
+
 function useKitchenCard() {
   const bus = useBus();
   const events = useMemo(() => {

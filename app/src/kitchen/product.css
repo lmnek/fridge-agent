@@ -1,0 +1,80 @@
+/* The price answer's product card. Tokens from index.css, flat. */
+.pc {
+  width: min(360px, 80%);
+  margin: auto;
+  padding: 20px 22px 22px;
+  background: #fff;
+  border: 1px solid var(--frost);
+  border-radius: 14px;
+  color: var(--ink);
+}
+
+.pc-photo {
+  height: 200px;
+  display: grid;
+  place-items: center;
+  margin-bottom: 16px;
+}
+
+.pc-photo img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+.pc-photo-empty {
+  width: 120px;
+  height: 120px;
+  border-radius: 10px;
+  background: var(--enamel);
+}
+
+.pc-item {
+  margin: 0;
+  font-size: 26px;
+  font-weight: 600;
+  line-height: 1.15;
+}
+
+.pc-product {
+  margin: 4px 0 0;
+  font-size: 15px;
+  line-height: 1.35;
+  color: var(--slate);
+}
+
+.pc-price {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin: 16px 0 0;
+}
+
+.pc-price strong {
+  font-size: 40px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.pc-price span {
+  font-size: 16px;
+  color: var(--slate);
+}
+
+.pc-deal {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 10px 0 0;
+  padding-top: 10px;
+  border-top: 1px solid var(--frost);
+  font-size: 17px;
+  font-variant-numeric: tabular-nums;
+}
+
+.pc-off {
+  padding: 1px 7px;
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--lamp) 16%, transparent);
+  font-size: 15px;
+}

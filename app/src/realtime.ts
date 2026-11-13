@@ -31,6 +31,8 @@ type Send = (event: Json) => void;
 
 // The bridge only lets these Rohlík tools into the session (bridge/rohlik.py SAFE_TOOLS) with no approvals.
 // This is the second lock: if an approval request ever arrives for anything else, a human decides.
+/** Tools that only draw something: when Coldex already spoke, their result needs no follow-up response. */
+const DISPLAY_ONLY = new Set(["show_product"]);
 const AUTO_APPROVE =
   /^(batch_search_products|get_product_details|get_cart|add_items_to_cart|update_cart_item|remove_cart_item|get_checkout_link|get_discounted_items)$/;
 
@@ -309,6 +311,13 @@ export class FridgeBrain {
       calls.forEach((c, i) => {
         this.send({ type: "conversation.item.create", item: { type: "function_call_output", call_id: c.call_id, output: results[i] } });
       });
+      // A price answer already spoken with its product card needs no second round: that round is the wait.
+      if (this.captionText && calls.every((c) => DISPLAY_ONLY.has(String(c.name)))) {
+        this.busy = false;
+        this.lastActive = Date.now();
+        this.settle();
+        return;
+      }
       this.wantResponse = false; // this follow-up already covers anything queued meanwhile
       this.send({ type: "response.create" });
       return;
