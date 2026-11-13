@@ -11,7 +11,7 @@ type Line = { id: number; item: string; product: string; price_czk: number; qty:
 const czk = (n: number) =>
   `${n.toLocaleString("cs-CZ", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Kč`;
 const SPRING = { type: "spring", stiffness: 320, damping: 30 } as const;
-const SHOWN = 6; // the newest lines, the card keeps its height
+const SHOWN = 7; // the newest lines (a full recipe order fits), the card keeps its height
 
 export function OrderCard({ ev }: { ev: BusEvent }) {
   const items = (ev.items as Line[]) ?? [];

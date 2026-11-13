@@ -64,6 +64,19 @@ export function Kitchen(props: {
   const product = useFresh(events, "product", 9_000);
   const nearby = useFresh(events, "nearby", 14_000);
   const order = useFresh(events, "order", 12_000);
+  const cartCard = useMemo(() => {
+    const ev = events.findLast((e) => e.type === "cart");
+    if (!ev) return null;
+    const items = ((ev.items as Record<string, unknown>[]) ?? []).map((i, n) => ({
+      id: n,
+      item: String(i.name ?? ""),
+      product: String(i.reason ?? ""),
+      price_czk: Number(i.price_czk ?? 0),
+      qty: Math.max(1, Math.round(Number(i.qty ?? 1))),
+      image_url: String(i.image_url ?? ""),
+    }));
+    return { ...ev, type: "order", items, added: null, total_czk: items.reduce((t, i) => t + i.price_czk * i.qty, 0) };
+  }, [events]);
   const lastCall = events.findLast((e) => e.type === "call");
   const callTs = lastCall?.ts ?? 0; // a newer courier call wins over the quick cards
   // After hang-up the call card stays CALL_GONE_MS for the last words, then the side goes back to the orb.
@@ -124,6 +137,11 @@ export function Kitchen(props: {
                 ) : (
                   <ProductCard ev={quick} />
                 )}
+              </div>
+            ) : card === "C4" && cartCard ? (
+              // The order's cart in the same Rohlík-like card as the voice order (photos, lines, total).
+              <div className="k-approval">
+                <OrderCard ev={cartCard} />
               </div>
             ) : (
               <Fit>
