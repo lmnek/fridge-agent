@@ -98,6 +98,24 @@ SALES = [
     ("Cucumbers", "okurky", r"okurk", r"steriliz|kyselé|nakládan|čalam"),
     ("Onions", "cibule", r"cibul", r"smažen|sušen|chips"),
     ("Spaghetti", "špagety", r"špaget|spaghet", r"boloň|hotov|omáčk"),
+    *(
+        (name, query, re.escape(query.split()[0][: max(4, len(query.split()[0]) - 2)]), r"(?!)")
+        for name, query in [
+            ("Ham", "šunka"), ("Salami", "salám"), ("Sausages", "párky"), ("Bacon", "slanina"),
+            ("Minced meat", "mleté maso"), ("Pork", "vepřová krkovice"), ("Salmon", "losos"),
+            ("Mozzarella", "mozzarella"), ("Parmesan", "parmazán"), ("Cream", "smetana na vaření"),
+            ("Sour cream", "zakysaná smetana"), ("Cottage cheese", "cottage"), ("Bread", "chléb"),
+            ("Rolls", "rohlík"), ("Rice", "rýže"), ("Pasta", "těstoviny"), ("Flour", "mouka"),
+            ("Sugar", "cukr krystal"), ("Oil", "olej"), ("Olive oil", "olivový olej"),
+            ("Soy sauce", "sójová omáčka"), ("Ketchup", "kečup"), ("Mustard", "hořčice"),
+            ("Pasta sauce", "omáčka na těstoviny"), ("Tomato passata", "passata"), ("Peppers", "paprika"),
+            ("Carrots", "mrkev"), ("Garlic", "česnek"), ("Lemons", "citrony"), ("Oranges", "pomeranče"),
+            ("Avocado", "avokádo"), ("Lettuce", "salát ledový"), ("Broccoli", "brokolice"),
+            ("Mushrooms", "žampiony"), ("Apple juice", "jablečný džus"), ("Orange juice", "pomerančový džus"),
+            ("Beer", "pivo"), ("Wine", "víno"), ("Water", "minerální voda"), ("Chocolate", "čokoláda"),
+            ("Chips", "chipsy"), ("Ice cream", "zmrzlina"), ("Tea", "čaj"), ("Toilet paper", "toaletní papír"),
+        ]
+    ),
 ]
 JUNK = r"protlak|pyré|kečup|omáčk|chips|lupín|sušen|nápoj|drink|čokolád|bonbon|tyčin|sirup|likér"
 
@@ -283,7 +301,8 @@ def search_live(query: str) -> dict[str, Any] | None:
         return None
     found = json.loads(res.stdout.strip().splitlines()[-1]).get(query)
     stem = re.escape(query.split()[0][: max(4, len(query.split()[0]) - 2)])
-    return cheapest(found, stem, JUNK, stores_nearby())
+    junk = "|".join(w for w in JUNK.split("|") if not re.search(w, query, re.I)) or r"(?!)"
+    return cheapest(found, stem, junk, stores_nearby())
 
 
 def nearby() -> dict[str, dict[str, Any]]:

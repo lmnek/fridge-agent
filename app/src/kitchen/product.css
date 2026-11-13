@@ -197,3 +197,121 @@
   left: auto;
   right: 18px;
 }
+
+/* The voice order: a receipt-like list in the same shell, thumbnails on the same grey tile as the product photo. */
+.pc.oc {
+  width: min(440px, 92%);
+  padding: 22px 18px 20px;
+}
+
+.oc-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding: 0 6px 10px;
+}
+
+.oc-count {
+  font-size: 15px;
+  color: #86868b;
+}
+
+.oc-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.oc-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 6px;
+  border-top: 1px solid #f0f0f2;
+}
+
+.oc-flash {
+  position: absolute;
+  inset: 2px -6px;
+  border-radius: 14px;
+  background: #e8f1fd;
+  z-index: 0;
+}
+
+.oc-row > :not(.oc-flash) {
+  position: relative;
+  z-index: 1;
+}
+
+.oc-thumb {
+  position: relative;
+  flex: none;
+  width: 56px;
+  height: 56px;
+  border-radius: 14px;
+  background: #f5f5f7;
+  overflow: hidden;
+}
+
+.oc-thumb img {
+  position: absolute;
+  inset: 6px;
+  width: calc(100% - 12px);
+  height: calc(100% - 12px);
+  object-fit: contain;
+  mix-blend-mode: multiply;
+}
+
+.oc-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+}
+
+.oc-name {
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.oc-product {
+  font-size: 13px;
+  color: #86868b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.oc-qty {
+  font-size: 15px;
+  color: #86868b;
+  font-variant-numeric: tabular-nums;
+}
+
+.oc-price {
+  min-width: 84px;
+  text-align: right;
+  font-size: 16px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+
+.oc-total {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-top: 6px;
+  padding: 14px 6px 0;
+  border-top: 1px solid #e5e5ea;
+  font-size: 17px;
+  font-weight: 500;
+}
+
+.oc-total > span:last-child {
+  font-size: 28px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}

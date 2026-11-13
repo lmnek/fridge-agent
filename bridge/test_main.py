@@ -136,7 +136,10 @@ def test_show_cart_and_shops_publish_the_table_shapes(monkeypatch):
     assert "Bananas at Rohlík: 9.68 Kč, was 12.1 Kč (-20 %)" in main.memory()
 
 
-def test_demo_cart_from_names_comes_to_the_picks_total():
+def test_demo_cart_from_names_comes_to_the_picks_total(monkeypatch):
+    import show
+
+    monkeypatch.setattr(show, "_live", lambda pick: None)  # products.md's prices, not today's scraped ones
     names = ["Lactose-free milk", "Eggs", "Guanciale", "Spaghetti", "Gluten-free spaghetti", "Greek yogurt", "Bananas"]
     qty = {"Lactose-free milk": 4, "Guanciale": 2, "Greek yogurt": 4, "Bananas": 6}
     items = [{"name": n, "qty": qty.get(n, 1), "reason": "x"} for n in names]

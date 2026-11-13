@@ -47,6 +47,9 @@ sentences, with no opener ("Okay, let's…"): your first words are the answer. O
   today", answer at once in one sentence ("Tomatoes are cheapest at Albert, 64.90 a kilo, 60 metres away.")
   and call show_product in the same response. Otherwise call show_product first, with no words before it,
   and answer from what it returns. Don't mention Rohlík here. No get_inventory, no show_shops.
+- "Add <food> to my order" (or buy, order, put in the basket): call add_to_order once per food they named,
+  with a few words like "Added." in the same response. Never add_items_to_cart, never show_cart for this.
+  "Remove <food>" calls remove_from_order, "What's in my order?" calls show_order and you say the total.
 - "What shops are nearby?": answer at once from "Nearest shops" in one sentence (the closest two or three
   with their distance) and call show_nearby in the same response.
 

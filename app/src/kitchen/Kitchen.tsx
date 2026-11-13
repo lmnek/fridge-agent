@@ -17,6 +17,7 @@ import { cardFor } from "../stage/pick";
 import { type Approval, ApprovalCard } from "./ApprovalCard";
 import { ProductCard } from "./ProductCard";
 import { NearbyCard } from "./NearbyCard";
+import { OrderCard } from "./OrderCard";
 import "./kitchen.css";
 
 export type { Approval };
@@ -57,7 +58,8 @@ export function Kitchen(props: {
   const { card, events } = useKitchenCard();
   const product = useFresh(events, "product", 9_000);
   const nearby = useFresh(events, "nearby", 14_000);
-  const quick = [product, nearby].filter(Boolean).sort((a, b) => (b?.ts ?? 0) - (a?.ts ?? 0))[0] ?? null;
+  const order = useFresh(events, "order", 12_000);
+  const quick = [product, nearby, order].filter(Boolean).sort((a, b) => (b?.ts ?? 0) - (a?.ts ?? 0))[0] ?? null;
   const side = approval ? "approval" : quick ? "quick" : card === "PR" || card === "NB" ? "idle" : card;
 
   return (
@@ -101,7 +103,13 @@ export function Kitchen(props: {
               </div>
             ) : quick ? (
               <div className="k-approval">
-                {quick.type === "nearby" ? <NearbyCard ev={quick} /> : <ProductCard ev={quick} />}
+                {quick.type === "nearby" ? (
+                  <NearbyCard ev={quick} />
+                ) : quick.type === "order" ? (
+                  <OrderCard ev={quick} />
+                ) : (
+                  <ProductCard ev={quick} />
+                )}
               </div>
             ) : (
               <Fit>

@@ -199,11 +199,85 @@ async def tool_show_product(ask: ProductAsk) -> dict[str, Any]:
     best = next((s for s in deals().get("sales", []) if s["item"].lower() == name.lower()), None)
     if not best:
         best = await asyncio.to_thread(leaflets.search_live, ask.query_cs.strip() or name)
-    if not best:
-        return {"ok": False, "error": f"No leaflet offer for {name} in the shops near the flat today."}
+    if not best:  # no shop has it in a leaflet this week: Rohlík has nearly everything
+        hit = await rohlik_find(ask.query_cs.strip() or name)
+        if not hit:
+            return {"ok": False, "error": f"Couldn't find {name} anywhere today."}
+        best = {**hit, "store": "Rohlík", "distance_m": None, "was_czk": None}
     card = {**best, "item": name[:1].upper() + name[1:]}
     bridge.emit("product", **card)
     return {"ok": True, **{k: card.get(k) for k in ("item", "product", "store", "distance_m", "price_czk", "was_czk")}}
+
+
+async def rohlik_find(query: str) -> dict[str, Any] | None:
+    """The first Rohlík hit for a food, with its photo from the product page. About 0.7 s."""
+    try:
+        async with Rohlik() as r:
+            raw = await r.call("batch_search_products", {"queries": [{"keyword": query}]})
+    except Exception:
+        return None
+    hits = [h for h in _products_of(raw) if h.get("price") and h.get("inStock", True)]
+    if not hits:
+        return None
+    # Rohlík's first hit can miss the brand ("Dacello pražská šunka" -> tlačenka): take the hit that has the most
+    # of the asked words, the search order breaks ties.
+    words = [w[: max(4, len(w) - 2)].lower() for w in query.split() if len(w) > 2]
+    hit = max(hits[:30], key=lambda h: sum(w in str(h.get("productName", "")).lower() for w in words))
+    pid = hit.get("productId")
+    image = ""
+    try:
+        import re
+
+        import httpx
+
+        async with httpx.AsyncClient(timeout=3, follow_redirects=True) as c:
+            html = (await c.get(f"https://www.rohlik.cz/{pid}", headers={"User-Agent": "Mozilla/5.0"})).text
+        m = re.search(rf"https://cdn\.rohlik\.cz/images/grocery/products/{pid}/[^\"'\s?]+\.(?:jpg|png|webp)", html)
+        image = m.group(0) if m else ""
+    except Exception:
+        pass
+    return {"id": pid, "product": hit.get("productName", ""), "price_czk": hit.get("price"), "image_url": image}
+
+
+# HACK(demo): a simulated order, filled by voice ("add red peppers to my order"). Never touches the real cart.
+ORDER: list[dict[str, Any]] = []
+
+
+class OrderAdd(BaseModel):
+    item: str
+    query_cs: str = ""
+    qty: int = 1
+
+
+def _order_event(added: Any = None) -> dict[str, Any]:
+    total = round(sum(i["price_czk"] * i["qty"] for i in ORDER), 2)
+    bridge.emit("order", items=ORDER, added=added, total_czk=total)
+    return {"items": [f"{i['qty']}x {i['item']}" for i in ORDER], "total_czk": total}
+
+
+@router.post("/tools/add_to_order")
+async def tool_add_to_order(add: OrderAdd) -> dict[str, Any]:
+    found = await rohlik_find(add.query_cs.strip() or add.item)
+    if not found:
+        return {"ok": False, "error": f"Couldn't find {add.item} on Rohlík."}
+    same = next((i for i in ORDER if i["id"] == found["id"]), None)
+    if same:
+        same["qty"] += max(1, add.qty)
+    else:
+        ORDER.append({**found, "item": add.item[:1].upper() + add.item[1:], "qty": max(1, add.qty)})
+    return {"ok": True, "added": found["product"], **_order_event(found["id"])}
+
+
+@router.post("/tools/remove_from_order")
+def tool_remove_from_order(add: OrderAdd) -> dict[str, Any]:
+    name = add.item.lower()
+    ORDER[:] = [i for i in ORDER if name not in i["item"].lower() and name not in i["product"].lower()]
+    return {"ok": True, **_order_event()}
+
+
+@router.post("/tools/show_order")
+def tool_show_order() -> dict[str, Any]:
+    return {"ok": True, **_order_event()}
 
 
 def nearby_shops() -> dict[str, Any]:
@@ -244,6 +318,28 @@ TOOLS = [
             }
         },
         ["items"],
+    ),
+    bridge._fn(
+        "add_to_order",
+        "Add one food to the order on the kitchen screen. Call it whenever someone asks to add, buy or order a food, "
+        "once per food, in the same response as a short spoken confirmation.",
+        {
+            "item": {"type": "string", "description": "The food in English, e.g. 'Red pepper'."},
+            "query_cs": {"type": "string", "description": "The food in Czech as they said it, with the brand if any, e.g. 'paprika červená'."},
+            "qty": {"type": "integer", "description": "How many, 1 if they didn't say."},
+        },
+        ["item", "query_cs"],
+    ),
+    bridge._fn(
+        "remove_from_order",
+        "Remove one food from the order on the kitchen screen.",
+        {"item": {"type": "string", "description": "The food in English."}},
+        ["item"],
+    ),
+    bridge._fn(
+        "show_order",
+        "Show the order so far on the kitchen screen, for 'what's in my order?'. Returns the items and the total.",
+        {},
     ),
     bridge._fn(
         "show_nearby",
