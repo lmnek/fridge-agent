@@ -103,9 +103,13 @@ def session() -> dict[str, Any]:
         "audio": {
             "input": {
                 "format": {"type": "audio/pcmu"},
-                "transcription": {"model": TRANSCRIBE_MODEL},
-                # A short call with a script: the courier talking over Coldex must not cut the line off.
-                "turn_detection": {"type": "server_vad", "interrupt_response": False, "silence_duration_ms": 500},
+                # The hint keeps the captions in the call's languages (8 kHz phone audio drifts into others).
+                "transcription": {
+                    "model": TRANSCRIBE_MODEL,
+                    "prompt": "A phone call in English or Czech about a Rohlík grocery delivery to a tech event.",
+                },
+                # A real conversation: when the courier talks, Coldex stops and listens (clear, in from_openai).
+                "turn_detection": {"type": "server_vad", "interrupt_response": True, "silence_duration_ms": 600},
             },
             "output": {"format": {"type": "audio/pcmu"}, "voice": REALTIME_VOICE},
         },
@@ -237,6 +241,7 @@ class Relay:
         self.call_sid = call_sid
         self.captions: dict[str, str] = {}
         self.courier_spoke = asyncio.Event()
+        self.responding = False
 
     def caption(self, who: str, item: str, text: str, final: bool) -> None:
         hooks.emit("caption", who=who, id=item, text=text, final=final)
@@ -270,6 +275,10 @@ class Relay:
                 self.caption("coldex", ev["item_id"], ev.get("transcript", ""), True)
             elif kind == "input_audio_buffer.speech_started":
                 self.courier_spoke.set()
+                # Barge-in: drop what Twilio still has queued of Coldex's voice, so the courier is heard at once.
+                await self.twilio.send_text(json.dumps({"event": "clear", "streamSid": self.stream_sid}))
+            elif kind == "response.created":
+                self.responding = True
             elif kind == "conversation.item.input_audio_transcription.delta":
                 text = self.captions.get(ev["item_id"], "") + ev.get("delta", "")
                 self.captions[ev["item_id"]] = text
@@ -283,12 +292,13 @@ class Relay:
                     await self.twilio.send_text(json.dumps(mark))
             elif kind == "error":
                 print(f"[courier] OpenAI error: {ev['error']}")
-                hooks.emit("system", message=f"Courier call: {ev['error'].get('message')}")
+                if ev["error"].get("code") != "conversation_already_has_active_response":  # harmless, not for the screen
+                    hooks.emit("system", message=f"Courier call: {ev['error'].get('message')}")
 
     async def greet(self, oai: Any) -> None:
         """HACK(demo): the story is the courier calling in, so Coldex answers first, like whoever picks up."""
         await asyncio.sleep(0.4)
-        if not self.courier_spoke.is_set():
+        if not self.courier_spoke.is_set() and not self.responding:  # a "Hello?" already started the answer
             await oai.send(json.dumps({"type": "response.create"}))
 
 

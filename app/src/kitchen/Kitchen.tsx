@@ -20,6 +20,8 @@ import { NearbyCard } from "./NearbyCard";
 import { OrderCard } from "./OrderCard";
 import "./kitchen.css";
 
+const CALL_GONE_MS = 3_000;
+
 export type { Approval };
 
 type Item = { id: string; name: string; qty?: string; expires?: string };
@@ -59,10 +61,19 @@ export function Kitchen(props: {
   const product = useFresh(events, "product", 9_000);
   const nearby = useFresh(events, "nearby", 14_000);
   const order = useFresh(events, "order", 12_000);
-  const callTs = events.findLast((e) => e.type === "call")?.ts ?? 0; // a newer courier call wins over the quick cards
+  const lastCall = events.findLast((e) => e.type === "call");
+  const callTs = lastCall?.ts ?? 0; // a newer courier call wins over the quick cards
+  // After hang-up the call card stays CALL_GONE_MS for the last words, then the side goes back to the orb.
+  const callOver = lastCall?.phase === "ended" && Date.now() - callTs > CALL_GONE_MS;
+  const [, tick] = useState(0);
+  useEffect(() => {
+    if (lastCall?.phase !== "ended") return;
+    const t = setTimeout(() => tick((n) => n + 1), Math.max(0, callTs + CALL_GONE_MS - Date.now()) + 50);
+    return () => clearTimeout(t);
+  }, [lastCall?.phase, callTs]);
   const newest = [product, nearby, order].filter(Boolean).sort((a, b) => (b?.ts ?? 0) - (a?.ts ?? 0))[0] ?? null;
   const quick = newest && (newest.ts ?? 0) > callTs ? newest : null;
-  const side = approval ? "approval" : quick ? "quick" : card === "PR" || card === "NB" ? "idle" : card;
+  const side = approval ? "approval" : quick ? "quick" : card === "F" && callOver ? "idle" : card === "PR" || card === "NB" ? "idle" : card;
 
   return (
     <div className="kitchen" data-side={side === "idle" ? "off" : "on"}>
