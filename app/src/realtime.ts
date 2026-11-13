@@ -16,7 +16,10 @@ export interface McpApproval {
 
 export interface Handlers {
   status(s: Status): void;
-  caption(text: string): void;
+  /** Coldex's speech so far in this response. `id` is stable per response, `final` once it's done. */
+  caption(text: string, final?: boolean, id?: string): void;
+  /** The human's speech (input transcription, part 3 turns it on). `id` is stable per utterance. */
+  heard?(text: string, final: boolean, id: string): void;
   approval(req: McpApproval): void;
   error(message: string): void;
 }
@@ -38,6 +41,10 @@ export class FridgeBrain {
   private wantResponse = false;
   private seen = new Set<string>();
   private captionText = "";
+  private captionId = "";
+  private heardText = new Map<string, string>();
+  private micTrack: MediaStreamTrack | null = null;
+  private micOn = true;
   private ctx: AudioContext | null = null;
   private inAnalyser: AnalyserNode | null = null;
   private outAnalyser: AnalyserNode | null = null;
@@ -74,7 +81,9 @@ export class FridgeBrain {
     const mic = await navigator.mediaDevices.getUserMedia({
       audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
     });
-    pc.addTrack(mic.getTracks()[0], mic);
+    this.micTrack = mic.getTracks()[0];
+    this.micTrack.enabled = this.micOn;
+    pc.addTrack(this.micTrack, mic);
     this.inAnalyser = this.analyser(mic);
 
     const dc = pc.createDataChannel("oai-events");
@@ -104,6 +113,16 @@ export class FridgeBrain {
     this.pc = this.dc = null;
     this.busy = this.wantResponse = false;
     this.h.status("off");
+  }
+
+  /** The mic gate. Off, the session hears nothing (the stage mic stays off until C). Works before start(). */
+  setMic(on: boolean) {
+    this.micOn = on;
+    if (this.micTrack) this.micTrack.enabled = on;
+  }
+
+  get mic() {
+    return this.micOn;
   }
 
   /** Mic and voice levels, 0..1, for the orb. */
@@ -145,6 +164,7 @@ export class FridgeBrain {
       case "response.created":
         this.busy = true;
         this.captionText = "";
+        this.captionId = String((ev.response as Json)?.id ?? `r${Date.now()}`);
         this.h.status("thinking");
         break;
       case "output_audio_buffer.started":
@@ -157,8 +177,21 @@ export class FridgeBrain {
       case "response.output_audio_transcript.delta":
       case "response.output_text.delta":
         this.captionText += String(ev.delta ?? "");
-        this.h.caption(this.captionText);
+        this.h.caption(this.captionText, false, this.captionId);
         break;
+      case "conversation.item.input_audio_transcription.delta": {
+        const id = String(ev.item_id ?? "");
+        const text = (this.heardText.get(id) ?? "") + String(ev.delta ?? "");
+        this.heardText.set(id, text);
+        this.h.heard?.(text, false, id);
+        break;
+      }
+      case "conversation.item.input_audio_transcription.completed": {
+        const id = String(ev.item_id ?? "");
+        this.heardText.delete(id);
+        this.h.heard?.(String(ev.transcript ?? ""), true, id);
+        break;
+      }
       case "conversation.item.added":
       case "conversation.item.done":
         this.onItem(ev.item as Json);
@@ -188,6 +221,7 @@ export class FridgeBrain {
   }
 
   private async onResponseDone(response: Json) {
+    if (this.captionText) this.h.caption(this.captionText, true, this.captionId);
     const output = (response?.output as Json[]) ?? [];
     const calls = output.filter((o) => o.type === "function_call");
     if (calls.length) {
