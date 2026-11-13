@@ -67,24 +67,25 @@ export default function App() {
     if (import.meta.env.DEV) Object.assign(window, { __fridge: { brain, setStatus, setCaption } });
   }, [brain]);
 
+  // Vision runs on the bridge (bridge/vision.py). Without a hub, the webcam frame goes there instead.
   const look = useCallback(async () => {
     try {
       setError(null);
-      const frames = await grabFrames(config?.cameras ?? [], brain.maxMessageBytes());
-      setPeek({ src: frames[0], at: Date.now() });
-      if (!brain.connected) {
-        setCaption("Wake me up first and I'll take a look.");
-        return;
-      }
-      const inv: Item[] = await fetch("/api/inventory").then((r) => r.json());
-      const listed = inv.map((i) => `${i.name}${i.qty ? ` (${i.qty})` : ""}${i.expires ? `, expires ${i.expires}` : ""}`);
-      brain.look(frames, listed.join("; ") || "empty");
+      const frames = config?.cameras.length ? [] : await grabFrames([], 4_000_000);
+      const res = await fetch("/api/vision/look", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ frames }),
+      });
+      if (!res.ok) throw new Error((await res.json()).detail ?? `Vision: ${res.status}`);
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
     }
-  }, [brain, config]);
+  }, [config]);
   const lookRef = useRef(look);
   lookRef.current = look;
+  const hasHub = useRef(false);
+  hasHub.current = !!config?.cameras.length;
 
   useEffect(() => {
     fetch("/api/config").then((r) => r.json()).then(setConfig).catch(() => setError("The bridge is not running on port 8100."));
@@ -93,7 +94,12 @@ export default function App() {
     es.onmessage = (m) => {
       const ev = JSON.parse(m.data);
       if (ev.type === "inventory") setItems(ev.items);
-      if (ev.type === "look") void lookRef.current();
+      if (ev.type === "look" && ev.reason === "manual" && !hasHub.current) void lookRef.current();
+      if (ev.type === "vision" && ev.phase === "captured") {
+        const frame = ev.frames.find((f: { when: string }) => f.when === "after") ?? ev.frames[0];
+        if (frame) setPeek({ src: frame.url, at: Date.now() });
+      }
+      if (ev.type === "vision" && ev.phase === "done" && ev.tell && brain.connected) brain.tell(ev.tell);
       if (ev.type === "recipe") setRecipe(ev.recipe);
       if (ev.type === "system") setError(ev.message);
       if (ev.type === "learned") {

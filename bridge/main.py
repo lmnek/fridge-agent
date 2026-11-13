@@ -24,6 +24,8 @@ from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import Response, StreamingResponse
 from pydantic import BaseModel
 
+import camera
+import vision
 from rohlik import SAFE_TOOLS
 
 ROOT = Path(__file__).resolve().parent
@@ -35,10 +37,6 @@ REALTIME_MODEL = os.getenv("REALTIME_MODEL", "gpt-realtime-2.1")
 REALTIME_VOICE = os.getenv("REALTIME_VOICE", "marin")
 ROHLIK_MCP_URL = os.getenv("ROHLIK_MCP_URL", "https://mcp.rohlik.cz/mcp")
 ROHLIK_TOKEN = os.getenv("ROHLIK_TOKEN", "")
-REOLINK_HOST = os.getenv("REOLINK_HOST", "")
-REOLINK_USER = os.getenv("REOLINK_USER", "admin")
-REOLINK_PASSWORD = os.getenv("REOLINK_PASSWORD", "")
-REOLINK_CHANNELS = [int(c) for c in os.getenv("REOLINK_CHANNELS", "0,1").split(",") if c.strip()]
 DATA_DIR = Path(os.getenv("DATA_DIR", ROOT.parent / "data"))
 STATE_FILE = DATA_DIR / "state.json"
 MEMORY_DIR = ROOT / "memory"  # seeded by hand: instructions, household profile, product picks
@@ -47,7 +45,7 @@ NOTES_FILE = DATA_DIR / "notes.md"  # what the agent noted itself; delete it to 
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
-    task = asyncio.create_task(watch_motion()) if REOLINK_HOST and REOLINK_CHANNELS else None
+    task = asyncio.create_task(vision.watch()) if camera.configured() else None
     yield
     if task:
         task.cancel()
@@ -315,44 +313,35 @@ def decide(approval_id: str, decision: Decision) -> dict[str, Any]:
 # --------------------------------------------------------------------------- camera
 
 
-async def _reolink(params: dict[str, Any]) -> httpx.Response:
-    async with httpx.AsyncClient(verify=False, timeout=20) as client:  # the hub uses a self-signed cert
-        return await client.get(
-            f"https://{REOLINK_HOST}/cgi-bin/api.cgi",
-            params={**params, "user": REOLINK_USER, "password": REOLINK_PASSWORD},
-        )
-
-
 @app.get("/camera/{channel}.jpg")
-async def camera(channel: int) -> Response:
-    if not REOLINK_HOST:
+async def camera_jpg(channel: int) -> Response:
+    if not camera.configured():
         raise HTTPException(404, "No Reolink hub configured, the app falls back to the webcam.")
-    res = await _reolink({"cmd": "Snap", "channel": channel, "rs": secrets.token_hex(4)})
-    if res.status_code != 200 or not res.headers.get("content-type", "").startswith("image/"):
-        raise HTTPException(502, f"Reolink snapshot failed: {res.text[:200]}")
-    return Response(res.content, media_type="image/jpeg", headers={"Cache-Control": "no-store"})
+    try:
+        return Response(await camera.snap(channel), media_type="image/jpeg", headers={"Cache-Control": "no-store"})
+    except camera.CameraError as e:
+        raise HTTPException(502, str(e)) from e
 
 
 @app.post("/snapshot")
-def snapshot() -> dict[str, Any]:
-    """Manual trigger: the app grabs fresh frames and shows them to the agent."""
-    emit("look", reason="manual")
+async def snapshot() -> dict[str, Any]:
+    """Manual trigger. With the hub the bridge looks itself, without it the kitchen app sends a webcam frame."""
+    if camera.configured():
+        asyncio.create_task(vision.look_hub())
+    else:
+        emit("look", reason="manual")
     return {"ok": True}
 
 
-async def watch_motion() -> None:
-    """Polls the hub's motion state (does not wake the cameras) and asks the app to look once it settles."""
-    moving = False
-    while True:
-        await asyncio.sleep(2)
-        try:
-            res = await _reolink({"cmd": "GetMdState", "channel": REOLINK_CHANNELS[0]})
-            now = bool(res.json()[0]["value"]["state"])
-        except Exception:
-            continue
-        if moving and not now:
-            emit("look", reason="motion")
-        moving = now
+# Beat B: the vision pipeline (bridge/vision.py) gets the bus and the inventory.
+vision.attach(
+    emit=emit,
+    items=inventory,
+    apply=lambda removed, added: inventory_changes(
+        Changes(removed=[ItemIn(name=n) for n in removed], added=[ItemIn(**a) for a in added], source="vision")
+    ),
+)
+app.include_router(vision.router)
 
 
 # --------------------------------------------------------------------------- Realtime session
@@ -498,5 +487,5 @@ def config() -> dict[str, Any]:
         "model": REALTIME_MODEL,
         "openai": bool(OPENAI_API_KEY),
         "rohlik": bool(ROHLIK_TOKEN),
-        "cameras": REOLINK_CHANNELS if REOLINK_HOST else [],
+        "cameras": camera.CHANNELS if camera.configured() else [],
     }

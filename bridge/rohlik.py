@@ -31,7 +31,6 @@ load_dotenv(ROOT / ".env")
 
 URL = os.getenv("ROHLIK_MCP_URL", "https://mcp.rohlik.cz/mcp")
 PRODUCTS = ROOT / "memory" / "products.md"
-MINIMUM_CZK = 749
 
 # What Coldex may call. Everything here reads or fills the cart, nothing can order, cancel or claim.
 # main.py passes this to OpenAI as allowed_tools, so the Realtime session never sees the rest.
@@ -263,7 +262,7 @@ async def cmd_fill() -> None:
         print(json.dumps(cart, ensure_ascii=False, indent=2)[:3000])
         link = await r.call("get_checkout_link")
     print(f"\nCheckout link: {link}")
-    print(f"Minimum order is {MINIMUM_CZK} Kč. Only a person can complete the order on rohlik.cz.")
+    print("Only a person can complete the order on rohlik.cz.")
 
 
 def main() -> None:
