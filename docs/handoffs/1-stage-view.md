@@ -42,7 +42,6 @@ window laid over a reserved slot is the fallback. Check the free tier's limits o
 2. Subtitles: caption publishing from both apps, and rendering them.
 3. Hotkeys and a dev event player, which replays a recorded list of bus events so part 2 can work without keys.
 
-
 ## Fake mode
 
 The dev event player drives the whole stage view with no keys and no hardware. Record its event list from

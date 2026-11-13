@@ -54,7 +54,7 @@ it, `docs/rozhodnuti.md` the architecture, and `docs/napojeni.md` connecting the
   parts small and written down, and commit small and often (`git pull --rebase` before pushing).
 - **Faking is fine.** A partly staged demo is acceptable. Give every hardware or external piece a fake mode
   so the demo survives if it dies, and mark fakes with `HACK(demo)` so we always know what's real.
-- Language: code and our docs are in English. The UI and agent language (Czech as built, or English) is still open (PLAN §8).
+- Language: everything is in English: code, docs, the UI, the agent and the courier call.
 - Never commit secrets (`.env` is gitignored).
 
 ## Design taste
