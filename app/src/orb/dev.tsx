@@ -12,6 +12,7 @@ import type { Levels } from "./types";
 const params = new URLSearchParams(window.location.search);
 export const devOn = params.has("orb") || params.has("orbdev");
 const STEPS: (Status | null)[] = [null, "off", "listening", "thinking", "speaking"];
+const fixed = params.has("level") ? Number(params.get("level")) : null;
 const NAMES: Record<string, string> = { off: "idle", listening: "listen", thinking: "think", speaking: "talk" };
 
 export function useOrbDev(status: Status, levels: Levels) {
@@ -28,6 +29,7 @@ export function useOrbDev(status: Status, levels: Levels) {
     const o = overrideRef.current;
     if (!o) return levelsRef.current();
     const t = performance.now() / 1000;
+    if (fixed !== null) return { input: o === "listening" ? fixed : 0, output: o === "speaking" ? fixed : 0 };
     return { input: o === "listening" ? fakeVoice(t + 7.3, 0.7) : 0, output: o === "speaking" ? fakeVoice(t) : 0 };
   }, []);
 
