@@ -28,6 +28,7 @@ import camera
 import courier
 import deals
 import kitchen_audio
+import pacing
 import telegram
 import vision
 from rohlik import SAFE_TOOLS
@@ -114,6 +115,11 @@ _subscribers: set[asyncio.Queue[str]] = set()
 
 
 def emit(kind: str, /, **data: Any) -> None:
+    if not pacing.hold(kind, data):  # inside a tool call: lands when the voice gets there (bridge/pacing.py)
+        _send(kind, data)
+
+
+def _send(kind: str, data: dict[str, Any]) -> None:
     message = json.dumps({"type": kind, **data}, ensure_ascii=False)
     for queue in list(_subscribers):
         queue.put_nowait(message)
@@ -145,6 +151,7 @@ async def publish(request: Request) -> dict[str, Any]:
     kind = event.pop("type")
     emit(kind, **event)
     if kind == "stage" and event.get("action") == "reset":
+        pacing.cancel()  # no stale cards after the reset
         reset()  # the stage reset hotkey resets the rehearsal data too
     return {"ok": True}
 
@@ -168,10 +175,14 @@ async def tool_events(request: Request, call_next):
     name = request.url.path.removeprefix("/tools/")
     args = json.loads(await request.body() or b"{}")
     screen = request.headers.get("x-coldex-screen")  # kitchen or stage, so the stage knows who called
-    emit("tool", name=name, args=args, phase="start", screen=screen)
-    response = await call_next(request)
-    emit("tool", name=name, args=args, phase="done", ok=response.status_code < 400, screen=screen)
-    return response
+    token = pacing.begin(request.headers, _send)  # X-Coldex-Show-In: the model gets its answer now, the bus later
+    try:
+        emit("tool", name=name, args=args, phase="start", screen=screen)
+        response = await call_next(request)
+        emit("tool", name=name, args=args, phase="done", ok=response.status_code < 400, screen=screen)
+        return response
+    finally:
+        pacing.end(token)
 
 
 # --------------------------------------------------------------------------- inventory

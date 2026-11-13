@@ -39,6 +39,9 @@ Anything that should show up on stage goes through the bridge. Screens never tal
 - `POST /api/events` with `{"type": ..., ...}` lets any part publish.
 - Every tool call (`POST /tools/<name>`) is published automatically as `tool` with its arguments, once at
   `start` and once at `done`. That's how the side panel follows the agent: the cards key off tool names.
+  With `X-Coldex-Show-In: <ms>` (voice mode: how far the voice is behind the model) the tool answers at once but
+  everything it publishes lands after that delay, at least 3 s after the previous card from the same screen
+  (`bridge/pacing.py`). A `stage` reset drops whatever is still held.
 
 | Event | Fields | Produced by | Used by |
 |---|---|---|---|

@@ -329,7 +329,10 @@ export class FridgeBrain {
     const calls = output.filter((o) => o.type === "function_call");
     if (calls.length) {
       // Answer every call from this response, then ask for one follow-up. `busy` stays on meanwhile.
-      const results = await Promise.all(calls.map((c) => runTool(String(c.name), String(c.arguments ?? "{}"))));
+      // The voice is the clock: the bridge shows each tool's cards once the voice reaches it, not when generated.
+      this.tick();
+      const showIn = (1000 * this.lines.reduce((n, l) => n + l.text.length - l.shown, 0)) / FridgeBrain.rate;
+      const results = await Promise.all(calls.map((c) => runTool(String(c.name), String(c.arguments ?? "{}"), showIn)));
       calls.forEach((c, i) => {
         this.send({ type: "conversation.item.create", item: { type: "function_call_output", call_id: c.call_id, output: results[i] } });
       });
@@ -459,11 +462,16 @@ export function setScreen(s: "kitchen" | "stage") {
   screen = s;
 }
 
-export async function runTool(name: string, args: string): Promise<string> {
+/** `showIn`: ms until the voice reaches this call. The bridge answers at once and shows its cards then. */
+export async function runTool(name: string, args: string, showIn = 0): Promise<string> {
   try {
     const res = await fetch(`/api/tools/${name}`, {
       method: "POST",
-      headers: { "Content-Type": "application/json", "X-Coldex-Screen": screen },
+      headers: {
+        "Content-Type": "application/json",
+        "X-Coldex-Screen": screen,
+        "X-Coldex-Show-In": String(Math.round(showIn)),
+      },
       body: args || "{}",
     });
     return JSON.stringify(res.ok ? await res.json() : { error: `${name} failed with ${res.status}: ${await res.text()}` });
