@@ -10,12 +10,14 @@ Uses a throwaway data dir and the fake cart, so it never touches the real fridge
 import asyncio
 import json
 import os
+import ssl
 import sys
 import tempfile
 import time
 
 os.environ["DATA_DIR"] = tempfile.mkdtemp(prefix="coldex-try-")
 
+import certifi  # noqa: E402
 import websockets  # noqa: E402
 from fastapi.testclient import TestClient  # noqa: E402
 
@@ -29,6 +31,7 @@ async def connect():
         f"wss://api.openai.com/v1/realtime?model={main.REALTIME_MODEL}",
         additional_headers={"Authorization": f"Bearer {main.OPENAI_API_KEY}"},
         max_size=None,
+        ssl=ssl.create_default_context(cafile=certifi.where()),  # uv's Python on NixOS has no system CAs
     )
     session = main.session_config(rohlik=False)
     session.pop("model")
@@ -78,6 +81,7 @@ async def run() -> None:
     for i in cart:
         print(f"  {i.get('qty', 1):>4} x {i['name']:<28} {i.get('price_czk', '?'):>6} Kč  [{i.get('reason', 'NO REASON')}]")
     print(f"  total {total:.0f} Kč, {'clears' if total >= 749 else 'BELOW'} the 749 Kč minimum")
+    print(f"\nEvent log: {main.DATA_DIR / 'events.jsonl'}")
     print(f"\nNotes:\n{(main.NOTES_FILE.read_text() if main.NOTES_FILE.exists() else '(none)')}")
 
 
