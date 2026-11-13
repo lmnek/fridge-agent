@@ -4,7 +4,10 @@ Prints what Coldex says, every tool call and the timing, so memory/instructions.
 
     cd bridge && uv run python try_demo.py [--scenario NAME] [--runs N]
 
-Scenarios (see SCENARIOS below): demo, no-camera, judge-qa, other-dish, other-missing, judge-craving, judge-edit.
+Scenarios (see SCENARIOS below): demo, stage, no-camera, judge-qa, other-dish, other-missing, judge-craving,
+judge-edit. `demo` is DEMO.md's B and C: the actor orders from the kitchen, and the vision diff lands mid-C
+(--vision-at seconds after the actor's line) and goes in the way the kitchen page passes it on (note or tell).
+`stage` is the fallback: the presenter types the order into the stage session.
 After all runs it prints one summary row per run, which is what the prompt tuner reads.
 
 Uses a throwaway data dir and the fake cart, so it never touches the real fridge state or Rohlík.
@@ -33,7 +36,9 @@ import main  # noqa: E402
 
 bridge = TestClient(main.app)
 ap = argparse.ArgumentParser()
-ap.add_argument("--scenario", default="demo", choices=["demo", "no-camera", "judge-qa", "other-dish", "other-missing", "judge-craving", "judge-edit"])
+ap.add_argument("--scenario", default="demo", choices=["demo", "stage", "no-camera", "judge-qa", "other-dish", "other-missing", "judge-craving", "judge-edit"])
+ap.add_argument("--vision-at", type=float, default=6.0, help="demo: seconds after the actor's line when the vision diff lands (handoff 4: ~5.8 s analysis)")
+ap.add_argument("--line", help="demo: what the actor says instead of DEMO.md's line")
 ap.add_argument("--runs", type=int, default=1)
 ap.add_argument("--rohlik", action="store_true")
 ap.add_argument("--voices", help="comma-separated Realtime voices: saves data/voices/<voice>.wav of the B and C lines to listen to")
@@ -61,13 +66,17 @@ def cam(*names: str, expected: str | None = B_LINE) -> tuple:
     return ("kitchen", "camera", text, expected)
 
 
-_cam = cam("Lactose-free milk", "Eggs")
+KITCHEN = "Ugh, the last milk again. And I'm craving carbonara tonight. Coldex, order what we need."  # DEMO.md B
+TAKEN = ["Lactose-free milk", "Eggs"]  # what the actor takes out in B
+_cam = cam(*TAKEN)
 _actor = ("kitchen", "actor", "Ugh, again. And I'm craving carbonara tonight.", B2_LINE)
 _order = ("stage", "presenter", ORDER, C_LINE)
 
-# name -> steps (session, who, text, expected). The stage session only learns the craving through get_household.
+# name -> steps (session, who, text, expected[, vision]). vision = (seconds after the line, names taken out): the
+# camera result arriving while that step runs. The stage session only learns the craving through get_household.
 SCENARIOS = {
-    "demo": [_cam, _actor, _order],
+    "demo": [("kitchen", "actor", ARGS.line or KITCHEN, C_LINE, (ARGS.vision_at, TAKEN))],
+    "stage": [_cam, _actor, _order],
     "no-camera": [  # DEMO's B without frames: the actor says what they took
         ("kitchen", "actor", "I just took the last milk and eggs.", B_LINE),
         _actor,
@@ -107,13 +116,32 @@ async def connect():
     return ws
 
 
-async def say(ws, who: str, text: str, expected: str | None) -> dict:
+async def say(ws, who: str, text: str, expected: str | None, vision: tuple[float, list[str]] | None = None) -> dict:
     print(f"\n\n>>> {who}: {text}\n")
     t0 = time.monotonic()
     first_word = None
     speech = [""]  # one string per response, to split what was said before the first tool call from what came after
     tools: list[str] = []
     pre_len = None  # number of responses up to and including the first one that called a tool
+    # Mirrors the kitchen page (App.tsx): busy or spoke in the last 45 s, the camera goes in as a note with no reply.
+    st: dict = {"busy": True, "idle_at": None, "cam": None, "told": False, "extra": []}
+
+    async def camera() -> None:  # vision.py's done event: apply the diff, then the kitchen page passes it on
+        await asyncio.sleep(vision[0])
+        bridge.post("/inventory/changes", json={"removed": [{"name": n} for n in vision[1]], "source": "vision"})
+        st["cam"] = time.monotonic() - t0
+        st["told"] = not st["busy"] and time.monotonic() - st["idle_at"] >= 45
+        line = (main.vision.tell_line if st["told"] else main.vision.note_line)(vision[1], [])
+        print(f"\n  [{st['cam']:4.1f}s] camera done, {'tell' if st['told'] else 'note'}: {line}")
+        cam_item = {"type": "message", "role": "user", "content": [{"type": "input_text", "text": line}]}
+        await ws.send(json.dumps({"type": "conversation.item.create", "item": cam_item}))
+        if st["told"]:
+            st["busy"] = True
+            st["extra"].append(len(speech))
+            speech.append("")
+            await ws.send(json.dumps({"type": "response.create"}))
+
+    cam_task = asyncio.create_task(camera()) if vision else None
     item = {"type": "message", "role": "user", "content": [{"type": "input_text", "text": text}]}
     await ws.send(json.dumps({"type": "conversation.item.create", "item": item}))
     await ws.send(json.dumps({"type": "response.create"}))
@@ -140,6 +168,11 @@ async def say(ws, who: str, text: str, expected: str | None) -> dict:
             if (calls or tools) and pre_len is None:
                 pre_len = len(speech)
             if not calls:
+                st["busy"], st["idle_at"] = False, time.monotonic()
+                if cam_task and not cam_task.done():
+                    await cam_task
+                    if st["busy"]:
+                        continue
                 break
             for call in calls:
                 tools.append(call["name"])
@@ -157,8 +190,12 @@ async def say(ws, who: str, text: str, expected: str | None) -> dict:
     print(f"\n  before first tool: {pre or '(nothing)'}\n  after: {post or '(nothing)'}")
     if sim is not None:
         print(f"  similarity to DEMO line: {sim:.2f}")
+    extra = " | ".join(speech[i] for i in st["extra"] if speech[i]) or ("(silent)" if st["extra"] else "")
+    if vision:
+        print(f"  camera at {st['cam'] or 0:.1f}s, responses it started: {len(st['extra'])} {extra}")
     print(f"  [first words {first_word or 0:.1f}s, done {done:.1f}s]")
-    return {"first": first_word or 0.0, "done": done, "tools": tools, "sim": sim, "pre": pre}
+    return {"first": first_word or 0.0, "done": done, "tools": tools, "sim": sim, "pre": pre, "cam": st["cam"],
+            "told": st["told"], "extra": len(st["extra"]), "extra_text": extra}
 
 
 def last_cart() -> tuple[list[dict], float]:
@@ -174,17 +211,16 @@ def last_cart() -> tuple[list[dict], float]:
 
 
 async def one_run(n: int, steps: list[tuple]) -> dict | None:
+    main.reset()  # the rehearsal reset: seed fridge, no cart, no notes, no order underway
     EVENTS.clear()
-    main.STATE = main._seed()
-    main.NOTES_FILE.unlink(missing_ok=True)
     print(f"\n\n{'=' * 20} run {n}: {ARGS.scenario} {'=' * 20}")
     sessions = {"stage": await connect(), "kitchen": await connect()}  # stage connects before B, like on stage
     try:
         results = []
-        for s, who, text, exp in steps:
+        for s, who, text, exp, *vision in steps:
             if text in CAM_REMOVED:  # vision.py updates the inventory before the session hears the camera line
                 bridge.post("/inventory/changes", json={"removed": [{"name": n} for n in CAM_REMOVED[text]], "source": "vision"})
-            results.append(await say(sessions[s], who, text, exp))
+            results.append(await say(sessions[s], who, text, exp, *vision))
     finally:
         for ws in sessions.values():
             await ws.close()
@@ -206,7 +242,7 @@ async def one_run(n: int, steps: list[tuple]) -> dict | None:
         if k in ("deals", "recipe"):
             print(f"\n{k}: {json.dumps(d, ensure_ascii=False)[:300]}")
     print(f"\nNotes:\n{(main.NOTES_FILE.read_text() if main.NOTES_FILE.exists() else '(none)')}")
-    c = results[next(i for i, st in enumerate(steps) if st[0] == "stage")]  # C: the first step on the stage session
+    c = next((r for r in results if "show_cart" in r["tools"]), results[-1])  # C: the first step that showed a cart
     return {"c": c, "n": len(items), "total": total, "flagged": flagged, "sims": [r["sim"] for r in results if r["sim"] is not None]}
 
 
@@ -215,13 +251,16 @@ async def run() -> None:
     rows = [await one_run(n, steps) for n in range(1, ARGS.runs + 1)]
     if ROHLIK:
         return
-    print(f"\n\nSUMMARY  scenario={ARGS.scenario}  (C = first stage step; flagged = items without a reason or price)")
+    print(f"\n\nSUMMARY  scenario={ARGS.scenario}  (C = first step with show_cart; flagged = items without a reason or price)")
     print(f"{'run':>3} {'C done':>7} {'C 1st':>6} {'tools':>5} {'items':>5} {'total':>6} {'flagged':>7}  similarity (expected lines)")
     for n, r in enumerate(rows, 1):
         sims = " ".join(f"{s:.2f}" for s in r["sims"]) or "-"
         print(f"{n:>3} {r['c']['done']:6.1f}s {r['c']['first']:5.1f}s {len(r['c']['tools']):>5} {r['n']:>5} {r['total']:>6.0f} {r['flagged']:>7}  {sims}")
         print(f"      C tools: {', '.join(r['c']['tools']) or '(none)'}")
         print(f"      C said before first tool: {r['c']['pre'][:120] or '(nothing)'}")
+        if r["c"]["cam"] is not None:
+            told = "tell, spoken reply" if r["c"]["told"] else "note, no reply asked"
+            print(f"      camera at {r['c']['cam']:.1f}s ({told}), extra responses: {r['c']['extra']} {r['c']['extra_text'][:100]}")
 
 
 async def voices(names: list[str]) -> None:
