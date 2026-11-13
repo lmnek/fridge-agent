@@ -165,6 +165,8 @@ async def _hangup(sid: str | None) -> None:
 @router.post("/hangup")
 async def hangup() -> dict[str, Any]:
     """Also the reset: a rehearsal call whose status webhook never arrived must not block the next call."""
+    if _fake_task:
+        _fake_task.cancel()  # HACK(demo): Shift R stops the scripted call too
     try:
         await _hangup(_call.get("sid"))
     finally:
@@ -335,6 +337,8 @@ async def media(ws: WebSocket) -> None:
 
 # --------------------------------------------------------------------------- fake mode
 
+_fake_task: asyncio.Task | None = None
+
 SCRIPT = [
     (0.0, "call", {"phase": "dialing"}),
     (1.5, "call", {"phase": "ringing"}),
@@ -364,5 +368,6 @@ async def fake() -> dict[str, Any]:
                 hooks.emit("caption", who=who, id=f"fake-{n}", text=" ".join(words[:i]), final=i == len(words))
                 await asyncio.sleep(0.28)
 
-    asyncio.create_task(play())
+    global _fake_task
+    _fake_task = asyncio.create_task(play())
     return {"ok": True}

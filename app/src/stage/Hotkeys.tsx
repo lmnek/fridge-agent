@@ -101,7 +101,10 @@ export function Hotkeys({ brain, wake }: { brain: FridgeBrain; wake: () => Promi
       }
       if (e.shiftKey && lower === "r") {
         stopFallback();
-        void publish({ type: "stage", action: "reset" });
+        endCallAudio(); // stop any running call (real or fake) before the screens clear
+        void fetch("/api/courier/hangup", { method: "POST" })
+          .catch(() => {})
+          .then(() => publish({ type: "stage", action: "reset" }));
         return;
       }
       if (e.shiftKey && lower === "k") {
