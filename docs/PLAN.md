@@ -41,11 +41,11 @@ One of the judges told us:
 - We should work out **how good it is to use day to day**, for example controlling it from the phone.
 
 What follows:
-- **Talking is the product.** B and C should feel like a conversation with the fridge, not commands. Proposed:
-  the actor's B line becomes a complaint plus a craving: "Out of milk again... and I'm craving carbonara tonight."
+- **Talking is the product.** B and C should feel like a conversation with the fridge, not commands. Decided:
+  in B, Coldex notices the milk and eggs first, the actor complains and craves, and Coldex confirms both (DEMO.md).
 - **Complaints are handled (done).** `bridge/memory/instructions.md` treats "we're out of X" as fact: X leaves
   the inventory and goes in the next order. Coldex never argues or asks you to check.
-- **Phone control** is open, see §8.
+- **Phone control:** decided, see §8.
 
 ## 3. Decisions
 
@@ -157,7 +157,8 @@ See the build table in [DEMO.md](DEMO.md#build-owners-suggested-swap-freely).
 - [ ] **Network**: the hub, cams and laptop must share a LAN, and venue Wi-Fi often isolates clients, so
       **bring a travel router or hotspot**.
 - [ ] **Courier** (Honza): contact, time window, contents of the bag, cue signal.
-- [ ] **Phone control** (from the judge, §2.1). The stage app stays the main screen of the demo either way. Options:
+- [x] **Phone control** (from the judge, §2.1). **Decided: option 1.** The phone is the same web app, shown in H as a
+      line plus a phone frame on stage (DEMO.md). Telegram and Hermes aren't built. The options were:
       1. **The same web app on the phone** (recommended). Open the tunnel URL and add it to the home screen. The
          Realtime app already has a mobile layout, and it shares the bridge, memory and cart, so a craving said
          at the fridge is known on the phone. Almost no new code.
