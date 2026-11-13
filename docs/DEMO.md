@@ -9,8 +9,9 @@ has a scripted or replayed fallback, and none of them needs a recording.
 ## Setup
 
 - **Kitchen** (separate room): the fridge with 2 Reolink cameras inside watching the shelves, the hub, and the
-  backend laptop on our own travel router. A tablet at the fridge runs Coldex, the one session for both B and C,
-  and the actor hears it through an earbud from the tablet. The stage inset shows the fridge's-eye view, dark
+  backend laptop on our own travel router. **No tablet and no earbud:** the phone in the fridge is the eye and
+  the ear, and `/stage` is the brain (its own Realtime session for B and C), the display and the speakers.
+  Nobody opens `/` during the demo, or two sessions answer. The stage inset shows the fridge's-eye view, dark
   while the door is shut, then the light and the actor's face when it opens, from one of two sources:
   - **A Reolink camera with its mic:** run `infra/go2rtc.sh` on the backend laptop (go2rtc's standalone binary,
     `REOLINK_HOST`/`USER`/`PASSWORD` from `bridge/.env`, HTTP-FLV first, RTSP sub stream as fallback). The
@@ -19,16 +20,17 @@ has a scripted or replayed fallback, and none of them needs a recording.
     pattern and tone instead, without the hub.
   - **A phone inside the fridge, facing out,** over VDO.Ninja. The phone opens
     `https://vdo.ninja/?push=<room>&webcam&autostart&videodevice=back&quality=1&maxframerate=30&outboundvideobitrate=2500`
-    (its mic goes along for U; add `&audiodevice=0` for video only, and some Android phones need
+    (its mic is Coldex's ear; add `&audiodevice=0` for video only, and some Android phones need
     `videodevice=rear`), gets one tap so it holds its wake lock, and runs on a charger with auto-lock off. The
     stage opens `/stage?kitchen=<room>`.
 - **Stage:** the presenter's laptop and the projector, running the **stage view** (below). The app is opened
   through the Cloudflare Tunnel URL, which Twilio also needs for the live call in F.
-- **Audio: the stage app plays every sound, one path at a time.** In B and C it plays the kitchen relay: the
-  tablet sends its mic (the actor) and Coldex's voice straight to the bridge, and the stage plays them, starting
-  from the first click or key on the stage. The inset stays muted. U switches the actor's voice between the
-  relay's kitchen mic and the inset's own mic (the camera's or the phone's), never both, and Coldex always
-  comes through the relay. In F the stage plays the phone call audio (see F below). The stage mic stays off.
+- **Audio: the stage app plays every sound, one path at a time.** Before A the presenter presses **M** on
+  `/stage`: the stage session wakes with the fridge phone's mic as its input (VDO.Ninja SDK, `stage/phoneAudio.ts`)
+  and the inset unmuted, so the audience hears the actor and Coldex answers in B and C from the stage speakers.
+  M again closes the input; the tab wakes itself after a reload, closing it ends the session. U swaps the input
+  between the phone and the laptop mic (fallback). Without a VDO.Ninja room, M uses the laptop mic. In F the
+  stage plays the phone call audio (see F below).
 - **People:** the actor in the kitchen, the presenter on stage, and the **real Rohlík courier** waiting at the
   office entrance (we have a deal with Rohlík).
 
@@ -71,8 +73,8 @@ from A to H. If the audio fails, the text still carries the story.
 - **The H shot is Telegram on the presenter's phone, mirrored to the projector.** The bridge posts what Coldex
   does into the chat (craving noted, cart ready, order placed) during the demo, so it's real and already full
   by H.
-- Hotkeys: replay the B frames (D), type the C line (T), play the scripted run from B or C (Z / X), swap the
-  actor between the relay's kitchen mic and the camera's mic (U). Press ? on the stage for all of them.
+- Hotkeys: replay the B frames (D), type the C line (T), play the scripted run from B or C (Z / X), wake Coldex
+  with the phone as its ear / close the input (M), swap the input between the phone and the laptop mic (U). Press ? on the stage for all of them.
 - Priority if time runs short: C4 cart, then the B analysis, then C3 map, then the D/E mini browser, then the F
   call card, then C1 and C2, then the H Telegram push.
 
@@ -130,7 +132,7 @@ from A to H. If the audio fails, the text still carries the story.
 - [ ] The lines and the voice are in English, including the courier call.
 - [ ] C's timing has been checked in rehearsal.
 - [ ] The cameras are on USB power, and the B replay frames are loaded.
-- [ ] The actor's earbud is charged and paired with the tablet, and the kitchen relay plays on the stage speakers.
+- [ ] M on `/stage` woke Coldex, the phone's audio plays on the stage speakers, and `/` is closed everywhere.
 - [ ] The travel router is up, and the tunnel URL opens on the stage laptop.
 - [ ] The fridge phone is plugged in and streaming from inside the fridge, and its picture comes back fast when the door opens after being shut.
 - [ ] A test call reaches the courier, and the audio plays on stage.

@@ -16,9 +16,9 @@ const C_LINE = "Coldex, order what we need.";
 
 const HELP: [string, string][] = [
   ["D", "Door closed: replay the B frames"],
-  ["M", "Stage mic on / off (emergency)"],
+  ["M", "Wake Coldex (the fridge phone is its ear) / input on, off"],
   ["T", "Type the C line"],
-  ["U", "Actor heard through the camera mic / the relay (never both)"],
+  ["U", "Coldex hears the fridge phone / the laptop mic"],
   ["K", "Call the courier"],
   ["Shift K", "Fake courier call (scripted)"],
   ["1 – 7", "Force beat A, B, C, D/E, F, G, H"],

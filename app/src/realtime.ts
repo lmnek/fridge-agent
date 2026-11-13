@@ -107,7 +107,7 @@ export class FridgeBrain {
     this.micTrack.enabled = this.micOn;
     this.sender = pc.addTrack(this.micTrack, mic);
     if (this.input) void this.sender.replaceTrack(this.input);
-    this.inAnalyser = this.analyser(mic);
+    this.inAnalyser = this.analyser(this.input ? new MediaStream([this.input]) : mic);
     this.h.stream?.("kitchen", mic);
 
     const dc = pc.createDataChannel("oai-events");
@@ -204,6 +204,8 @@ export class FridgeBrain {
     this.input = track;
     if (track) track.enabled = this.micOn;
     void this.sender?.replaceTrack(track ?? this.micTrack);
+    const now = track ?? this.micTrack;
+    if (this.ctx && now) this.inAnalyser = this.analyser(new MediaStream([now])); // the orb hears what the session hears
   }
 
   get mic() {

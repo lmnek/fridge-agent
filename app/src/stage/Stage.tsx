@@ -7,14 +7,14 @@
  * One session runs B and C, the kitchen's. The stage's own session is only the T-hotkey fallback (and M,
  * the emergency mic): it never starts by itself and its mic never turns on by itself.
  */
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Orb } from "../Orb";
 import { FridgeBrain, type Status } from "../realtime";
 import { type BusEvent, useBus } from "./bus";
 import { publishCaption } from "./captions";
 import { DevPlayer } from "./DevPlayer";
 import { Hotkeys } from "./Hotkeys";
-import { KitchenInset } from "./KitchenInset";
+import { KitchenInset, phoneRoom } from "./KitchenInset";
 import { Panel, usePanelCard } from "./Panel";
 import { beatFor, insetGone } from "./pick";
 import { onPhoneAudio } from "./phoneAudio";
@@ -22,6 +22,9 @@ import { setVideoAudio, startRelay } from "./relay";
 import { Subtitles } from "./Subtitles";
 import { useOrbVoice } from "./voice";
 import "./stage.css";
+
+const AWAKE = "coldex-stage-awake"; // sessionStorage: this stage tab was woken, so it wakes again after a reload
+let autoWoke = false; // StrictMode runs effects twice, and two sessions would answer twice
 
 /**
  * Where the fridge camera goes, `?layout=`:
@@ -62,11 +65,15 @@ export default function Stage() {
   const [status, setStatus] = useState<Status>("off");
   const [error, setError] = useState<string | null>(null);
 
+  // With a VDO.Ninja room the fridge phone is the session's ear (no tablet): M wakes it with the phone as
+  // input and the phone audible on the speakers, so what it hears is the actor.
+  const [phone] = useState(() => phoneRoom() !== null);
+  const ear = useRef(false);
   const brain = useMemo(() => {
     const b = new FridgeBrain({
       status: setStatus,
       caption: (text, final, id) => publishCaption("coldex", `stage-${id ?? "r"}`, text, Boolean(final)),
-      heard: (text, final, id) => publishCaption("presenter", `stage-${id}`, text, final),
+      heard: (text, final, id) => publishCaption(ear.current ? "actor" : "presenter", `stage-${id}`, text, final),
       // The stage never asks a human mid-demo. Anything outside the safe list is declined (nothing may order).
       approval: (req) => b.approve(req.id, false),
       error: setError,
@@ -79,13 +86,60 @@ export default function Stage() {
   const wake = useCallback(async () => {
     if (brain.connected || status !== "off") return;
     setError(null);
+    if (phone) setVideo(true);
     try {
       await brain.start();
+      try {
+        sessionStorage.setItem(AWAKE, "1"); // like the kitchen page: this tab wakes again after a reload
+      } catch {}
     } catch (e) {
       brain.stop();
       setError(e instanceof Error ? e.message : String(e));
     }
-  }, [brain, status]);
+  }, [brain, status, phone]);
+
+  // As on the kitchen page (App.tsx): a tab woken once wakes again after a reload (Vite reloads on every
+  // pull), here with the mic open too, since M opened it. Closing the tab ends the session. Any gesture plays
+  // the voice if autoplay was refused.
+  useEffect(() => {
+    let again = false;
+    try {
+      again = sessionStorage.getItem(AWAKE) === "1";
+    } catch {}
+    if (again && !autoWoke) {
+      autoWoke = true;
+      void wake().then(() => brain.setMic(true));
+    }
+    const unblock = () => void brain.audio.play().catch(() => {});
+    window.addEventListener("pointerdown", unblock);
+    window.addEventListener("keydown", unblock);
+    return () => {
+      window.removeEventListener("pointerdown", unblock);
+      window.removeEventListener("keydown", unblock);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [brain]);
+
+  // As on the kitchen page: the door's vision result and an order decision go into the session.
+  useEffect(() => {
+    const es = new EventSource("/api/events");
+    es.onmessage = (m) => {
+      const ev = JSON.parse(m.data);
+      if (!brain.connected) return;
+      if (ev.type === "vision" && ev.phase === "done" && ev.tell) {
+        if (brain.activeWithin(45_000)) brain.note(ev.note);
+        else brain.tell(ev.tell);
+      }
+      if (ev.type === "approval" && ev.approval?.status !== "pending") {
+        brain.tell(
+          ev.order
+            ? `[app] The household approved the order. Rohlík order ${ev.order.id} is placed, ${ev.order.total_czk} CZK.`
+            : "[app] The household declined the order.",
+        );
+      }
+    };
+    return () => es.close();
+  }, [brain]);
 
   useEffect(() => {
     if (import.meta.env.DEV) Object.assign(window, { __stage: { brain } });
@@ -99,9 +153,13 @@ export default function Stage() {
   // wakes it and opens the gate). The stage laptop's mic is out of the session meanwhile.
   useEffect(() => {
     if (!videoAudio) return;
-    const off = onPhoneAudio((t) => brain.setInput(t));
+    const off = onPhoneAudio((t) => {
+      ear.current = true;
+      brain.setInput(t);
+    });
     return () => {
       off();
+      ear.current = false;
       brain.setInput(null);
     };
   }, [brain, videoAudio]);
