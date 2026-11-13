@@ -86,8 +86,8 @@ live, the judge's feedback, Telegram, scraping). The rest is aligned. In priorit
 ## Update: the actor orders from the kitchen
 
 Decided 13. 11. ~13:45 (DEMO.md B and C). The kitchen session now runs both B and C, and the stage session is
-only the typed fallback. With the fridge door open, the actor says: "Ugh, the last milk again. And I'm craving
-carbonara tonight. Coldex, order what we need." The door then closes, and the vision diff arrives a few seconds
+only the typed fallback. With the fridge door open, the actor says: "Coldex, we're out of milk and eggs again
+and I'm craving carbonara, so order what we need." The door then closes, and the vision diff arrives a few seconds
 into C. Check that:
 - **C starts straight from that line.** Coldex goes into the C narration with no B reaction first. "That was the
   last of the milk and the eggs." is dropped, because "What just ran out" covers it.

@@ -66,7 +66,7 @@ def cam(*names: str, expected: str | None = B_LINE) -> tuple:
     return ("kitchen", "camera", text, expected)
 
 
-KITCHEN = "Ugh, the last milk again. And I'm craving carbonara tonight. Coldex, order what we need."  # DEMO.md B
+KITCHEN = "Coldex, we're out of milk and eggs again and I'm craving carbonara, so order what we need."  # DEMO.md B
 TAKEN = ["Lactose-free milk", "Eggs"]  # what the actor takes out in B
 _cam = cam(*TAKEN)
 _actor = ("kitchen", "actor", "Ugh, again. And I'm craving carbonara tonight.", B2_LINE)

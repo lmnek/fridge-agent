@@ -72,8 +72,8 @@ From the old Frida build: `frontend/src/components/orb/` and `frontend/src/featu
 
 Decided 13. 11. ~13:45, and already written into DEMO.md (Setup, B, C, Fallbacks, Before the slot) and the
 PLAN decision log. The new B: the inset shows a phone **inside the fridge, facing out**. The door opens, the
-light comes on, the actor takes the last milk and eggs and says "Ugh, the last milk again. And I'm craving
-carbonara tonight. Coldex, order what we need.", then closes the door. The view goes dark, the stage fades the
+light comes on, the actor takes the last milk and eggs and says "Coldex, we're out of milk and eggs again
+and I'm craving carbonara, so order what we need.", then closes the door. The view goes dark, the stage fades the
 inset out, and the kitchen session's C narration plays on stage while the cards run. The presenter no longer
 speaks to Coldex. In priority order:
 

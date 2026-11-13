@@ -152,7 +152,7 @@ export const demoRun: Timed[] = [
   ...tool(26.7, "update_inventory", { removed: [{ name: "Lactose-free milk" }, { name: "Eggs" }], source: "camera" }),
   at(26.8, { type: "inventory", items: fridgeAfterB, source: "camera" }),
   ...say(27.5, "coldex", "b-1", "That was the last of the milk and the eggs.", 2.5),
-  ...say(30.2, "actor", "b-2", "Ugh, the last milk again. And I'm craving carbonara tonight. Coldex, order what we need.", 4),
+  ...say(30.2, "actor", "b-2", "Coldex, we're out of milk and eggs again and I'm craving carbonara, so order what we need.", 4),
   at(34, { type: "tool", name: "remember", args: { fact: "Craving carbonara tonight", category: "craving" }, phase: "start" }),
   at(34.1, { type: "learned", fact: "Craving carbonara tonight", category: "craving" }),
   at(34.2, { type: "tool", name: "remember", args: { fact: "Craving carbonara tonight", category: "craving" }, phase: "done", ok: true }),
