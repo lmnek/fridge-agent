@@ -51,8 +51,15 @@ in Rohlík, and that checkout is screen-recorded for D/E. The real courier then 
 - **For part 3 and C4:** in Rohlík mode the cart calls run on OpenAI's side, so no `tool` event reaches the
   bus. The C4 card only appears if Coldex calls `show_cart` (with reasons and image URLs) after adding to
   the Rohlík cart. The prompt has to ask for that.
-- Not yet run against Rohlík. Check that `GET /api/realtime/token` answers `"rohlik": true`. If it says
-  false, OpenAI rejected the MCP setup and the session is on the fake cart.
+- **Tested 13. 11. at 13:30:** the token works (58 tools, expires after about 6.5 h, no refresh yet).
+  `/realtime/token` answers `"rohlik": true`. `try_demo.py --rohlik` filled the real cart from the product
+  IDs in one `add_items_to_cart` call, done at 13.3 s.
+- **For part 3, found in that run:**
+  - Coldex said the bananas are on sale today. They aren't, and none of the 7 items is.
+  - It never called `show_cart`, so C4 stays empty in Rohlík mode.
+  - Rohlík has no Olympus yogurt, so `products.md` uses Milko and `household.md` still says Olympus.
+- **This Rohlík account still shows a 749 Kč minimum** (`minimalOrderPrice`), although we expected the pro
+  account to have none. The 7 items come to 684.78 Kč.
 
 ## Fake mode
 

@@ -55,6 +55,9 @@ in `bridge/memory/courier.md`, tests in `bridge/test_courier.py`, stage playback
 - If Coldex should start the call itself (the fixtures use a `call_courier` tool), that tool only needs to
   `POST /courier/call`.
 - Setup: the Twilio and tunnel steps in `SETUP.md`. It hasn't run against Twilio yet.
+- **The Twilio account is a trial (checked 13. 11.).** A trial only calls verified numbers and plays a trial
+  notice first, which the person called has to dismiss with a key press. Upgrade it before the courier call.
+  The +420 number has voice, and calls to Czech numbers are allowed.
 
 ## Fake mode
 

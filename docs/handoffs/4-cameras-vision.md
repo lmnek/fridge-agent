@@ -69,7 +69,9 @@ runs the pipeline and `bridge/test_vision.py` tests it.
 - `POST /api/vision/keep?name=b` saves the newest real run as that replay folder. Run it after a good rehearsal.
 - The `done` event carries `tell`, and the kitchen page passes it to its Realtime session.
 - While the door is open, the newest lit frame is kept, because the fridge goes dark once it shuts.
-- The vision model is `VISION_MODEL`, default `gpt-5.5`. It isn't run against OpenAI yet.
+- The vision model is `VISION_MODEL`, default `gpt-5.5`. Tested 13. 11. on drawn before and after shelves:
+  5.8 s, removed exactly "Lactose-free milk" and "Eggs" by their inventory names, and the boxes fit. Real
+  fridge photos are still to come.
 
 ## Fake mode
 
