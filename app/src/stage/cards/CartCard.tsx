@@ -1,8 +1,15 @@
 import { motion } from "motion/react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { BusEvent } from "../bus";
-import { CardFrame, CountUp, Tag, czk, rise, stagger, type Tone } from "./ui";
+import { CardFrame, CountUp, Tag, czk, type Tone } from "./ui";
 import "./CartCard.css";
+
+// Pacing. Rows land one by one from the moment the card opens; the total eases to each new running sum.
+const LEAD_MS = 300; // the card frame settles first
+const ROW_MS = 400; // one row per beat: 7 rows land in under 3 s
+const HURRY_MS = 600; // Coldex says "… Kč" while rows are still landing: the rest land within this
+const SETTLE_MS = 550; // after the last row, the total settles (colour + hairline)
+const ease = [0.16, 1, 0.3, 1] as const;
 
 type Item = { name: string; qty: number; price: number; tags: string[]; image?: string };
 
@@ -43,15 +50,24 @@ function Thumb({ src, name }: { src?: string; name: string }) {
   );
 }
 
-/** The total waits until the rows have landed, then counts up. */
-function Total({ to, delay, settled }: { to: number; delay: number; settled: boolean }) {
-  const [go, setGo] = useState(false);
+/** Row i lands at start + LEAD + i*ROW, unless Coldex says the total first: then the rest land within HURRY. */
+function schedule(n: number, start: number, hurry: number | null): number[] {
+  const at = Array.from({ length: n }, (_, i) => start + LEAD_MS + i * ROW_MS);
+  if (hurry === null) return at;
+  const left = at.filter((t) => t > hurry).length;
+  return at.map((t, i) => (t > hurry ? Math.min(t, hurry + ((i - (n - left) + 1) * HURRY_MS) / left) : t));
+}
+
+/** Re-renders at each moment in `times` until they've all passed. */
+function useClock(times: number[]) {
+  const [now, setNow] = useState(Date.now);
+  const next = times.find((t) => t > now);
   useEffect(() => {
-    const id = setTimeout(() => setGo(true), delay);
+    if (next === undefined) return;
+    const id = setTimeout(() => setNow(Date.now()), Math.max(0, next - Date.now()));
     return () => clearTimeout(id);
-  }, [delay]);
-  if (settled) return <span className="ck-cart-total"><span className="ck-num">{czk(to)}</span></span>;
-  return <span className="ck-cart-total">{go ? <CountUp to={to} duration={1.4} format={(n) => czk(Math.round(n))} /> : <span className="ck-num ck-cart-wait">{czk(0)}</span>}</span>;
+  }, [next]);
+  return now;
 }
 
 function Building() {
@@ -79,12 +95,37 @@ export default function CartCard({ events }: { events: BusEvent[] }) {
   }
   if (cartAt < 0 || buildAt > cartAt) return <Building />;
 
-  const { items, total } = readCart(events[cartAt]);
+  return <Cart events={events} cartAt={cartAt} />;
+}
+
+function Cart({ events, cartAt }: { events: BusEvent[]; cartAt: number }) {
+  const ev = events[cartAt];
+  const { items, total } = readCart(ev);
   const count = items.reduce((s, i) => s + i.qty, 0);
-  const landed = 100 + items.length * 80 + 350;
-  // A cart that arrived long ago (card shown again later) just shows its total.
-  const ts = events[cartAt].ts;
-  const settled = typeof ts === "number" && Date.now() - ts > landed + 4000;
+
+  // The count starts when this cart is first on screen (its event usually arrived seconds earlier).
+  const cartTs = typeof ev.ts === "number" ? ev.ts : 0;
+  const run = useRef({ key: -1, start: 0 });
+  if (run.current.key !== cartTs) run.current = { key: cartTs, start: Math.max(cartTs, Date.now()) };
+  const start = run.current.start;
+
+  // Coldex saying the total while the card is counting: the first "Kč" caption that arrived after the count began.
+  let hurry: number | null = null;
+  for (let i = cartAt + 1; i < events.length; i++) {
+    const e = events[i];
+    if (e.type === "caption" && e.who === "coldex" && typeof e.ts === "number" && e.ts > start && /Kč/.test(String(e.text ?? ""))) {
+      hurry = e.ts;
+      break;
+    }
+  }
+
+  const at = schedule(items.length, start, hurry);
+  const lastAt = at.length ? at[at.length - 1] : start;
+  const now = useClock([...at, lastAt + SETTLE_MS]);
+  const landed = at.filter((t) => t <= now).length;
+  const done = landed === items.length;
+  const settled = now >= lastAt + SETTLE_MS;
+  const running = done ? total : items.slice(0, landed).reduce((s, i) => s + i.qty * i.price, 0);
 
   return (
     <CardFrame
@@ -99,16 +140,24 @@ export default function CartCard({ events }: { events: BusEvent[] }) {
             <br />
             You confirm the order in Rohlík.
           </p>
-          <Total to={total} delay={landed} settled={settled} />
+          <span className={`ck-cart-total${settled ? " is-settled" : ""}`}>
+            <CountUp to={running} duration={0.6} format={(n) => czk(Math.round(n))} />
+          </span>
         </div>
       }
     >
-      <motion.ul className="ck-cart-list" variants={stagger} initial="hidden" animate="show">
+      <ul className="ck-cart-list">
         {items.map((it, i) => (
-          <motion.li key={`${it.name}-${i}`} variants={rise} className="ck-cart-row">
+          <motion.li
+            key={`${it.name}-${i}`}
+            className="ck-cart-row"
+            initial={{ opacity: 0, y: 14 }}
+            animate={i < landed ? { opacity: 1, y: 0 } : { opacity: 0, y: 14 }}
+            transition={{ duration: 0.5, ease }}
+          >
             <Thumb src={it.image} name={it.name} />
             <span className="ck-cart-main">
-              <span className="ck-cart-name">{it.name}</span>
+              <span className={`ck-cart-name${it.name.length > 46 ? " is-longer" : it.name.length > 34 ? " is-long" : ""}`}>{it.name}</span>
               {it.tags.length > 0 && (
                 <span className="ck-cart-tags">
                   {it.tags.map((t) => (
@@ -123,7 +172,7 @@ export default function CartCard({ events }: { events: BusEvent[] }) {
             <span className="ck-cart-price ck-num">{czk(it.qty * it.price)}</span>
           </motion.li>
         ))}
-      </motion.ul>
+      </ul>
     </CardFrame>
   );
 }

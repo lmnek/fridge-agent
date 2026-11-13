@@ -61,6 +61,14 @@
   white-space: nowrap;
   text-overflow: ellipsis;
 }
+/* Rohlík's long Czech names step down in size so they still fit one line: a second line plus the
+   tag doesn't fit 7 rows in the panel, so the ellipsis is only the last resort. */
+.ck-cart-name.is-long {
+  font-size: 21px;
+}
+.ck-cart-name.is-longer {
+  font-size: 19px;
+}
 .ck-cart-tags {
   display: flex;
   gap: 8px;
@@ -87,7 +95,7 @@
 .ck-cart-note {
   margin: 0 0 8px;
   color: var(--ck-mute);
-  font-size: 18px;
+  font-size: 20px;
   line-height: 1.4;
 }
 .ck-cart-total {
@@ -97,6 +105,29 @@
   line-height: 0.95;
   letter-spacing: -0.02em;
   white-space: nowrap;
+  position: relative;
+  padding-bottom: 10px;
+  color: var(--ck-mute);
+  transition: color 0.7s ease;
+}
+/* The running sum is quiet; once every row is in, it settles: full ink and a hairline drawing in under it. */
+.ck-cart-total::after {
+  content: "";
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: 2px;
+  background: var(--ck-ink);
+  transform: scaleX(0);
+  transform-origin: right;
+  transition: transform 0.9s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.ck-cart-total.is-settled {
+  color: var(--ck-ink);
+}
+.ck-cart-total.is-settled::after {
+  transform: scaleX(1);
 }
 
 /* Smaller boxes: drop the tags first, then shrink the photo. */
@@ -134,7 +165,4 @@
   .ck-cart-list.is-building .ck-cart-row {
     animation: none;
   }
-}
-.ck-cart-wait {
-  color: var(--ck-line);
 }
