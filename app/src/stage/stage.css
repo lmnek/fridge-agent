@@ -47,6 +47,9 @@
 /* ---------------------------------------------------------------- wordmark */
 
 .stage-mark {
+  display: flex;
+  align-items: center;
+  gap: 12px;
   position: absolute;
   left: 60px;
   top: 40px;

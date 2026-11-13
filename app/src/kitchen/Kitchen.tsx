@@ -58,7 +58,7 @@ export function Kitchen(props: {
     <div className="kitchen" data-side={side === "idle" ? "off" : "on"}>
       <header className="k-top">
         <span className="k-mark">
-          <img src="/coldex-mark.svg" alt="" aria-hidden />
+          <span className="mark-cube" aria-hidden>{"\u{1F9CA}"}</span>
           Coldex
         </span>
         <button type="button" className="peek" onClick={props.onLook} title="Look inside now (L)">

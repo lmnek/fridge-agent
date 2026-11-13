@@ -354,3 +354,10 @@ button {
     animation: none;
   }
 }
+
+/* the real ice cube in front of the Coldex wordmark (stage and kitchen) */
+.mark-cube {
+  font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif;
+  font-weight: 400;
+  line-height: 1;
+}

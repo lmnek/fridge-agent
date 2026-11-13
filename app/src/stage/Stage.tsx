@@ -139,7 +139,10 @@ export default function Stage() {
       data-inset={camera ? "large" : "gone"}
       data-orb={orb.status}
     >
-      <p className="stage-mark">Coldex</p>
+      <p className="stage-mark">
+        <span className="mark-cube" aria-hidden>{"\u{1F9CA}"}</span>
+        Coldex
+      </p>
       <div className="stage-orb">
         <Orb status={orb.status} levels={orb.levels} onToggle={() => {}} />
       </div>
