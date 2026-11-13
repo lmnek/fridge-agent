@@ -32,7 +32,9 @@ type Size = "large" | "pip" | "hidden";
 
 function source(): string {
   const param = new URLSearchParams(window.location.search).get("kitchen");
-  return (param ?? import.meta.env.VITE_KITCHEN_ROOM ?? "").trim();
+  // Remembered per browser, so the kitchen page at plain / finds the same fridge phone the stage URL named.
+  if (param) localStorage.setItem("coldex-kitchen", param);
+  return (param ?? localStorage.getItem("coldex-kitchen") ?? import.meta.env.VITE_KITCHEN_ROOM ?? "").trim();
 }
 
 // HACK(demo): the ham scan (Recognition + its hidden second VDO.Ninja viewer, hamTracker.ts) is off unless the
