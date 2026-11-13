@@ -24,8 +24,10 @@ export interface Handlers {
 type Json = Record<string, unknown>;
 type Send = (event: Json) => void;
 
-// Read-only and cart tools on the Rohlík MCP. Names that don't match need a human.
-const AUTO_APPROVE = /^(batch_search|search|get_|fetch_|list_|analyze_|add_items_to_cart|update_cart_item|remove_cart_item)/;
+// The bridge only lets these Rohlík tools into the session (bridge/rohlik.py SAFE_TOOLS) with no approvals.
+// This is the second lock: if an approval request ever arrives for anything else, a human decides.
+const AUTO_APPROVE =
+  /^(batch_search_products|get_product_details|get_cart|add_items_to_cart|update_cart_item|remove_cart_item|get_checkout_link|get_discounted_items)$/;
 
 export class FridgeBrain {
   private h: Handlers;

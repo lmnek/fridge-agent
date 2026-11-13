@@ -24,6 +24,8 @@ from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import Response, StreamingResponse
 from pydantic import BaseModel
 
+from rohlik import SAFE_TOOLS
+
 ROOT = Path(__file__).resolve().parent
 load_dotenv(ROOT / ".env")
 load_dotenv(ROOT.parent / ".env")
@@ -401,7 +403,10 @@ def session_config(rohlik: bool = True) -> dict[str, Any]:
                 "server_label": "rohlik",
                 "server_url": ROHLIK_MCP_URL,
                 "authorization": ROHLIK_TOKEN,
-                "require_approval": "always",  # the app auto-approves read and cart calls, a human approves the rest
+                # Only search, read and cart tools exist for the session (rohlik.SAFE_TOOLS), so none of them
+                # needs an approval round trip. Ordering is impossible here: a person completes it on rohlik.cz.
+                "allowed_tools": SAFE_TOOLS,
+                "require_approval": "never",
             }
         )
     else:

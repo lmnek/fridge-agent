@@ -5,6 +5,9 @@ Prints what Coldex says, every tool call and the timing, so memory/instructions.
     cd bridge && uv run python try_demo.py
 
 Uses a throwaway data dir and the fake cart, so it never touches the real fridge state or Rohlík.
+With --rohlik it uses the real Rohlík MCP instead and fills the household's real cart (never orders):
+
+    cd bridge && uv run python try_demo.py --rohlik
 """
 
 import asyncio
@@ -24,6 +27,7 @@ from fastapi.testclient import TestClient  # noqa: E402
 import main  # noqa: E402
 
 bridge = TestClient(main.app)
+ROHLIK = "--rohlik" in sys.argv
 
 
 async def connect():
@@ -33,7 +37,7 @@ async def connect():
         max_size=None,
         ssl=ssl.create_default_context(cafile=certifi.where()),  # uv's Python on NixOS has no system CAs
     )
-    session = main.session_config(rohlik=False)
+    session = main.session_config(rohlik=ROHLIK)
     session.pop("model")
     await ws.send(json.dumps({"type": "session.update", "session": session}))
     return ws
@@ -55,7 +59,15 @@ async def say(ws, who: str, text: str) -> None:
         elif kind == "error":
             print(f"\n[error] {ev['error'].get('message')}")
         elif kind == "response.done":
-            calls = [o for o in ev["response"].get("output", []) if o["type"] == "function_call"]
+            output = ev["response"].get("output", [])
+            for o in output:  # Rohlík MCP calls run on OpenAI's side, inside the same response
+                if o["type"] == "mcp_call":
+                    print(f"\n  [{time.monotonic() - t0:4.1f}s] rohlik.{o['name']} {o['arguments'][:160]}")
+                    if o.get("error"):
+                        print(f"  [rohlik error] {str(o['error'])[:300]}")
+                elif o["type"] == "mcp_list_tools":
+                    print(f"\n  [{time.monotonic() - t0:4.1f}s] rohlik tools: {len(o.get('tools', []))}")
+            calls = [o for o in output if o["type"] == "function_call"]
             if not calls:
                 break
             for call in calls:
@@ -75,6 +87,12 @@ async def run() -> None:
               "Update the inventory, then react briefly.")
     await say(kitchen, "actor", "Ugh, again. And I'm craving carbonara tonight.")
     await say(stage, "presenter", "Let's order now, please.")
+    if ROHLIK:
+        from rohlik import Rohlik
+
+        async with Rohlik() as r:
+            print(f"\n\nReal Rohlík cart:\n{json.dumps(await r.call('get_cart'), ensure_ascii=False)[:3000]}")
+        return
     cart = bridge.post("/tools/view_cart").json()["cart"]
     total = sum(float(i.get("price_czk") or 0) * float(i.get("qty") or 1) for i in cart)
     print("\n\nCart:")

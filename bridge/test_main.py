@@ -62,7 +62,9 @@ def test_token_sends_full_session(monkeypatch):
     client.get("/realtime/token")
     tools = json.loads(route.calls.last.request.content)["session"]["tools"]
     mcp = [t for t in tools if t["type"] == "mcp"]
-    assert mcp and mcp[0]["require_approval"] == "always" and mcp[0]["authorization"] == "rohlik-oauth"
+    assert mcp and mcp[0]["authorization"] == "rohlik-oauth"
+    # only read and cart tools reach the session, so nothing in it can order, cancel or claim
+    assert "add_items_to_cart" in mcp[0]["allowed_tools"] and "cancel_order" not in mcp[0]["allowed_tools"]
     assert "place_order" not in {t.get("name") for t in tools}
 
 
