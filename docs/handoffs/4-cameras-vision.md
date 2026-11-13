@@ -41,9 +41,24 @@ fridge says "That was the last of the milk and the eggs."
 `vision/claude.py` (the prompt and boxes), `camera/change.py` (diffing), `camera/reolink.py`, and the notes in
 `docs/integrace/reolink-kamera.md`.
 
+## If the cameras can't run live
+
+Router settings may keep the hub off our network, and we'll know by 14:30. The demo has to work either way, and
+the live code stays in place, chosen by config rather than removed. Only the **source of the frames** and the
+**trigger** change. The vision call, the diff, the events and Coldex's line are the same code in every mode:
+
+| Mode | Frames from | Triggered by |
+|---|---|---|
+| Live | the Reolink hub | the door closing (motion settles) |
+| Replay | real Reolink frames captured whenever the cameras worked, even on another network | a "door closed" hotkey, pressed as the actor closes the fridge |
+| Phone photos | before and after photos of the same fridge taken with a phone | the same hotkey |
+| Speech only | none | the actor says what they took ("took the last milk and eggs"), and the complaint handling in part 3 updates the inventory |
+
+So capture frames at the first chance, and take the phone photos now as a fallback for the fallback.
+
 ## Fake mode
 
-The replayed B frames.
+The replay and phone-photo modes above, marked `HACK(demo)`.
 
 ## Risks
 

@@ -145,6 +145,8 @@ See the build table in [DEMO.md](DEMO.md#build-owners-suggested-swap-freely).
 ## 8. Open questions
 
 - [x] **Language**: English throughout, including the courier call (decided 13. 11.).
+- [ ] **Cameras live or not**: router settings may keep the hub off our network. Decide by 14:30. If not live, B runs
+      on captured frames through the same pipeline (handoffs, part 4), and the live code stays in place.
 - [ ] **Reolink**: on-demand snapshots of both cams through the hub? Wake latency? Wi-Fi through a closed
       fridge door? Cold kills batteries, so run on USB power. Honza's notes are in `docs/integrace/reolink-kamera.md`.
 - [ ] **Camera placement**: both inside (Frida's default: "Police" and "Dveře") or one outside facing the fridge?
