@@ -13,7 +13,7 @@ import contextvars
 import time
 from typing import Any, Callable
 
-CARD_MIN_DWELL_S = 3.0
+CARD_MIN_DWELL_S = 6.0
 # Tools that put a card up (app/src/stage/pick.ts TOOLS, plus the product and nearby cards). Only these get the dwell.
 CARD_TOOLS = {
     "get_inventory", "update_inventory", "show_recipe", "show_shops", "show_cart", "add_to_cart", "view_cart",
