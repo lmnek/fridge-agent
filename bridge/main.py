@@ -26,6 +26,7 @@ from pydantic import BaseModel
 
 import camera
 import courier
+import kitchen_audio
 import vision
 from rohlik import SAFE_TOOLS
 
@@ -364,6 +365,9 @@ app.include_router(vision.router)
 # Beat F: the courier call (bridge/courier.py) publishes call phases and captions on the bus.
 courier.attach(emit=emit)
 app.include_router(courier.router)
+
+# Beats B and C: the kitchen tablet's mic and Coldex's voice, relayed to the stage (bridge/kitchen_audio.py).
+app.include_router(kitchen_audio.router)
 
 
 # --------------------------------------------------------------------------- Realtime session

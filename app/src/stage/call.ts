@@ -4,6 +4,7 @@
  */
 import type { FridgeBrain } from "../realtime";
 import { type CallAudio, playCallAudio } from "./callAudio";
+import { setCalling } from "./relay";
 
 let active: CallAudio | null = null;
 
@@ -16,6 +17,7 @@ export async function startCourierCall(brain: FridgeBrain, fake = false): Promis
   if (!fake) {
     active?.stop();
     active = playCallAudio();
+    setCalling(true); // one path at a time: the kitchen relay goes quiet for the call
   }
   const res = await fetch(fake ? "/api/courier/fake" : "/api/courier/call", { method: "POST" });
   if (!res.ok) {
@@ -27,6 +29,7 @@ export async function startCourierCall(brain: FridgeBrain, fake = false): Promis
 export function endCallAudio() {
   active?.stop();
   active = null;
+  setCalling(false);
 }
 
 /** 0..1 while the call audio plays, null when there's no call. */

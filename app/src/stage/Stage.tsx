@@ -16,6 +16,7 @@ import { Hotkeys } from "./Hotkeys";
 import { KitchenInset } from "./KitchenInset";
 import { Panel, usePanelCard } from "./Panel";
 import { beatFor } from "./pick";
+import { startRelay } from "./relay";
 import { Subtitles } from "./Subtitles";
 import { useOrbVoice } from "./voice";
 import "./stage.css";
@@ -58,6 +59,16 @@ export default function Stage() {
   useEffect(() => {
     if (import.meta.env.DEV) Object.assign(window, { __stage: { brain } });
   }, [brain]);
+
+  // The kitchen relay plays from the first click or key on (browsers only start audio after a gesture).
+  useEffect(() => {
+    window.addEventListener("pointerdown", startRelay, { once: true });
+    window.addEventListener("keydown", startRelay, { once: true });
+    return () => {
+      window.removeEventListener("pointerdown", startRelay);
+      window.removeEventListener("keydown", startRelay);
+    };
+  }, []);
 
   const card = usePanelCard(events);
   const beat = beatFor(card, events);

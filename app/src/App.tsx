@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { grabFrames } from "./camera";
+import { KitchenRelay } from "./kitchenAudio";
 import { Orb } from "./Orb";
 import { FridgeBrain, type Status } from "./realtime";
 import { publishCaption } from "./stage/captions";
@@ -52,6 +53,8 @@ export default function App() {
   const [error, setError] = useState<string | null>(null);
   const [, tick] = useState(0);
 
+  // The stage plays the kitchen through this relay, not through the video call (bridge/kitchen_audio.py).
+  const relay = useMemo(() => new KitchenRelay(), []);
   const brain = useMemo(
     () =>
       new FridgeBrain({
@@ -63,8 +66,9 @@ export default function App() {
         heard: (text, final, id) => publishCaption("actor", `kitchen-${id}`, text, final),
         approval: (req) => setApproval({ kind: "mcp", id: req.id, name: req.name, args: req.args }),
         error: setError,
+        stream: (who, s) => void relay.attach(who, s),
       }),
-    [],
+    [relay],
   );
   const levels = useCallback(() => brain.levels(), [brain]);
   useEffect(() => {
