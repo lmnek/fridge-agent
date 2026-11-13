@@ -26,6 +26,7 @@ import os
 import re
 import subprocess
 import sys
+import time
 import unicodedata
 from dataclasses import dataclass
 from datetime import date, datetime
@@ -49,6 +50,11 @@ SHOPS = 2  # the card has a column per store, Rohlík plus two keeps the item na
 REFRESH_MIN = float(os.getenv("DEALS_REFRESH_MIN", "30"))  # the bridge rescrapes in the background, 0 turns it off
 DELIVERY_MIN = 60
 UA = "Mozilla/5.0 (compatible; coldex-deals)"  # akcniceny.cz
+OVERPASS = [
+    "https://overpass-api.de/api/interpreter",
+    "https://overpass.private.coffee/api/interpreter",
+    "https://maps.mail.ru/osm/tools/overpass/api/interpreter",
+]
 OSM_UA = "coldex-deals/0.1"  # Overpass answers 406 to a Mozilla User-Agent
 
 
@@ -139,7 +145,8 @@ from frida.config import Settings
 from frida.deals.akcniceny import AkcnicenyDealSource
 
 async def main():
-    source = AkcnicenyDealSource(Settings(http_user_agent=sys.argv[1]))
+    # The search page carries the offers, offer pages are only a fallback and cost a second each.
+    source = AkcnicenyDealSource(Settings(http_user_agent=sys.argv[1]), max_offer_pages=0)
     out = {}
     for query in sys.argv[2:]:
         try:
@@ -209,10 +216,16 @@ def nearby() -> dict[str, dict[str, Any]]:
         f'[out:json][timeout:25];nwr["shop"~"^(supermarket|convenience)$"](around:{RADIUS_M},{lat},{lon});'
         "out center tags;"
     )
-    res = httpx.post(
-        "https://overpass-api.de/api/interpreter", data={"data": query}, headers={"User-Agent": OSM_UA}, timeout=40
-    )
-    res.raise_for_status()
+    res = None
+    for server in OVERPASS:  # the main instance answers 502 often, the mirrors share its data
+        try:
+            res = httpx.post(server, data={"data": query}, headers={"User-Agent": OSM_UA}, timeout=30)
+            if res.status_code == 200:
+                break
+        except httpx.HTTPError:
+            continue
+    if res is None or res.status_code != 200:
+        raise RuntimeError("Every Overpass server failed.")
     stores: dict[str, dict[str, Any]] = {}
     for el in res.json()["elements"]:
         tags = el.get("tags", {})
@@ -226,6 +239,19 @@ def nearby() -> dict[str, dict[str, Any]]:
         k = key(name)
         if k not in stores or meters < stores[k]["distance_m"]:
             stores[k] = {"distance_m": meters, "address": tags.get("addr:street", "")}
+    return stores
+
+
+def stores_nearby() -> dict[str, dict[str, Any]]:
+    """The OpenStreetMap stores, cached in data/stores.json: they don't move, and Overpass is often slow or down."""
+    cache = ROOT / "replay" / "stores.json"  # committed, so a scrape needs Overpass only for a new COLDEX_HOME
+    home = ",".join(str(v) for v in HOME)
+    saved = json.loads(cache.read_text()) if cache.exists() else {}
+    if saved.get("home") == home:
+        return saved["stores"]
+    stores = nearby()
+    cache.parent.mkdir(parents=True, exist_ok=True)
+    cache.write_text(json.dumps({"home": home, "stores": stores}, ensure_ascii=False))
     return stores
 
 
@@ -243,14 +269,13 @@ def pick_shops(deals: list[dict[str, Any]], around: dict[str, dict[str, Any]]) -
 
 async def scrape(keep: bool = True) -> dict[str, Any]:
     """Scrapes and saves to data/deals.json, and with keep also to the committed bridge/replay/deals.json."""
-    print("Rohlík, live over MCP ...")
-    rohlik = await rohlik_prices()
-    print(f"  {len(rohlik)} prices")
-    print("akcniceny.cz, about a second per request ...")
-    shops = shop_deals(await asyncio.to_thread(scrape_akcniceny))
-    print(f"  {len(shops)} matching deals")
-    print("Nearby shops, OpenStreetMap ...")
-    stores = pick_shops(shops, await asyncio.to_thread(nearby))
+    t0 = time.monotonic()
+    rohlik, raw, around = await asyncio.gather(  # all three at once, akcniceny.cz sets the pace
+        rohlik_prices(), asyncio.to_thread(scrape_akcniceny), asyncio.to_thread(stores_nearby)
+    )
+    shops = shop_deals(raw)
+    print(f"{len(rohlik)} Rohlík prices, {len(shops)} matching deals, {len(around)} chains nearby")
+    stores = pick_shops(shops, around)
     names = {s["name"] for s in stores}
     result = {
         "scraped_at": datetime.now().astimezone().isoformat(timespec="seconds"),
@@ -264,7 +289,11 @@ async def scrape(keep: bool = True) -> dict[str, Any]:
     for path in (DATA, SAVED) if keep else (DATA,):
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(json.dumps(result, ensure_ascii=False, indent=1) + "\n")
-    print(f"Saved {DATA}" + (f" and {SAVED.relative_to(ROOT.parent)}" if keep else ""))
+    print(
+        f"Saved {DATA}"
+        + (f" and {SAVED.relative_to(ROOT.parent)}" if keep else "")
+        + f" in {time.monotonic() - t0:.1f} s"
+    )
     return result
 
 

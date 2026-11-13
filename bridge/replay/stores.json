@@ -1,0 +1,18 @@
+{
+ "home": "50.0755,14.4378",
+ "note": "From the 14:45 OpenStreetMap run on 13. 11. 2026 (Overpass was down later). Only the chains that had deals that day. Delete this file to fetch the full list again.",
+ "stores": {
+  "albert": {
+   "distance_m": 60,
+   "address": ""
+  },
+  "billa": {
+   "distance_m": 820,
+   "address": ""
+  },
+  "penny": {
+   "distance_m": 1170,
+   "address": ""
+  }
+ }
+}
