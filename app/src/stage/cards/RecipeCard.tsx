@@ -22,7 +22,20 @@ const note = (n: string) => (/gluten/i.test(n) ? "for Anna" : undefined);
 export default function RecipeCard({ events }: { events: BusEvent[] }) {
   const recipe: Recipe | undefined =
     latest(events, "recipe")?.recipe ?? latest(events, "tool", (e) => e.name === "show_recipe")?.args;
-  if (!recipe) return <CardFrame icon="C2" kicker="Recipe" title="Picking a recipe" live />;
+  if (!recipe)
+    return (
+      <CardFrame icon="C2" kicker="Recipe" title="Picking a recipe" live>
+        {/* The shape of the answer while it's coming: the missing block and the line under it, still empty. */}
+        <div className="ck-recipe-missing is-ghost" aria-hidden>
+          {[62, 48, 54, 70].map((w) => (
+            <div key={w} className="ck-recipe-row">
+              <span className="ck-recipe-mark" />
+              <span className="ck-recipe-bar" style={{ width: `${w}%` }} />
+            </div>
+          ))}
+        </div>
+      </CardFrame>
+    );
 
   const have = recipe.have ?? [];
   const missing = recipe.missing ?? [];

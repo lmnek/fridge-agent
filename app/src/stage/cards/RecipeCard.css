@@ -27,7 +27,7 @@
   display: flex;
   align-items: center;
   gap: 16px;
-  min-height: 60px;
+  min-height: 64px;
   border-top: 1px solid rgba(184, 40, 58, 0.16);
 }
 .ck-recipe-row:first-child { border-top: 0; }
@@ -101,3 +101,13 @@
   font-weight: 700;
   font-variant-numeric: tabular-nums;
 }
+
+/* Loading: the missing block as an empty grey outline of itself, breathing slowly. */
+.ck-recipe-missing.is-ghost {
+  padding-top: 8px;
+  background: var(--ck-sunk);
+  animation: ck-pulse 1.6s ease-in-out infinite;
+}
+.ck-recipe-missing.is-ghost .ck-recipe-row { border-top-color: var(--ck-line); }
+.ck-recipe-missing.is-ghost .ck-recipe-mark { background: var(--ck-line); }
+.ck-recipe-bar { height: 22px; border-radius: var(--ck-r-chip); background: var(--ck-line); }
