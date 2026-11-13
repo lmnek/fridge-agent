@@ -1,81 +1,197 @@
-/* F courier call: the timer in the head, the two voices as a two-sided transcript (Coldex left in lamp blue,
-   the courier right), the newest line set large. */
+/* F courier call. Head: the call timer. Then one status line (signal, phase, the courier's number), then the
+   transcript on a two-column grid: the speaker in a fixed gutter on the left (Coldex in lamp blue, the courier in
+   ink), the words on the right. The newest line is the hero, set large in ink; older lines step back. Before
+   anyone picks up, the transcript space holds a quiet ring pulse instead. */
+
 .ck-call-time {
   font-family: "Barlow Semi Condensed", "Barlow", sans-serif;
-  font-size: var(--ck-t-title);
+  font-size: 56px;
   font-weight: 500;
   line-height: 1;
-  color: var(--ck-ink);
-}
-.ck-call-time.is-ended {
+  letter-spacing: 0.01em;
   color: var(--ck-faint);
 }
-.ck-call-meta {
+.ck-call-time.is-running {
+  color: var(--ck-ink);
+}
+
+/* Status line: signal glyph, phase, number. */
+.ck-call-status {
   display: flex;
   align-items: center;
-  gap: 14px;
-  padding-bottom: 20px;
+  gap: 16px;
+  padding: 20px 0;
+  border-top: 1px solid var(--ck-line);
   border-bottom: 1px solid var(--ck-line);
-  color: var(--ck-slate);
-  font-size: var(--ck-t-label);
 }
+.ck-call-signal {
+  position: relative;
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+}
+.ck-call-signal i {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--ck-lamp);
+}
+.ck-call-status.is-dialing .ck-call-signal i,
+.ck-call-status.is-ringing .ck-call-signal i {
+  animation: ck-pulse 1s ease-in-out infinite;
+}
+.ck-call-status.is-answered .ck-call-signal i {
+  background: var(--ck-ok);
+}
+.ck-call-status.is-ended .ck-call-signal i {
+  background: transparent;
+  border: 3px solid var(--ck-faint);
+}
+.ck-call-status.is-failed .ck-call-signal i {
+  background: var(--ck-gone);
+}
+.ck-call-phase {
+  font-family: "Barlow Semi Condensed", "Barlow", sans-serif;
+  font-size: 32px;
+  font-weight: 600;
+  line-height: 1.1;
+  color: var(--ck-lamp);
+}
+.ck-call-status.is-answered .ck-call-phase {
+  color: var(--ck-ok);
+}
+.ck-call-status.is-ended .ck-call-phase {
+  color: var(--ck-mute);
+}
+.ck-call-status.is-failed .ck-call-phase {
+  color: var(--ck-gone);
+}
+.ck-call-number {
+  margin-left: auto;
+  font-size: var(--ck-t-body);
+  font-weight: 500;
+  color: var(--ck-ink);
+  letter-spacing: 0.02em;
+}
+
 .ck-call-error {
   margin: 16px 0 0;
   color: var(--ck-gone);
   font-size: var(--ck-t-label);
 }
+
+/* Before the first words: rings spreading from a point, and one plain sentence. */
+.ck-call-wait {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 40px;
+  padding-bottom: 24px;
+}
+.ck-call-wait p {
+  margin: 0;
+  color: var(--ck-mute);
+  font-size: 32px;
+  font-weight: 500;
+  text-align: center;
+}
+.ck-call-rings {
+  position: relative;
+  width: 200px;
+  height: 200px;
+}
+.ck-call-rings::after {
+  content: "";
+  position: absolute;
+  inset: 76px;
+  border-radius: 50%;
+  background: var(--ck-lamp);
+}
+.ck-call-rings i {
+  position: absolute;
+  inset: 0;
+  border: 2px solid var(--ck-lamp);
+  border-radius: 50%;
+  opacity: 0;
+  animation: ck-call-ring 2.4s cubic-bezier(0.2, 0.6, 0.3, 1) infinite;
+}
+.ck-call-rings i:nth-child(2) {
+  animation-delay: 0.8s;
+}
+.ck-call-rings i:nth-child(3) {
+  animation-delay: 1.6s;
+}
+/* Dialing: a slower, single ring; ringing: the full three-ring pulse. */
+.ck-call-wait.is-dialing .ck-call-rings i:not(:first-child) {
+  display: none;
+}
+@keyframes ck-call-ring {
+  0% {
+    transform: scale(0.24);
+    opacity: 0.9;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 0;
+  }
+}
+
+/* Transcript: speaker gutter + words, bottom-anchored so the newest line sits low and large. */
 .ck-call-feed {
   flex: 1;
   min-height: 0;
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
-  gap: 22px;
+  gap: 24px;
   overflow: hidden;
-  padding-top: 22px;
-  padding-bottom: 8px; /* the growing newest line keeps its descenders */
-  -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 80px);
-  mask-image: linear-gradient(to bottom, transparent 0, #000 80px);
-}
-.ck-call-wait {
-  margin: 0 0 auto;
-  color: var(--ck-faint);
-  font-size: 32px;
+  padding-top: 24px;
+  padding-bottom: 8px; /* the newest line keeps its descenders */
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 72px);
+  mask-image: linear-gradient(to bottom, transparent 0, #000 72px);
 }
 .ck-call-line {
   flex: none;
-  max-width: 88%;
-  padding-left: 20px;
-  border-left: 3px solid var(--ck-lamp);
-}
-.ck-call-line.courier {
-  align-self: flex-end;
-  padding-left: 0;
-  padding-right: 20px;
-  border-left: none;
-  border-right: 3px solid var(--ck-edge);
-  text-align: right;
+  display: grid;
+  grid-template-columns: 120px 1fr;
+  column-gap: 20px;
+  align-items: baseline;
 }
 .ck-call-speaker {
-  display: block;
-  margin-bottom: 2px;
-  color: var(--ck-slate);
   font-size: var(--ck-t-label);
-  font-weight: 600;
+  font-weight: 700;
+  line-height: 1.3;
+  color: var(--ck-ink);
 }
 .ck-call-line.coldex .ck-call-speaker {
   color: var(--ck-lamp);
 }
 .ck-call-text {
   margin: 0;
+  padding-left: 20px;
+  border-left: 3px solid var(--ck-line);
   font-size: var(--ck-t-body);
   line-height: 1.3;
   font-weight: 450;
+  color: var(--ck-ink);
+}
+.ck-call-line.coldex .ck-call-text {
+  border-left-color: var(--ck-lamp);
+}
+.ck-call-line.courier .ck-call-text {
+  border-left-color: var(--ck-ink);
 }
 .ck-call-line.is-new .ck-call-text {
-  font-size: 36px;
+  font-size: 40px;
   font-weight: 500;
   line-height: 1.2;
+}
+.ck-call-line.is-new .ck-call-speaker {
+  font-size: var(--ck-t-body);
 }
 .ck-call-caret {
   display: inline-block;
@@ -85,4 +201,15 @@
   vertical-align: -0.1em;
   background: var(--ck-lamp);
   animation: ck-pulse 1s ease-in-out infinite;
+}
+.ck-call-line.courier .ck-call-caret {
+  background: var(--ck-ink);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ck-call-rings i,
+  .ck-call-signal i,
+  .ck-call-caret {
+    animation: none;
+  }
 }

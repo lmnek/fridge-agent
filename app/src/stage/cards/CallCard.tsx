@@ -1,7 +1,7 @@
 import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useState } from "react";
 import type { BusEvent } from "../bus";
-import { CardFrame, Tag, latest } from "./ui";
+import { CardFrame, latest } from "./ui";
 import "./CallCard.css";
 
 const PHASE_LABEL: Record<string, string> = {
@@ -10,7 +10,7 @@ const PHASE_LABEL: Record<string, string> = {
   answered: "Connected",
   ended: "Call ended",
 };
-const SHOWN = 4; // subtitle lines kept on screen
+const SHOWN = 6; // subtitle lines kept on screen (the oldest clip under the top fade)
 
 type Line = { id: string; who: string; text: string; final: boolean };
 
@@ -30,7 +30,7 @@ export default function CallCard({ events }: { events: BusEvent[] }) {
   const dialing = latest(events, "call", (e) => e.phase === "dialing");
   const answered = latest(events, "call", (e) => e.phase === "answered" && (!dialing || e.ts >= dialing.ts));
   const ended = latest(events, "call", (e) => e.phase === "ended" && (!dialing || e.ts >= dialing.ts));
-  const phase = call ? String(call.phase) : "";
+  const phase = call ? String(call.phase) : "dialing";
   const failed = Boolean(call?.error) || (phase === "ended" && call?.status === "failed");
 
   // Subtitles: newest text per caption id, only this call, only the two voices on the line.
@@ -43,56 +43,77 @@ export default function CallCard({ events }: { events: BusEvent[] }) {
   const lines = [...byId.values()].slice(-SHOWN);
 
   const clock = answered ? mmss((ended ? ended.ts : Math.max(now, answered.ts)) - answered.ts) : "00:00";
-  const live = phase === "dialing" || phase === "ringing" || phase === "answered";
-  const label = !call ? "Calling the courier" : PHASE_LABEL[phase] ?? phase;
+  const reaching = phase === "dialing" || phase === "ringing"; // the line is open but nobody has picked up
+  const live = reaching || phase === "answered";
+  const state = failed ? "failed" : phase;
+  const label = failed ? "Call failed" : (PHASE_LABEL[phase] ?? phase);
+  const number = call?.number ? String(call.number) : "";
 
   return (
     <CardFrame
       icon="F"
       kicker="Phone call"
       title="Rohlík courier"
-      live={live || !call}
-      aside={<span className={`ck-call-time${phase === "ended" ? " is-ended" : ""}`}>{clock}</span>}
+      live={live}
+      aside={<span className={`ck-call-time${answered && !ended ? " is-running" : ""}`}>{clock}</span>}
     >
-      <div className="ck-call-meta">
-        <Tag tone={failed ? "gone" : phase === "ended" ? undefined : phase === "answered" ? "ok" : "lamp"}>
-          {label}
-          {!call || phase === "dialing" || phase === "ringing" ? "…" : ""}
-        </Tag>
-        <span>Coldex {phase === "ended" ? "called" : "is calling"}{call?.number ? ` ${call.number}` : ""}</span>
+      {/* The line itself: what the call is doing, and who is on the other end. */}
+      <div className={`ck-call-status is-${state}`}>
+        <span className="ck-call-signal" aria-hidden>
+          <i />
+        </span>
+        <span className="ck-call-phase">{label}</span>
+        {number && <span className="ck-call-number">{number}</span>}
       </div>
 
       {failed && <p className="ck-call-error">{String(call?.error ?? "The call could not be completed.")}</p>}
 
-      <div className="ck-call-feed">
-        {lines.length === 0 && (
-          <p className="ck-call-wait">
-            {!call ? "Calling the courier…" : phase === "ended" ? "No conversation was captured." : phase === "answered" ? "Listening…" : "Waiting for an answer…"}
+      {lines.length === 0 ? (
+        <div className={`ck-call-wait is-${state}`}>
+          {reaching && (
+            <span className="ck-call-rings" aria-hidden>
+              <i />
+              <i />
+              <i />
+            </span>
+          )}
+          <p>
+            {phase === "ended"
+              ? "No conversation was captured."
+              : phase === "answered"
+                ? "Listening…"
+                : phase === "ringing"
+                  ? "Waiting for the courier to pick up…"
+                  : "Coldex is calling the courier…"}
           </p>
-        )}
-        <AnimatePresence initial={false}>
-          {lines.map((l, i) => {
-            const age = lines.length - 1 - i;
-            return (
-              <motion.div
-                key={l.id}
-                layout="position"
-                className={`ck-call-line ${l.who}${age === 0 ? " is-new" : ""}`}
-                initial={{ opacity: 0, y: 24 }}
-                animate={{ opacity: phase === "ended" ? (age === 0 ? 1 : 0.7) : age === 0 ? 1 : age === 1 ? 0.6 : age === 2 ? 0.4 : 0.25, y: 0 }}
-                exit={{ opacity: 0 }}
-                transition={{ type: "spring", stiffness: 300, damping: 32 }}
-              >
-                <span className="ck-call-speaker">{l.who === "coldex" ? "Coldex" : "Courier"}</span>
-                <p className="ck-call-text">
-                  {l.text}
-                  {!l.final && <span className="ck-call-caret" />}
-                </p>
-              </motion.div>
-            );
-          })}
-        </AnimatePresence>
-      </div>
+        </div>
+      ) : (
+        <div className="ck-call-feed">
+          <AnimatePresence initial={false}>
+            {lines.map((l, i) => {
+              const age = lines.length - 1 - i;
+              const opacity = phase === "ended" ? (age === 0 ? 1 : 0.8) : [1, 0.8, 0.62, 0.48][age] ?? 0.4;
+              return (
+                <motion.div
+                  key={l.id}
+                  layout="position"
+                  className={`ck-call-line ${l.who}${age === 0 ? " is-new" : ""}`}
+                  initial={{ opacity: 0, y: 24 }}
+                  animate={{ opacity, y: 0 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ type: "spring", stiffness: 300, damping: 32 }}
+                >
+                  <span className="ck-call-speaker">{l.who === "coldex" ? "Coldex" : "Courier"}</span>
+                  <p className="ck-call-text">
+                    {l.text}
+                    {!l.final && <span className="ck-call-caret" />}
+                  </p>
+                </motion.div>
+              );
+            })}
+          </AnimatePresence>
+        </div>
+      )}
     </CardFrame>
   );
 }
