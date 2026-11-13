@@ -8,7 +8,7 @@ Living doc. Update it when a decision changes or an open question gets answered.
 > "I'd love carbonara tonight", orders what's missing from Rohlík after one tap, and gets better at running
 > your kitchen every day.
 
-Event: AI Tinkerers hackathon. About 10 h of build time, then a **3-minute demo with a hard stop**.
+Event: AI Tinkerers hackathon. **Build deadline 17:45**, then a **3-minute demo with a hard stop**. Demo slots are sometime after (time TBD).
 Judging: **creativity** first, plus a **special prize for the most impressive self-learning / recursive agent**.
 That prize shapes the design (§6), so learning has to be a visible, structural part of the product.
 
@@ -164,7 +164,7 @@ API_SERVER_KEY=...
 - **B, OpenAI Realtime (WebRTC in the browser).** Speech-to-speech with a single tool `ask_fridge_agent(text)`
   that calls Hermes. It's the snappiest, but it's a second model. The orb uses a WebAudio `AnalyserNode` on
   the mic and remote tracks.
-- Decide at H5. Risk for A: a tool-heavy Hermes turn may be too slow for conversational timing. Mitigation:
+- Decide at 12:45. Risk for A: a tool-heavy Hermes turn may be too slow for conversational timing. Mitigation:
   short spoken acknowledgement first, details on screen.
 
 ## 6. Self-improvement: the prize angle
@@ -208,13 +208,15 @@ Owners get assigned at kickoff. Each lane runs its own agents, and the interface
 | D: Voice | A/B voice variants and the orb (can merge into C) | `app/` |
 | E: Stage | Courier staging with Rohlík, groceries, fridge setup, network, run of show, backup video | `demo/` |
 
-- **H0–1:** setup, plus each lane kills its open questions (§8).
-- **H1–4:** every lane works on its own with fakes.
-- **H4–5:** first end-to-end run: real camera, inventory, agent, approval, Rohlík cart.
-- **H5:** voice A/B decision.
-- **H5–7:** demo beats: expiry, craving → recipe, learning panel, Telegram approval.
-- **H7–8:** polish, seed data, fake modes, record the backup video.
-- **H8–10:** rehearse full 3-minute runs. Code freeze at **H9**, after which only demo-blocking fixes go in.
+Scheduled backwards from the **17:45 build deadline**:
+- **First hour after start:** setup, plus each lane resolves its open questions (§8).
+- **Until 11:45:** every lane works on its own with fakes.
+- **By 12:45:** first end-to-end run: real camera, inventory, agent, approval, Rohlík cart.
+- **12:45:** pick the voice variant.
+- **12:45–14:45:** demo beats: expiry, craving → recipe, learning panel, Telegram approval.
+- **14:45–15:45:** polish, seed data, fake modes, record the backup video.
+- **15:45–17:45:** rehearse full 3-minute runs. **Code freeze at 16:45**, after which only demo-blocking fixes go in.
+- **After 17:45, until our slot:** more rehearsals, and re-check the hardware just before going on.
 
 ## 8. Open questions (verify in hour 1)
 
@@ -232,6 +234,7 @@ Owners get assigned at kickoff. Each lane runs its own agents, and the interface
 - [ ] **Courier** (Honza): contact, time window, contents of the bag, cue signal.
 - [ ] **Apify**: hosted MCP URL and auth (Bearer token or OAuth)? Is there a ready actor for Czech leaflet deals
       (kupi.cz, Lidl, Kaufland), or does the generic web scraper do it? Do the hackathon credits cover it?
+- [ ] **Schedule**: when is our demo slot? Can we touch code or hardware between 17:45 and the slot, or is 17:45 a hard submission?
 - [ ] **Telegram**: bot token. Approval UX: is a text "yes" enough, or can Hermes send inline buttons?
 
 ## 9. References

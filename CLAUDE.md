@@ -2,7 +2,7 @@
 
 ## The event
 
-AI Tinkerers hackathon. About **10 hours** of build time, then a **3-minute demo with a hard stop**.
+AI Tinkerers hackathon. **Build deadline 17:45**, then a **3-minute demo with a hard stop**. Demo slots are sometime after the deadline (exact time TBD).
 Judging puts **creativity** first, and there's a special prize for the **most impressive self-learning ("recursive") agent**.
 We also have free Apify credits.
 
