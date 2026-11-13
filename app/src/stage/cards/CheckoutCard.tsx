@@ -27,7 +27,8 @@ const tickIn = { hidden: { pathLength: 0 }, show: { pathLength: 1, transition: {
 export default function CheckoutCard({ events }: { events: BusEvent[] }) {
   const start = latest(events, "stage", (e) => e.beat === "DE")?.ts ?? Date.now();
   const [now, setNow] = useState(Date.now());
-  const [videoOk, setVideoOk] = useState(true);
+  // HACK(demo), decided 13. 11.: the stepped checkout below for good, no recording. true plays VIDEO_SRC instead.
+  const [videoOk, setVideoOk] = useState(false);
   const [ended, setEnded] = useState(false);
   const video = useRef<HTMLVideoElement>(null);
 
