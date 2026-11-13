@@ -185,3 +185,23 @@
 .k-approval .card h3 {
   font-size: 32px;
 }
+
+/* U: the fridge camera (stage/KitchenInset.tsx, base styles in stage/stage.css). No card: a 9:16 portrait frame
+   centred in the side. A card up: a small PiP at the top right of the orb's column. */
+.kitchen .kitchen-inset {
+  --ice-line: #c6dbe5;
+  --glide: 760ms cubic-bezier(0.3, 0, 0, 1);
+  --rise: cubic-bezier(0.2, 0, 0, 1);
+  --h: calc(100vh - var(--top) - var(--gut));
+  z-index: 2;
+  top: var(--top);
+  height: var(--h);
+  width: calc(var(--h) * 9 / 16);
+  left: calc(75% - var(--h) * 9 / 32);
+}
+
+.kitchen .kitchen-inset[data-size="pip"] {
+  --h: 30vh;
+  left: calc(50% - var(--gut) - var(--h) * 9 / 16);
+  border-radius: 14px;
+}

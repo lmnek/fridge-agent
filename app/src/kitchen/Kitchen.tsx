@@ -12,6 +12,7 @@ import { Orb } from "../Orb";
 import type { Levels } from "../orb/types";
 import type { Status } from "../realtime";
 import { type BusEvent, useBus } from "../stage/bus";
+import { KitchenInset } from "../stage/KitchenInset";
 import { Panel, usePanelCard } from "../stage/Panel";
 import { cardFor } from "../stage/pick";
 import { type Approval, ApprovalCard } from "./ApprovalCard";
@@ -55,6 +56,8 @@ export function Kitchen(props: {
   onDecide: (ok: boolean) => void;
   peek: { src: string; at: number } | null;
   onLook: () => void;
+  cam: boolean;
+  inputLevel: () => number;
 }) {
   const { status, caption, learned, error, approval, peek } = props;
   const { card, events } = useKitchenCard();
@@ -74,9 +77,11 @@ export function Kitchen(props: {
   const newest = [product, nearby, order].filter(Boolean).sort((a, b) => (b?.ts ?? 0) - (a?.ts ?? 0))[0] ?? null;
   const quick = newest && (newest.ts ?? 0) > callTs ? newest : null;
   const side = approval ? "approval" : quick ? "quick" : card === "F" && callOver ? "idle" : card === "PR" || card === "NB" ? "idle" : card;
+  // U: the fridge camera fills the side while no card shows, and shrinks to a PiP beside a card (as on /stage).
+  const split = side !== "idle" || props.cam;
 
   return (
-    <div className="kitchen" data-side={side === "idle" ? "off" : "on"}>
+    <div className="kitchen" data-side={split ? "on" : "off"}>
       <header className="k-top">
         <span className="k-mark">
           <span className="mark-cube" aria-hidden>{"\u{1F9CA}"}</span>
@@ -90,7 +95,7 @@ export function Kitchen(props: {
 
       {/* The orb's column: the whole width when idle, the left half while a card shows, so the orb glides from
           dead centre to the centre of the left half and stays big. */}
-      <motion.main className="k-hero" initial={false} animate={{ width: side === "idle" ? "100%" : "50%" }} transition={SPRING}>
+      <motion.main className="k-hero" initial={false} animate={{ width: split ? "50%" : "100%" }} transition={SPRING}>
         <Orb status={status} levels={props.levels} onToggle={props.onWake} />
         <div className="k-voice" aria-live="polite">
           {STATUS_TEXT[status] ? <p className="k-state">{STATUS_TEXT[status]}</p> : null}
@@ -132,6 +137,11 @@ export function Kitchen(props: {
           </motion.aside>
         ) : null}
       </AnimatePresence>
+      <KitchenInset
+        size={!props.cam ? "hidden" : side === "idle" ? "large" : "pip"}
+        muted={!props.cam}
+        level={props.cam ? props.inputLevel : undefined}
+      />
     </div>
   );
 }

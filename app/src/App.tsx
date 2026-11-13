@@ -6,6 +6,7 @@ import { FridgeBrain, type Status } from "./realtime";
 import { publish, useBus } from "./stage/bus";
 import { type CallAudio, playCallAudio, unlockCallAudio } from "./stage/callAudio";
 import { publishCaption } from "./stage/captions";
+import { onPhoneAudio } from "./stage/phoneAudio";
 
 const AWAKE = "coldex-awake"; // sessionStorage: this tab was woken, so it wakes again after a reload
 let autoWoke = false; // StrictMode runs effects twice, and two sessions would answer twice
@@ -55,6 +56,7 @@ export default function App() {
     [relay],
   );
   const levels = useCallback(() => brain.levels(), [brain]);
+  const inputLevel = useCallback(() => brain.levels().input, [brain]);
   useEffect(() => {
     // Dev only: lets you drive the orb and captions from the console when rehearsing.
     if (import.meta.env.DEV) Object.assign(window, { __fridge: { brain, relay, setStatus, setCaption } });
@@ -125,9 +127,23 @@ export default function App() {
     };
   }, [brain]);
 
+  // U (as on /stage): the fridge camera on screen, its mic played aloud and made Coldex's ear. U again: the tablet mic.
+  const [cam, setCam] = useState(false);
+  useEffect(() => {
+    if (!cam) return;
+    const off = onPhoneAudio((t) => brain.setInput(t));
+    return () => {
+      off();
+      brain.setInput(null);
+    };
+  }, [brain, cam]);
+
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key.toLowerCase() === "l" && !(e.target instanceof HTMLInputElement)) void lookRef.current();
+      if (e.target instanceof HTMLInputElement || e.ctrlKey || e.metaKey || e.altKey || e.shiftKey) return;
+      const k = e.key.toLowerCase();
+      if (k === "l") void lookRef.current();
+      if (k === "u") setCam((c) => !c);
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -220,6 +236,8 @@ export default function App() {
       onDecide={(ok) => void decide(ok)}
       peek={peek}
       onLook={() => void look()}
+      cam={cam}
+      inputLevel={inputLevel}
     />
   );
 }
