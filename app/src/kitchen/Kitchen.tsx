@@ -65,7 +65,7 @@ export function Kitchen(props: {
       <header className="k-top">
         <span className="k-mark">
           <span className="mark-cube" aria-hidden>{"\u{1F9CA}"}</span>
-          Coldex
+          <span className="mark-name">Coldex</span>
         </span>
         <button type="button" className="peek" onClick={props.onLook} title="Look inside now (L)">
           {peek ? <img src={peek.src} alt="Last camera frame" /> : <span className="peek-empty" aria-hidden />}

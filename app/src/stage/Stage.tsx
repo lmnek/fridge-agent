@@ -141,7 +141,7 @@ export default function Stage() {
     >
       <p className="stage-mark">
         <span className="mark-cube" aria-hidden>{"\u{1F9CA}"}</span>
-        Coldex
+        <span className="mark-name">Coldex</span>
       </p>
       <div className="stage-orb">
         <Orb status={orb.status} levels={orb.levels} onToggle={() => {}} />
