@@ -310,3 +310,17 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
+
+/* ---------------------------------------------------------------- audio fallback (U) */
+
+/* Only while the video call's audio stands in for the kitchen relay, so the presenter knows. */
+.stage-audio {
+  position: fixed;
+  top: 36px;
+  right: 20px;
+  margin: 0;
+  font-size: 14px;
+  letter-spacing: 0.02em;
+  color: var(--gone);
+  pointer-events: none;
+}

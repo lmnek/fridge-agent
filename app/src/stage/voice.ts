@@ -1,14 +1,19 @@
 /**
- * What drives the stage orb. Priority: the courier call audio (F), then the stage session once it's awake
- * (from C on), and while it's off (A and B) a mirror of the kitchen tablet, so Coldex speaking there makes
- * the stage orb speak too. Owned by part 1, sub-task 2.
+ * What drives the stage orb. Priority: the courier call audio (F), then the stage session if it's awake (the
+ * T fallback), then Coldex's voice from the kitchen relay (B and C, relay.ts). The orb gets Coldex's level
+ * only, never the actor's. If no kitchen audio arrives (relay dead, the video call's audio on instead), it
+ * mirrors the kitchen's captions with a synthetic level. Owned by part 1, sub-task 2.
  */
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { FridgeBrain, Status } from "../realtime";
 import type { BusEvent } from "./bus";
 import { callLevel } from "./call";
+import { relayColdexLevel } from "./relay";
 
 const KITCHEN_WINDOW_MS = 900;
+/** Kitchen relay: Coldex counts as speaking above this level, and for HANGOVER_MS after it dips. */
+const SPEAKING_LEVEL = 0.03;
+const HANGOVER_MS = 350;
 
 /** When the newest kitchen Coldex caption arrived, if that response is still streaming (not final). */
 function kitchenSpeakingSince(events: BusEvent[]): number | null {
@@ -39,8 +44,8 @@ function callActive(events: BusEvent[]): boolean {
   return false;
 }
 
-// HACK(demo): a speech-like envelope for the orb while the kitchen talks. The stage doesn't get the kitchen
-// audio, only its captions, so syllable-rate sines plus a little noise stand in for the real output level.
+// HACK(demo): a speech-like envelope for the orb while the kitchen talks and no relay audio arrives, only its
+// captions: syllable-rate sines plus a little noise stand in for the real output level.
 function syntheticLevel(t: number) {
   const s = t / 1000;
   const syll = 0.5 + 0.5 * Math.sin(s * 2 * Math.PI * 4.3);
@@ -56,6 +61,18 @@ export function useOrbVoice(brain: FridgeBrain, status: Status, events: BusEvent
   const statusRef = useRef(status);
   statusRef.current = status;
   const smooth = useRef(0);
+
+  // The kitchen relay: "speaking" follows Coldex's real level. Re-renders only when the state flips.
+  const [relay, setRelay] = useState<"none" | "quiet" | "speaking">("none");
+  const loudAt = useRef(0);
+  useEffect(() => {
+    const t = setInterval(() => {
+      const lv = relayColdexLevel();
+      if (lv !== null && lv > SPEAKING_LEVEL) loudAt.current = performance.now();
+      setRelay(lv === null ? "none" : performance.now() - loudAt.current < HANGOVER_MS ? "speaking" : "quiet");
+    }, 50);
+    return () => clearInterval(t);
+  }, []);
 
   const since = status === "off" ? kitchenSpeakingSince(events) : null;
   const [now, setNow] = useState(() => Date.now());
@@ -74,6 +91,8 @@ export function useOrbVoice(brain: FridgeBrain, status: Status, events: BusEvent
     const call = callLevel();
     if (call !== null) return { input: call, output: call };
     if (statusRef.current !== "off" && !callActive(eventsRef.current)) return brain.levels();
+    const kitchen = relayColdexLevel();
+    if (kitchen !== null && !callActive(eventsRef.current)) return { input: 0, output: kitchen };
     const s = kitchenSpeakingSince(eventsRef.current);
     const speaking = callActive(eventsRef.current) || (s !== null && Date.now() - s < KITCHEN_WINDOW_MS);
     const target = speaking ? syntheticLevel(performance.now()) : 0.02;
@@ -83,6 +102,7 @@ export function useOrbVoice(brain: FridgeBrain, status: Status, events: BusEvent
 
   if (callLevel() !== null || callActive(events)) return { status: "speaking" as Status, levels };
   if (status !== "off") return { status, levels };
+  if (relay !== "none") return { status: (relay === "speaking" ? "speaking" : "listening") as Status, levels };
   const mirroring = since !== null && Math.max(now, since) - since < KITCHEN_WINDOW_MS;
   return { status: (mirroring ? "speaking" : "listening") as Status, levels };
 }

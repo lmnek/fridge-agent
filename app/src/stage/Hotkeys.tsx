@@ -16,6 +16,7 @@ const HELP: [string, string][] = [
   ["D", "Door closed: replay the B frames"],
   ["M", "Stage mic on / off (emergency)"],
   ["T", "Type the C line"],
+  ["U", "Video call audio on / off (if the kitchen relay dies)"],
   ["K", "Call the courier"],
   ["Shift K", "Fake courier call (scripted)"],
   ["1 – 7", "Force beat A, B, C, D/E, F, G, H"],

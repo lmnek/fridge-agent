@@ -56,8 +56,9 @@ Anything that should show up on stage goes through the bridge. Screens never tal
 | `stage` | `beat` (A, B, C, DE, F, G, H, idle), `action` (`reset` clears every screen, `door` = the D hotkey: the door closed, the kitchen inset fades out) | hotkeys (part 1) | forces a card, fallbacks |
 | `system` | `message` | bridge | error line |
 
-Audio is too heavy for the bus. Part 6 exposes its own WebSocket for the call, part 1 one for the kitchen relay,
-and the stage view plays both.
+Audio is too heavy for the bus. Part 6 exposes its own WebSocket for the call (`/courier/listen`, mu-law 8 kHz),
+part 1 one for the kitchen relay (the tablet sends to `/kitchen/audio`, the stage listens on `/kitchen/listen`,
+`{"who": "kitchen" | "coldex", "audio": base64 PCM16 24 kHz, "t": sender ms}`), and the stage view plays both.
 **If you change a shape, update this table in the same commit.** Until a producer exists, fake its events.
 
 ## Stage contract (parts 1 and 2)

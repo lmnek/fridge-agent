@@ -17,6 +17,7 @@ import { Hotkeys } from "./Hotkeys";
 import { KitchenInset } from "./KitchenInset";
 import { Panel, usePanelCard } from "./Panel";
 import { beatFor, insetGone } from "./pick";
+import { setVideoAudio, startRelay } from "./relay";
 import { Subtitles } from "./Subtitles";
 import { useOrbVoice } from "./voice";
 import "./stage.css";
@@ -55,6 +56,28 @@ export default function Stage() {
     if (import.meta.env.DEV) Object.assign(window, { __stage: { brain } });
   }, [brain]);
 
+  // The kitchen relay plays from the first click or key on (browsers only start audio after a gesture).
+  // U swaps it for the video call's own audio, the fallback when the relay dies. Never both at once.
+  const [videoAudio, setVideo] = useState(false);
+  useEffect(() => setVideoAudio(videoAudio), [videoAudio]);
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const t = e.target as HTMLElement | null;
+      if (t?.tagName === "INPUT" || e.ctrlKey || e.metaKey || e.altKey || e.shiftKey) return;
+      if (e.key.toLowerCase() === "u") setVideo((v) => !v);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+  useEffect(() => {
+    window.addEventListener("pointerdown", startRelay, { once: true });
+    window.addEventListener("keydown", startRelay, { once: true });
+    return () => {
+      window.removeEventListener("pointerdown", startRelay);
+      window.removeEventListener("keydown", startRelay);
+    };
+  }, []);
+
   const card = usePanelCard(events);
   const beat = beatFor(card, events);
   // Gone once the door closed, or whenever a beat past B is forced without one (H passes: a forced beat
@@ -76,7 +99,8 @@ export default function Stage() {
       <section className="stage-panel">
         <Panel card={card} events={events} />
       </section>
-      <KitchenInset size={gone ? "hidden" : "large"} muted={true} />
+      <KitchenInset size={gone ? "hidden" : "large"} muted={!videoAudio} />
+      {videoAudio ? <p className="stage-audio">Video call audio</p> : null}
       {line ? <p className="stage-error">{line}</p> : null}
       <Hotkeys brain={brain} wake={wake} />
       <DevPlayer />

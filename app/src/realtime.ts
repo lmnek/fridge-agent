@@ -22,6 +22,8 @@ export interface Handlers {
   heard?(text: string, final: boolean, id: string): void;
   approval(req: McpApproval): void;
   error(message: string): void;
+  /** The session's audio streams, again after every reconnect: the mic after echo cancellation, and Coldex's voice. */
+  stream?(who: "kitchen" | "coldex", stream: MediaStream): void;
 }
 
 type Json = Record<string, unknown>;
@@ -85,6 +87,7 @@ export class FridgeBrain {
     pc.ontrack = (e) => {
       this.audio.srcObject = e.streams[0];
       this.outAnalyser = this.analyser(e.streams[0]);
+      this.h.stream?.("coldex", e.streams[0]);
     };
     const mic = await navigator.mediaDevices.getUserMedia({
       audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
@@ -93,6 +96,7 @@ export class FridgeBrain {
     this.micTrack.enabled = this.micOn;
     pc.addTrack(this.micTrack, mic);
     this.inAnalyser = this.analyser(mic);
+    this.h.stream?.("kitchen", mic);
 
     const dc = pc.createDataChannel("oai-events");
     this.dc = dc;
