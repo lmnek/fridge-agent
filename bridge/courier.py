@@ -202,7 +202,11 @@ async def status(request: Request) -> Response:
 # --------------------------------------------------------------------------- audio relay
 
 
+FRAMES: dict[str, int] = {}  # per side, printed when a call ends: shows at once which side went silent
+
+
 async def _fan_out(who: str, payload: str) -> None:
+    FRAMES[who] = FRAMES.get(who, 0) + 1
     message = json.dumps({"who": who, "audio": payload})
     for ws in list(_listeners):
         try:
@@ -278,6 +282,7 @@ class Relay:
                     mark = {"event": "mark", "streamSid": self.stream_sid, "mark": {"name": "bye"}}
                     await self.twilio.send_text(json.dumps(mark))
             elif kind == "error":
+                print(f"[courier] OpenAI error: {ev['error']}")
                 hooks.emit("system", message=f"Courier call: {ev['error'].get('message')}")
 
     async def greet(self, oai: Any) -> None:
@@ -312,6 +317,8 @@ async def media(ws: WebSocket) -> None:
         except WebSocketDisconnect:
             pass
         finally:
+            print(f"[courier] call ended, audio frames sent to {len(_listeners)} listener(s): {FRAMES}")
+            FRAMES.clear()
             for task in tasks:
                 task.cancel()
 

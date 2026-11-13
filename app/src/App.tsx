@@ -4,7 +4,7 @@ import { type Approval, Kitchen } from "./kitchen/Kitchen";
 import { KitchenRelay } from "./kitchenAudio";
 import { FridgeBrain, type Status } from "./realtime";
 import { publish, useBus } from "./stage/bus";
-import { type CallAudio, playCallAudio } from "./stage/callAudio";
+import { type CallAudio, playCallAudio, unlockCallAudio } from "./stage/callAudio";
 import { publishCaption } from "./stage/captions";
 
 const AWAKE = "coldex-awake"; // sessionStorage: this tab was woken, so it wakes again after a reload
@@ -138,6 +138,7 @@ export default function App() {
     if (status !== "off") return;
     setError(null);
     try {
+      unlockCallAudio();
       await brain.start();
       try {
         sessionStorage.setItem(AWAKE, "1");
@@ -177,7 +178,10 @@ export default function App() {
       autoWoke = true;
       void toggle();
     }
-    const unblock = () => void brain.audio.play().catch(() => {});
+    const unblock = () => {
+      void brain.audio.play().catch(() => {});
+      unlockCallAudio(); // so a courier call started later by voice can play
+    };
     window.addEventListener("pointerdown", unblock);
     window.addEventListener("keydown", unblock);
     return () => {

@@ -76,9 +76,20 @@ const pct = (xs: number[], p: number) => {
   return Math.round(s[Math.min(s.length - 1, Math.floor(s.length * p))]);
 };
 
+// One AudioContext for every call, unlocked by the first tap on the page (unlockCallAudio). A context made later,
+// from a bus event, starts suspended in Chrome and plays nothing.
+let shared: AudioContext | null = null;
+
+/** Call from any tap or key handler: makes the call audio able to play when a call starts later. */
+export function unlockCallAudio() {
+  shared ??= new AudioContext();
+  void shared.resume().catch(() => {});
+}
+
 export function playCallAudio(path = "/api/courier/listen", { format = "mulaw8k", maxLag, reconnect }: Options = {}): CallAudio {
-  const ctx = new AudioContext();
-  // Started from a bus event, not a tap: Chrome lets it run once the page had any tap, else the next tap does.
+  const own = !shared;
+  const ctx = shared ?? new AudioContext();
+  // Started from a bus event, not a tap: the shared context was unlocked by an earlier tap, else the next tap does.
   const unblock = () => void ctx.resume().catch(() => {});
   unblock();
   window.addEventListener("pointerdown", unblock);
@@ -140,6 +151,14 @@ export function playCallAudio(path = "/api/courier/listen", { format = "mulaw8k"
     };
   };
   connect();
+  // HACK(demo): the player's state lands in the bridge log (a 404 line with the numbers), to see a silent call.
+  const report = (n: number) =>
+    setTimeout(() => {
+      if (stopped) return;
+      void fetch(`/api/debug/call-audio?ctx=${ctx.state}&chunks=${chunks}`).catch(() => {});
+      if (n > 1) report(n - 1);
+    }, 5000);
+  report(6);
 
   const wave = new Uint8Array(512);
   return {
@@ -148,7 +167,8 @@ export function playCallAudio(path = "/api/courier/listen", { format = "mulaw8k"
       window.removeEventListener("pointerdown", unblock);
       window.removeEventListener("keydown", unblock);
       ws?.close();
-      void ctx.close();
+      out.disconnect();
+      if (own) void ctx.close();
     },
     level(who?: string) {
       return rms(who ? sides[who] : all, wave);
