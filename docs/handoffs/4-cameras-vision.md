@@ -56,6 +56,21 @@ the live code stays in place, chosen by config rather than removed. Only the **s
 
 So capture frames at the first chance, and take the phone photos now as a fallback for the fallback.
 
+## Built (13. 11., Honza)
+
+Decided: option 1, the bridge runs the vision call. `bridge/camera.py` talks to the hub, `bridge/vision.py`
+runs the pipeline and `bridge/test_vision.py` tests it.
+
+- `POST /api/vision/look` makes the bridge take hub snapshots. With `{"frames": [data URL]}` it uses the
+  webcam frames instead, which is what the kitchen page's `L` key does without a hub.
+- `POST /api/vision/replay?name=b` runs `bridge/replay/b/` through the same pipeline. This is the stage's "door
+  closed" hotkey. The folder holds `before_0.jpg` and `after_0.jpg` (or a phone's `before.jpg` and
+  `after.jpg`). If it also holds `result.json`, that result is reused, so the card looks the same every time.
+- `POST /api/vision/keep?name=b` saves the newest real run as that replay folder. Run it after a good rehearsal.
+- The `done` event carries `tell`, and the kitchen page passes it to its Realtime session.
+- While the door is open, the newest lit frame is kept, because the fridge goes dark once it shuts.
+- The vision model is `VISION_MODEL`, default `gpt-5.5`. It isn't run against OpenAI yet.
+
 ## Fake mode
 
 The replay and phone-photo modes above, marked `HACK(demo)`.
