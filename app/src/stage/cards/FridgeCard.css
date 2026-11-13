@@ -1,0 +1,23 @@
+.ck-fridge-body { display: flex; flex-direction: column; }
+.ck-fridge-out { display: flex; flex-direction: column; gap: 14px; margin-bottom: 36px; }
+.ck-fridge-outrow {
+  display: flex; align-items: center; gap: 20px;
+  padding: 22px 26px; border-radius: 14px;
+  background: var(--ck-gone-soft); border: 1px solid var(--ck-gone); color: var(--ck-gone);
+}
+.ck-fridge-x { display: grid; place-items: center; flex: none; }
+.ck-fridge-outname {
+  flex: 1; font-family: "Barlow Semi Condensed", "Barlow", sans-serif;
+  font-size: 40px; font-weight: 600; line-height: 1.1; color: var(--ck-ink);
+}
+.ck-fridge-outrow .ck-tag { background: var(--ck-gone); color: #fff; font-size: 20px; }
+.ck-fridge-label { margin: 0 0 6px; color: var(--ck-mute); font-size: 20px; font-weight: 500; }
+.ck-fridge-list { margin: 0; padding: 0; list-style: none; }
+.ck-fridge-row {
+  display: grid; grid-template-columns: 1fr auto 230px; align-items: baseline; gap: 20px;
+  padding: 16px 0; border-top: 1px solid var(--ck-line); font-size: 26px;
+}
+.ck-fridge-name { font-weight: 500; }
+.ck-fridge-qty { color: var(--ck-mute); }
+.ck-fridge-exp { color: var(--ck-mute); text-align: right; }
+.ck-fridge-exp.soon { color: var(--ck-soon); font-weight: 600; }

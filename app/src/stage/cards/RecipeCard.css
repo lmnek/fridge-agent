@@ -1,0 +1,17 @@
+.ck-recipe-list { margin: 0; padding: 0; list-style: none; }
+.ck-recipe-row {
+  display: flex; align-items: center; gap: 18px;
+  padding: 17px 0; border-top: 1px solid var(--ck-line);
+}
+.ck-recipe-icon { display: grid; place-items: center; flex: none; width: 28px; }
+.ck-recipe-name { flex: 1; font-size: 30px; font-weight: 500; line-height: 1.15; }
+.ck-recipe-name small { display: block; margin-top: 2px; color: var(--ck-mute); font-size: 20px; font-weight: 400; }
+.ck-recipe-row.is-missing { color: var(--ck-gone); }
+.ck-recipe-row.is-missing .ck-recipe-name { font-weight: 600; color: var(--ck-ink); }
+.ck-recipe-row.is-have { color: var(--ck-ok); }
+.ck-recipe-row.is-have .ck-recipe-name { color: var(--ck-mute); }
+.ck-recipe-steps {
+  margin: auto 0 0; padding: 20px 0 0 28px; border-top: 1px solid var(--ck-line);
+  color: var(--ck-mute); font-size: 18px; line-height: 1.4;
+  display: grid; grid-template-columns: 1fr 1fr; gap: 6px 36px;
+}
