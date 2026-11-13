@@ -13,6 +13,21 @@ Beats B and C. This part covers what Coldex knows, what it says and which tools 
 - **First live run:** C took 16.5 s, first words came after 0.5 s, the two lookups ran in parallel, and the
   cart had all 7 items with reasons, 812 Kč. The stage session found the kitchen craving.
 
+## Built (13. 11., part 3)
+
+- **`bridge/show.py`** has `show_cart` and `show_shops`, mounted from `main.py`. `show_cart` publishes `cart`
+  in the table shape, fills `image_url` from an `Image` column in `products.md`, and is also the fake cart
+  (`add_to_cart` and `view_cart` left the session, `place_order` stays). `show_shops` publishes `deals` from
+  `data/deals.json` (part 8 writes it in the `deals` shape) or a `HACK(demo)` sample, plus Coldex's `choice`
+  and `why`. Today's sales also go into the memory, so C knows them before it plans.
+- **Input transcription** is on (`REALTIME_TRANSCRIBE`, default `gpt-4o-transcribe`, English).
+- **C's choreography:** "Ordering three things." with `get_inventory` and `get_household`, then the narration,
+  then `show_recipe`, `show_shops` and `show_cart` in one batch, about 11 s in. C2, C3 and C4 arrive within
+  a few milliseconds of each other, so the panel should queue cards and hold each for a couple of seconds.
+- **`try_demo.py`** has `--scenario` (demo, no-camera, other-dish, other-missing, judge-craving, judge-edit),
+  `--runs N` with a summary table, and `--voices marin,cedar,...`, which saves one WAV per voice to `data/voices/`.
+- **Voice:** `marin` stays the default. To compare by ear: `cedar`, `coral`, `sage` (samples in `data/voices/`).
+
 ## Done when
 
 - **The lines match DEMO.md**, checked over several runs, because the model varies:
