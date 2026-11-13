@@ -26,6 +26,7 @@ import json
 import os
 import secrets
 import ssl
+import sys
 import time
 from collections.abc import Callable
 from pathlib import Path
@@ -352,22 +353,81 @@ SCRIPT = [
 ]
 
 
+FAKE_AUDIO = ROOT / "replay" / "fake_call"  # one mu-law 8 kHz file per spoken line, from `python courier.py render`
+VOICES = {"coldex": REALTIME_VOICE, "courier": "ash"}
+
+
+def _ulaw(sample: int) -> int:
+    """16-bit PCM sample -> G.711 mu-law byte."""
+    sign = 0x80 if sample < 0 else 0
+    sample = min(abs(sample), 32635) + 0x84
+    exponent = max(0, sample.bit_length() - 8)
+    mantissa = (sample >> (exponent + 3)) & 0x0F
+    return ~(sign | (exponent << 4) | mantissa) & 0xFF
+
+
+def render_fake() -> None:
+    """Speaks the SCRIPT lines once with OpenAI TTS (Coldex's voice and a courier voice) into FAKE_AUDIO."""
+    import array
+
+    FAKE_AUDIO.mkdir(parents=True, exist_ok=True)
+    for n, (_, who, what) in enumerate(SCRIPT):
+        if who == "call":
+            continue
+        res = httpx.post(
+            "https://api.openai.com/v1/audio/speech",
+            headers={"Authorization": f"Bearer {OPENAI_API_KEY}"},
+            json={"model": "gpt-4o-mini-tts", "voice": VOICES[who], "input": what, "response_format": "pcm"},
+            timeout=60,
+        )
+        res.raise_for_status()
+        pcm = array.array("h", res.content[: len(res.content) // 2 * 2])  # 24 kHz, 16-bit
+        out = bytes(_ulaw(sum(pcm[i : i + 3]) // 3) for i in range(0, len(pcm) - 2, 3))  # -> 8 kHz mu-law
+        (FAKE_AUDIO / f"{n}.ulaw").write_bytes(out)
+        print(f"{n} {who}: {len(out) / 8000:.1f} s")
+
+
 @router.post("/fake")
 async def fake() -> dict[str, Any]:
-    """HACK(demo): the F card without a phone. Same call and caption events, words appear as if spoken."""
+    """HACK(demo): a scripted call without a phone. The same call and caption events, and both voices go to the
+    browser like a real call's (FAKE_AUDIO), so the kitchen hears the courier and Coldex."""
+
+    async def say(n: int, who: str, what: str) -> None:
+        audio_file = FAKE_AUDIO / f"{n}.ulaw"
+        audio = audio_file.read_bytes() if audio_file.exists() else b""
+        words = what.split()
+        seconds = len(audio) / 8000 if audio else 0.28 * len(words)
+        t0 = time.monotonic()
+        shown = 0
+        for i in range(0, max(len(audio), 1), 160):  # 20 ms frames in real time, the captions keep pace
+            if audio:
+                await _fan_out(who, base64.b64encode(audio[i : i + 160]).decode())
+            due = min(len(words), int(len(words) * (time.monotonic() - t0) / seconds) + 1)
+            if due > shown:
+                shown = due
+                hooks.emit("caption", who=who, id=f"fake-{n}", text=" ".join(words[:shown]), final=False)
+            await asyncio.sleep(max(0.0, t0 + (i + 160) / 8000 - time.monotonic()) if audio else 0.28)
+            if not audio and shown >= len(words):
+                break
+        hooks.emit("caption", who=who, id=f"fake-{n}", text=what, final=True)
+        await asyncio.sleep(0.5)  # a breath between turns
 
     async def play() -> None:
+        number = mask(COURIER_NUMBER or "+420000000000")
         t0 = time.monotonic()
         for n, (at, who, what) in enumerate(SCRIPT):
-            await asyncio.sleep(max(0.0, at - (time.monotonic() - t0)))
             if who == "call":
-                hooks.emit("call", number=mask(COURIER_NUMBER or "+420000000000"), fake=True, **what)
+                if what["phase"] == "ended":
+                    await asyncio.sleep(1.0)
+                else:
+                    await asyncio.sleep(max(0.0, at - (time.monotonic() - t0)))
+                hooks.emit("call", number=number, fake=True, **what)
                 continue
-            words = what.split()
-            for i in range(1, len(words) + 1):
-                hooks.emit("caption", who=who, id=f"fake-{n}", text=" ".join(words[:i]), final=i == len(words))
-                await asyncio.sleep(0.28)
+            await say(n, who, what)
 
-    global _fake_task
-    _fake_task = asyncio.create_task(play())
+    asyncio.create_task(play())
     return {"ok": True}
+
+
+if __name__ == "__main__" and sys.argv[1:] == ["render"]:
+    render_fake()

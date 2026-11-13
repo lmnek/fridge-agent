@@ -22,11 +22,10 @@ export async function startCourierCall(brain: FridgeBrain, fake = false): Promis
   muteFor(brain);
   // HACK(demo): `fake` plays part 6's scripted call through the same `call` and `caption` events.
   // Start the player before the request, while the key press still counts as a gesture.
-  if (!fake) {
-    active?.stop();
-    active = playCallAudio();
-    setCalling(true); // one path at a time: the kitchen relay goes quiet for the call
-  }
+  // The scripted call has both voices too (bridge/replay/fake_call), so the player runs for it as well.
+  active?.stop();
+  active = playCallAudio();
+  setCalling(true); // one path at a time: the kitchen relay goes quiet for the call
   const res = await fetch(fake ? "/api/courier/fake" : "/api/courier/call", { method: "POST" });
   if (!res.ok) {
     endCallAudio();
