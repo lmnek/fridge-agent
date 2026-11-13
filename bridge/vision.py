@@ -204,7 +204,7 @@ def tell_line(removed: list[str], added: list[str]) -> str | None:
         parts.append(f"Vision saw these taken out: {', '.join(removed)}.")
     if added:
         parts.append(f"Vision saw these put in: {', '.join(added)}.")
-    return f"[camera] The fridge door just closed. {' '.join(parts)} Update the inventory, then react briefly."
+    return f"[camera] The fridge door just closed. {' '.join(parts)} The inventory is updated, react briefly."
 
 
 async def pipeline(

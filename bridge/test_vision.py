@@ -46,7 +46,7 @@ def test_tell_line_matches_the_kitchen_prompt() -> None:
     line = vision.tell_line(["Lactose-free milk", "Eggs"], [])
     assert line == (
         "[camera] The fridge door just closed. Vision saw these taken out: Lactose-free milk, Eggs. "
-        "Update the inventory, then react briefly."
+        "The inventory is updated, react briefly."
     )
 
 

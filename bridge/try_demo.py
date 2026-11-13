@@ -4,7 +4,7 @@ Prints what Coldex says, every tool call and the timing, so memory/instructions.
 
     cd bridge && uv run python try_demo.py [--scenario NAME] [--runs N]
 
-Scenarios (see SCENARIOS below): demo, no-camera, other-dish, other-missing, judge-craving, judge-edit.
+Scenarios (see SCENARIOS below): demo, no-camera, judge-qa, other-dish, other-missing, judge-craving, judge-edit.
 After all runs it prints one summary row per run, which is what the prompt tuner reads.
 
 Uses a throwaway data dir and the fake cart, so it never touches the real fridge state or Rohlík.
@@ -33,7 +33,7 @@ import main  # noqa: E402
 
 bridge = TestClient(main.app)
 ap = argparse.ArgumentParser()
-ap.add_argument("--scenario", default="demo", choices=["demo", "no-camera", "other-dish", "other-missing", "judge-craving", "judge-edit"])
+ap.add_argument("--scenario", default="demo", choices=["demo", "no-camera", "judge-qa", "other-dish", "other-missing", "judge-craving", "judge-edit"])
 ap.add_argument("--runs", type=int, default=1)
 ap.add_argument("--rohlik", action="store_true")
 ap.add_argument("--voices", help="comma-separated Realtime voices: saves data/voices/<voice>.wav of the B and C lines to listen to")
@@ -45,24 +45,39 @@ EVENTS: list[tuple[float, str, dict]] = []
 _orig_emit = main.emit
 main.emit = lambda kind, /, **d: (EVENTS.append((time.monotonic(), kind, d)), _orig_emit(kind, **d))
 
-# HACK(demo): stands in for the camera photos, which this script doesn't have.
-CAMERA = "[camera] The fridge door just closed. Vision saw these taken out: {}. Update the inventory, then react briefly."
+# HACK(demo): stands in for the camera photos, which this script doesn't have. The wording is vision.tell_line's,
+# and like vision.py the script applies the removal to the inventory before Coldex hears about it.
+CAMERA = "[camera] The fridge door just closed. Vision saw these taken out: {}. The inventory is updated, react briefly."
+CAM_REMOVED: dict[str, list[str]] = {}
 ORDER = "Let's order now, please."
 B_LINE = "That was the last of the milk and the eggs."
 B2_LINE = "They're going in the next order. Noted, carbonara."
 C_LINE = ("Ordering three things. What just ran out: milk, lactose-free as always, and eggs, which carbonara needs anyway. "
           "For tonight: guanciale and spaghetti, with a gluten-free pack for Anna. And your weekly basics: yogurt, and "
           "bananas, which are on sale today. Lidl is 400 m away, but Rohlík delivers within the hour, so Rohlík. 812 Kč, ordering now.")
-_cam = ("kitchen", "camera", CAMERA.format("Lactose-free milk, Eggs"), B_LINE)
+def cam(*names: str, expected: str | None = B_LINE) -> tuple:
+    text = CAMERA.format(", ".join(names))
+    CAM_REMOVED[text] = list(names)
+    return ("kitchen", "camera", text, expected)
+
+
+_cam = cam("Lactose-free milk", "Eggs")
 _actor = ("kitchen", "actor", "Ugh, again. And I'm craving carbonara tonight.", B2_LINE)
 _order = ("stage", "presenter", ORDER, C_LINE)
 
 # name -> steps (session, who, text, expected). The stage session only learns the craving through get_household.
 SCENARIOS = {
     "demo": [_cam, _actor, _order],
-    "no-camera": [
-        ("kitchen", "actor", "I just took the last of the milk and the eggs. Ugh, again. And I'm craving carbonara tonight.", B2_LINE),
+    "no-camera": [  # DEMO's B without frames: the actor says what they took
+        ("kitchen", "actor", "I just took the last milk and eggs.", B_LINE),
+        _actor,
         _order,
+    ],
+    "judge-qa": [  # a judge talking to the fridge, off script, on the seeded fridge
+        ("stage", "judge", "What's in my fridge?", None),
+        ("stage", "judge", "What's about to expire?", None),
+        ("stage", "judge", "What can I cook tonight?", None),
+        ("stage", "judge", "Do I have everything for carbonara?", None),
     ],
     "other-dish": [
         _cam,
@@ -70,7 +85,7 @@ SCENARIOS = {
         ("stage", "presenter", ORDER, None),
     ],
     "other-missing": [
-        ("kitchen", "camera", CAMERA.format("Butter, Greek yogurt"), None),
+        cam("Butter", "Greek yogurt", expected=None),
         ("kitchen", "actor", "Out of butter again? And I'm craving carbonara tonight.", None),
         ("stage", "presenter", ORDER, None),
     ],
@@ -165,7 +180,11 @@ async def one_run(n: int, steps: list[tuple]) -> dict | None:
     print(f"\n\n{'=' * 20} run {n}: {ARGS.scenario} {'=' * 20}")
     sessions = {"stage": await connect(), "kitchen": await connect()}  # stage connects before B, like on stage
     try:
-        results = [await say(sessions[s], who, text, exp) for s, who, text, exp in steps]
+        results = []
+        for s, who, text, exp in steps:
+            if text in CAM_REMOVED:  # vision.py updates the inventory before the session hears the camera line
+                bridge.post("/inventory/changes", json={"removed": [{"name": n} for n in CAM_REMOVED[text]], "source": "vision"})
+            results.append(await say(sessions[s], who, text, exp))
     finally:
         for ws in sessions.values():
             await ws.close()
