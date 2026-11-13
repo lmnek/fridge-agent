@@ -183,12 +183,18 @@ export default function Stage() {
 
   const card = usePanelCard(events);
   const beat = beatFor(card, events);
+  const inputLevel = useCallback(() => brain.levels().input, [brain]);
   // Gone once the door closed, or whenever a beat past B is forced without one (H passes: a forced beat
   // shows idle for one render before its card).
   const gone = insetGone(events) || !(beat === "A" || beat === "B" || beat === "H");
   // The composition (stage.css): the orb is the hero, dead centre, until something shows. Then it glides to the
   // centre of the left half and the card, or the fridge camera, takes the right half.
   const camera = !gone && (LAYOUT !== "a" || kitchenAwake(events));
+  // The fridge camera and its mic go together (U toggles both). Fridge on: the camera never leaves; off the big
+  // slot (a card up, the door closed) it shrinks to a picture-in-picture (stage.css `data-size="pip"`) whose
+  // border breathes with what the phone hears. Fridge off once awake: the camera fades out, the laptop is the ear.
+  const micLive = phone && videoAudio;
+  const fridgeOff = phone && !videoAudio && status !== "off";
   const cardUp = card !== "idle" && !camera;
   const split = cardUp || (camera && LAYOUT !== "b");
   const orb = useOrbVoice(brain, status, events);
@@ -221,7 +227,11 @@ export default function Stage() {
       <section className="stage-panel" data-hidden={!cardUp}>
         <Panel card={card} events={events} />
       </section>
-      <KitchenInset size={camera ? "large" : "hidden"} muted={!videoAudio} />
+      <KitchenInset
+        size={fridgeOff ? "hidden" : camera ? "large" : micLive ? "pip" : "hidden"}
+        muted={!videoAudio}
+        level={micLive ? inputLevel : undefined}
+      />
       {videoAudio ? <p className="stage-audio">Actor on the camera mic</p> : null}
       {line ? <p className="stage-error">{line}</p> : null}
       <Hotkeys brain={brain} wake={wake} />

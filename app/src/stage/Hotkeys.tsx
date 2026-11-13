@@ -19,7 +19,7 @@ const HELP: [string, string][] = [
   ["D", "Door closed: replay the B frames"],
   ["M", "Wake Coldex (the fridge phone is its ear) / input on, off"],
   ["T", "Type the C line"],
-  ["U", "Coldex hears the fridge phone / the laptop mic"],
+  ["U", "Fridge camera + mic on / off (off: hidden, the laptop mic)"],
   ["A", "Approve the order Coldex asks for (then the D/E checkout plays)"],
   ["K", "Call the courier"],
   ["Shift K", "Fake courier call (scripted)"],

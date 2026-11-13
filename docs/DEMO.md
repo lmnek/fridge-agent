@@ -74,7 +74,7 @@ from A to H. If the audio fails, the text still carries the story.
   does into the chat (craving noted, cart ready, order placed) during the demo, so it's real and already full
   by H.
 - Hotkeys: replay the B frames (D), type the C line (T), play the scripted run from B or C (Z / X), wake Coldex
-  with the phone as its ear / close the input (M), swap the input between the phone and the laptop mic (U). Press ? on the stage for all of them.
+  with the phone as its ear / close the input (M), fridge camera + mic on / off (U: on, the camera stays as a pulsing picture-in-picture beside any card; off, it hides and the laptop mic is the input). Press ? on the stage for all of them.
 - Priority if time runs short: C4 cart, then the B analysis, then C3 map, then the D/E mini browser, then the F
   call card, then C1 and C2, then the H Telegram push.
 

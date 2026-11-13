@@ -28,7 +28,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Recognition } from "./Recognition";
 
-type Size = "large" | "hidden";
+type Size = "large" | "pip" | "hidden";
 
 function source(): string {
   const param = new URLSearchParams(window.location.search).get("kitchen");
@@ -55,11 +55,34 @@ function viewerUrl(room: string, muted: boolean): string {
   return `https://vdo.ninja/?view=${encodeURIComponent(room)}&cleanoutput&lowlatency&cover&retry=10&mutespeaker=${muted ? 1 : 0}`;
 }
 
-export function KitchenInset({ size, muted }: { size: Size; muted: boolean }) {
+/**
+ * `level` (0..1, the session's input level) makes the border breathe while the phone mic is the session's ear:
+ * a solid ice ring whose width and opacity follow the smoothed level, calm at silence. Written straight to a CSS
+ * variable each frame, no re-render.
+ */
+export function KitchenInset({ size, muted, level }: { size: Size; muted: boolean; level?: () => number }) {
   const [src] = useState(source);
   const cam = camera(src);
+  const box = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = box.current;
+    if (!el || !level) return;
+    let v = 0;
+    let raf = 0;
+    const tick = () => {
+      const raw = Math.min(1, Math.max(0, (level() - 0.02) * 4)); // gate the room hiss, then lift speech
+      v += (raw - v) * (raw > v ? 0.25 : 0.06); // quick rise, slow fall: it breathes, never flickers
+      el.style.setProperty("--talk", v.toFixed(3));
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => {
+      cancelAnimationFrame(raf);
+      el.style.setProperty("--talk", "0");
+    };
+  }, [level]);
   return (
-    <div className="kitchen-inset" data-size={size} data-muted={muted}>
+    <div ref={box} className="kitchen-inset" data-size={size} data-muted={muted} data-live={Boolean(level)}>
       {!src ? (
         <span className="kitchen-label">Kitchen</span>
       ) : cam ? (

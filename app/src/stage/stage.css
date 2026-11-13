@@ -181,7 +181,12 @@
   height: 880px;
   transition:
     opacity 1000ms cubic-bezier(0.4, 0, 0.2, 1),
-    transform 420ms var(--rise);
+    transform 420ms var(--rise),
+    left var(--glide),
+    top var(--glide),
+    width var(--glide),
+    height var(--glide),
+    border-radius var(--glide);
 }
 
 /* b: picture-in-picture, top right, while the orb stays the hero */
@@ -191,6 +196,31 @@
   width: 252px;
   height: 448px;
   border-radius: 16px;
+}
+
+/* The phone mic is live (Stage.tsx `micLive`): off the big slot the camera shrinks to a small portrait PiP
+   instead of leaving. Hero (no card): the b spot, top right. Split: the gutter between the orb and the card,
+   top-aligned with the card, clear of the subtitles below. */
+.kitchen-inset[data-size="pip"] {
+  left: 1608px;
+  top: 60px;
+  width: 252px;
+  height: 448px;
+  border-radius: 16px;
+}
+
+.stage-view[data-split="true"] .kitchen-inset[data-size="pip"] {
+  left: 862px;
+  top: 140px;
+  width: 158px;
+  height: 281px;
+}
+
+/* The border breathes with what the phone hears (--talk, 0..1, smoothed in KitchenInset.tsx): a solid ice ring
+   that widens and darkens toward --lamp while the camera talks, and is the plain border at silence. */
+.kitchen-inset[data-live="true"] {
+  border-color: color-mix(in srgb, var(--lamp) calc(var(--talk, 0) * 100%), var(--ice-line));
+  box-shadow: 0 0 0 calc(var(--talk, 0) * 7px) rgb(31 111 150 / calc(var(--talk, 0) * 0.45));
 }
 
 .kitchen-inset[data-size="hidden"] {
