@@ -82,3 +82,18 @@ live, the judge's feedback, Telegram, scraping). The rest is aligned. In priorit
    model, and add `checkout_url` to the event and the README table. Coordinate with parts 5 and 7.
 6. **Low: a text channel later.** Telegram step 2 (part 7) reuses `instructions.md`. Keep the voice-only rules
    (the narration shape, "in the same breath") in their own section, so a text channel can skip them.
+
+## Update: the actor orders from the kitchen
+
+Decided 13. 11. ~13:45 (DEMO.md B and C). The kitchen session now runs both B and C, and the stage session is
+only the typed fallback. With the fridge door open, the actor says: "Ugh, the last milk again. And I'm craving
+carbonara tonight. Coldex, order what we need." The door then closes, and the vision diff arrives a few seconds
+into C. Check that:
+- **C starts straight from that line.** Coldex goes into the C narration with no B reaction first. "That was the
+  last of the milk and the eggs." is dropped, because "What just ran out" covers it.
+- **Coldex doesn't wait for the vision diff,** and doesn't update the inventory twice.
+- **The camera result arriving mid-C never starts a second spoken response** and never makes Coldex repeat
+  the narration. Send it to the session as context only, or skip it once C is underway. That's item 4 above,
+  with part 4's `tell_line`.
+
+Make this the main `try_demo.py` scenario, and keep the old stage-session C as the fallback scenario.

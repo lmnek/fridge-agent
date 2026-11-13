@@ -20,9 +20,10 @@ start one, give it this:
 
 ## How the system fits together (decided: Realtime-first)
 
-- **Brain:** one OpenAI Realtime session per screen. The kitchen tablet runs one for B, and the stage laptop runs
-  one from C on. It was verified on 13. 11.: C ran in 16.5 s with the right cart, and the stage session found
-  the kitchen craving.
+- **Brain:** the kitchen tablet's OpenAI Realtime session runs both B and C, because the actor orders from the
+  fridge (DEMO.md, decided 13. 11. ~13:45). The stage laptop's own session is only the fallback for typing the
+  order. The stage app plays all the audio: the kitchen relay in B and C, the call in F (part 1, "Update" in
+  `1-stage-view.md`).
 - **`bridge/`** (FastAPI, port 8100) holds the fridge state, the tools, the memory, the camera proxy and the
   event bus. Put new parts in new files and mount them from `main.py` in a few lines.
 - **`app/`** (React + Vite, port 5174) has the kitchen page (today's `App.tsx`) and the stage view (new, `app/src/stage/`).
@@ -55,7 +56,8 @@ Anything that should show up on stage goes through the bridge. Screens never tal
 | `stage` | `beat` (A, B, C, DE, F, G, H, idle), `action` | hotkeys (part 1) | forces a card, fallbacks |
 | `system` | `message` | bridge | error line |
 
-The call audio is too heavy for the bus. Part 6 exposes its own WebSocket, and the stage view plays it.
+Audio is too heavy for the bus. Part 6 exposes its own WebSocket for the call, part 1 one for the kitchen relay,
+and the stage view plays both.
 **If you change a shape, update this table in the same commit.** Until a producer exists, fake its events.
 
 ## Stage contract (parts 1 and 2)
@@ -95,5 +97,5 @@ The call audio is too heavy for the bus. Part 6 exposes its own WebSocket, and t
 
 ## Human tasks (not for agents)
 
-The Bluetooth speaker for the fridge, the travel router, the Cloudflare tunnel, phone mirroring for H, the
+The actor's earbud, the phone mount inside the fridge, the travel router, the Cloudflare tunnel, phone mirroring for H, the
 recordings (DEMO.md, Recordings), briefing the courier, and the rehearsals.
