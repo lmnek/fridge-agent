@@ -110,8 +110,12 @@ export default function OrbC({ status, levels }: OrbVariantProps) {
     const canvas = canvasRef.current!;
     const ctx = canvas.getContext("2d")!;
     let W = 1, H = 1;
+    // Lighter mode for weak hardware (the tablet): the frame-time watchdog in draw() sets it. Skip optional
+    // extras (extra strokes, tracers, gradients) when it is on.
+    let lite = new URLSearchParams(window.location.search).has("orblite");
+    let slowFrames = 0;
     const resize = () => {
-      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      const dpr = Math.min(window.devicePixelRatio || 1, lite ? 1 : 2);
       W = Math.max(1, canvas.clientWidth);
       H = Math.max(1, canvas.clientHeight);
       canvas.width = Math.round(W * dpr);
@@ -193,10 +197,12 @@ export default function OrbC({ status, levels }: OrbVariantProps) {
     // tone: 0 = the palette's edge body, 1 = its deep colour (depth and pulses)
     const strokeEdges = (path: Path2D, a: number, w: number, core: number, tone = 0) => {
       if (a < 0.004) return;
-      ctx.globalAlpha = a * 0.11;
-      ctx.strokeStyle = rgb(pal.halo);
-      ctx.lineWidth = w * 6.5;
-      ctx.stroke(path);
+      if (!lite) {
+        ctx.globalAlpha = a * 0.11;
+        ctx.strokeStyle = rgb(pal.halo);
+        ctx.lineWidth = w * 6.5;
+        ctx.stroke(path);
+      }
       ctx.globalAlpha = Math.min(1, a * 0.58);
       ctx.strokeStyle = mixRgb(pal.body, pal.deep, tone);
       ctx.lineWidth = w * 2.6;
@@ -257,8 +263,17 @@ export default function OrbC({ status, levels }: OrbVariantProps) {
     };
 
     const draw = (now: number) => {
-      const dt = Math.min(0.05, (now - last) / 1000);
+      const rawDt = (now - last) / 1000;
+      const dt = Math.min(0.05, rawDt);
       last = now;
+      // watchdog: ~1.5 s of mostly slow frames (under ~45 fps, ignoring hitches) switches to lite for good
+      if (!lite && !document.hidden && rawDt < 0.25) {
+        slowFrames = Math.max(0, slowFrames + (rawDt > 0.022 ? 1 : -0.5));
+        if (slowFrames > 60) {
+          lite = true;
+          resize();
+        }
+      }
       const t = now / 1000;
       const st = statusRef.current;
       const lv = levels();
