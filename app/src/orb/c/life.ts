@@ -69,7 +69,7 @@ export function createLife(EDGES: number[][], N: number) {
     t = now;
     act = Math.min(1, Math.max(0, activeX));
     for (let j = 0; j < 3; j++) {
-      bodyRgb[j] = pal.body[j] + (pal.deep[j] - pal.body[j]) * 0.25;
+      bodyRgb[j] = pal.body[j] + (pal.deep[j] - pal.body[j]) * 0.75; // a deep-blue bead: white alone and light blue vanish on a projector
       coreRgb[j] = pal.core[j];
     }
     bodyStr = rgb(bodyRgb); coreStr = rgb(coreRgb);
@@ -193,7 +193,7 @@ export function createLife(EDGES: number[][], N: number) {
         ctx.strokeStyle = coreStr; ctx.globalAlpha = a * 0.45; ctx.lineWidth = w * 1.2; ctx.stroke();
       }
       if (span(ctx, i, mid, s, SX, SY, front, wantFront)) {
-        ctx.strokeStyle = bodyStr; ctx.globalAlpha = a * 0.5; ctx.lineWidth = w * 6; ctx.stroke();
+        ctx.strokeStyle = bodyStr; ctx.globalAlpha = a * 0.7; ctx.lineWidth = w * 5; ctx.stroke();
         ctx.strokeStyle = coreStr; ctx.globalAlpha = a; ctx.lineWidth = w * 2.6; ctx.stroke();
       }
     }
