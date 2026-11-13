@@ -150,7 +150,7 @@ export default function OrbB({ status, levels }: OrbVariantProps) {
       gl.uniform1f(U.time, t);
       gl.uniform3fv(U.v, verts);
       gl.uniform4f(U.s, s[0], s[1], s[2], s[3]);
-      const wt = (d: number) => (d < 0 ? (1 + d) * (1 + d) * (1 - 2 * d) : Math.pow(0.62, d) * (d > 2 ? 3 - d : 1));
+      const wt = (d: number) => (d < 0 ? (1 + d) * (1 + d) * (1 - 2 * d) : Math.pow(0.6, d) * Math.min(1, Math.max(0, (2.1 - d) / 0.9)));
       gl.uniform4f(U.w, wt(f - 1), wt(f), wt(f + 1), wt(f + 2));
       gl.uniformMatrix3fv(U.rot, false, rot);
       gl.uniform3f(U.pos, 0.025 * Math.sin(t * 0.53), 0.06 * Math.sin(t * 0.8) + 0.02, lean * 0.35);

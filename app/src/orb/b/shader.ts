@@ -51,13 +51,13 @@ float noise(vec3 x) {
 // a soft key behind the camera, and two dark flags behind the cube so refraction has something to bend.
 vec3 env(vec3 d) {
   float y = d.y;
-  vec3 c = mix(vec3(0.78, 0.84, 0.87), vec3(0.95, 0.97, 0.975), smoothstep(-0.3, 0.6, y));
-  c = mix(c, vec3(0.34, 0.55, 0.68), smoothstep(-0.05, -0.7, y));
-  c *= 1.0 - 0.22 * exp(-abs(y + 0.04) * 16.0);
+  vec3 c = mix(vec3(0.88, 0.93, 0.95), vec3(0.955, 0.972, 0.98), smoothstep(-0.3, 0.6, y));
+  c = mix(c, vec3(0.70, 0.84, 0.91), smoothstep(-0.05, -0.8, y));
+  c *= 1.0 - 0.16 * exp(-abs(y + 0.04) * 40.0);
   if (d.z < 0.0) {
     float px = d.x / -d.z;
-    c *= 1.0 - 0.45 * smoothstep(0.16, 0.04, abs(px - 0.42)) * smoothstep(-0.9, -0.2, y);
-    c *= 1.0 - 0.28 * smoothstep(0.10, 0.02, abs(px + 0.58)) * smoothstep(-0.9, -0.2, y);
+    c *= 1.0 - 0.30 * smoothstep(0.06, 0.015, abs(px - 0.42)) * smoothstep(-0.9, -0.2, y);
+    c *= 1.0 - 0.20 * smoothstep(0.04, 0.01, abs(px + 0.58)) * smoothstep(-0.9, -0.2, y);
   }
   if (y > 0.0) {
     vec2 sb = d.xz / y;
@@ -129,8 +129,8 @@ void main() {
   float tir = 0.0;
   if (dot(r2, r2) < 0.5) { r2 = reflect(r1, -n2); tir = 1.0; }
   vec3 trans = env(uRot * r2) * (tir > 0.5 ? 0.75 : 1.0);
-  vec3 sigma = (vec3(1.0) - DEEP) * 0.78;
-  trans *= exp(-sigma * (L + 0.1));
+  vec3 sigma = (vec3(1.0) - DEEP) * 0.42;
+  trans *= exp(-sigma * L);
 
   // the tesseract frozen inside: closest distance from the chord to each edge
   float core = 0.0, halo = 0.0;
@@ -138,7 +138,7 @@ void main() {
     float w = uW[lv];
     if (w < 0.01) continue;
     float s = uS[lv];
-    float wc = mix(0.0045, 0.010, clamp(s / 0.33, 0.0, 1.0));
+    float wc = mix(0.0032, 0.0062, clamp(s / 0.33, 0.0, 1.0));
     for (int i = 0; i < 16; i++) {
       vec3 a = uV[i] * s;
       for (int k = 0; k < 4; k++) {
@@ -155,14 +155,16 @@ void main() {
         float dist2 = dot(dv, dv);
         float att = w * exp(-sc * 0.8);
         core += att * exp(-dist2 / (wc * wc));
-        halo += att * exp(-sqrt(dist2) * 38.0);
+        halo += att * exp(-sqrt(dist2) * 70.0);
       }
     }
   }
 
   vec3 col = trans;
-  col = mix(col, DEEP * 0.85, clamp(halo * 0.2, 0.0, 0.4));
-  col += vec3(0.92, 0.97, 1.0) * core * (0.85 + 0.55 * uLight);
+  col = mix(col, DEEP, clamp(halo * 0.14, 0.0, 0.3));
+  col = mix(col, vec3(0.97, 0.99, 1.0), clamp(core * (0.6 + 0.35 * uLight), 0.0, 1.0));
+  // thin dark refraction lines only along the bevels at grazing angles
+  col = mix(col, DEEP * 0.75, edge * smoothstep(0.55, 0.15, cosi) * 0.4);
   // the voice: a cold light deep in the middle of the ice
   float mid = length(pi + r1 * clamp(-dot(pi, r1), 0.0, L));
   col += vec3(0.55, 0.82, 1.0) * uVoice * 0.45 * exp(-mid * mid * 18.0);
@@ -174,7 +176,7 @@ void main() {
   col += vec3(0.75, 0.9, 1.0) * pow(max(dot(rw, normalize(vec3(-1.0, 0.2, 0.1))), 0.0), 24.0) * edge * 0.6 * (0.6 + uLight);
   col = mix(col, vec3(0.97, 0.985, 1.0), frost * 0.7);
 
-  float a = clamp(0.72 + 0.6 * F + frost * 0.25 + core * 0.3, 0.0, 1.0);
+  float a = clamp(0.72 + 0.6 * F + frost * 0.25 + core * 0.15, 0.0, 1.0);
   col = min(col, vec3(1.0));
   frag = vec4(col * a, a);
 }
