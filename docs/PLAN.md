@@ -58,33 +58,20 @@ inside that session. The server is one FastAPI file in `bridge/` (port 8100, so 
 `backend/` and `frontend/` is untouched. It covers the "Realtime voice orb" workstream (§7) in its
 simplest form. How it works: `REALTIME.md`. Keys: `SETUP.md`. Not yet run against OpenAI with a real key.
 
-## 4. Demo: 3:00 run of show (draft, adapt as features land)
+## 4. Demo
 
-What's real: tracking, vision, the expiry scan, agent reasoning, the recipe, and the Rohlík cart and order.
-What's staged: the courier's arrival, plus learning seeded by the simulated household (§6.2) and one live self-edit on stage.
-
-| t | Beat | On screen |
-|---|---|---|
-| 0:00 | One-line pitch. The app shows the home orb and the live fridge. | Home |
-| 0:15 | Unpack groceries into the fridge. Scan the yogurt's date with the phone, and take out the **last milk**. | Items appear in the timeline, "milk: out" |
-| 0:40 | Frida reacts on her own: "You're out of milk, and the chicken expires tomorrow." This could be a **phone call on stage**. | Timeline, or an incoming call |
-| 1:00 | **Voice** to the orb: "I'd love carbonara tonight." She checks the fridge, gives a recipe that uses what's expiring, and puts the missing items in the Rohlík cart, choosing **oat milk** because she learned the household drinks it. | Orb, recipe, cart, "remembered: oat milk" |
-| 1:40 | **Learning beat**: "What Frida learned" shows the household profile and the measured curve from the sim. Frida proposes an edit to her own rules, and we approve it live. | Learning panel (§6) |
-| 2:15 | The checkout link goes to the phone, and we tap **Order** in Rohlík. | Rohlík order confirmation |
-| 2:35 | **The courier walks in** with the bag. | |
-| 2:50 | Close: "She watched, learned, and ordered. All we did was open the fridge." | |
-
-Rules: rehearse at least 3 full runs and record a **backup video** of a clean run. Every beat needs a
-manual trigger. The camera simulation panel ("Vezmi mléko" and similar) and `POST /api/camera/trigger` are the fallbacks.
+The script, setup, fallbacks and build list are in **[DEMO.md](DEMO.md)**, which replaces the earlier draft here.
+The learning shown in the demo is the household profile (diets, brands, weekly basics) inside beat C. The full
+self-improvement loop in §6 is only for the side prize, if there's time.
 
 ## 5. Feature tiers
 
-- **Demo path (must):** real camera in/out tracking, proactive reaction, expiry scan, craving → recipe → cart,
-  checkout link → real order, learning beat, a voice orb that sounds good.
-- **Should:** design cleanup (no emoji or sparkles), a live phone call from Frida, English (if chosen).
-- **Leave as is, don't invest:** deals, the store radar, price history, analytics, delivery links, and local
-  ViT. They're fine as B-roll and not part of the 3 minutes.
-- **Cut:** Hermes, Telegram, Apify, the 3D fridge, the courier phone call.
+- **Demo path (must):** real camera in/out tracking, a craving saved from the kitchen, one cart that combines what ran out, the craving and the profile,
+  checkout link → real order, the stage view with subtitles, and the courier call (see DEMO.md).
+- **Should:** design cleanup (no emoji or sparkles), English (if chosen).
+- **Leave as is, don't invest:** deals, price history, analytics, delivery links, local ViT, and the expiry scan
+  (the store radar is reused in C3). They're fine as B-roll and not part of the 3 minutes.
+- **Cut:** Hermes, Telegram, Apify, the 3D fridge, and the self-edit and learning-curve beats (side prize only, §6).
 
 ## 6. Self-driving + self-improving: the side prize
 
@@ -137,24 +124,9 @@ rising, corrections and tool calls per cart falling), charted in the panel and l
 6. **Waste learning:** items that get binned lead to smaller packs.
 7. **Nightly reflection:** a changelog of her own rules.
 
-## 7. Workstreams (owners TBD, all four must happen)
+## 7. Workstreams
 
-Suggested split by who knows the code. Swap freely.
-
-| Workstream | Scope | Suggested owner |
-|---|---|---|
-| **Learning loop** | §6: `backend/frida/learning/`, signals, profile, Scout, sim household, learning panel | Kryštof (new code, no collisions) |
-| **Demo script + staging** | Run of show (§4), triggers, seed data, courier, groceries, network, backup video | Kryštof (needs the whole story) |
-| **Real hardware + Rohlík** | Reolink hub on site, camera placement, Claude vision on real snapshots, Rohlík OAuth token, a real cart end to end | Honza (wrote these integrations) |
-| **Realtime voice orb** | Replace the Web Speech voice with a realtime voice model behind the orb, reusing `tool_definitions` / `run_tool` | Honza (wrote the frontend and voice) |
-
-Timeline, scheduled backwards from the **17:45 build deadline**:
-- **By 12:00:** decide the language. Hardware: hub snapshots work. Rohlík: token works.
-- **By 13:30:** real camera → inventory → agent reaction runs end to end. The learning profile appears in the agent's context.
-- **13:30–15:30:** the voice orb, the Scout loop with the sim curve, the learning panel, design cleanup.
-- **15:30–16:00:** record the backup video.
-- **16:00–17:45:** rehearse full 3-minute runs. **Code freeze at 16:45**, after which only demo-blocking fixes go in.
-- **After 17:45, until our slot:** more rehearsals, and re-check the hardware just before going on.
+See the build table in [DEMO.md](DEMO.md#build-owners-suggested-swap-freely).
 
 ## 8. Open questions
 

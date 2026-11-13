@@ -28,11 +28,13 @@ What it does:
   they helped once a human approves them. This is the side-prize angle.
 - **Talks back** through the app (timeline, chat, and a voice mode with an animated orb), and by SMS or a phone call.
 
-Demo story: groceries go in and the last milk comes out. The agent notices. Someone says a craving out loud.
-The agent answers with a recipe and a cart that already reflects learned preferences. Someone taps Order on the
-phone, and the Rohlík courier walks in.
+Demo story: someone takes the last milk and eggs out of the fridge and says they're craving carbonara. On
+stage, "let's order now" makes the agent build one Rohlík cart from what ran out, the craving, and the
+household's learned habits and diets. It orders, phones the courier, and the courier walks onto the stage.
+**The full script is [docs/DEMO.md](docs/DEMO.md), and it's the source of truth. Judge every task by which beat
+(A–H) it serves.**
 
-The app is called **Frida**. Honza built the base overnight. It runs fully in demo mode with no keys, and every
+The product is **Coldex** (the code still says Frida). Honza built the base overnight. It runs fully in demo mode with no keys, and every
 integration goes live separately via `.env`. Building blocks: Frida's own **Claude agent loop** (no Hermes),
 **Reolink Home Hub + 2× Argus B310** cameras, **Rohlík's official MCP** (Frida fills the cart, and a human
 completes the order in Rohlík), and **Twilio** for calls and SMS.
