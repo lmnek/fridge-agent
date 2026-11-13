@@ -450,6 +450,25 @@ export default function OrbC({ status, levels }: OrbVariantProps) {
         }
       }
 
+      // the frozen core (borrowed from B's tesseract in the ice): a small still cube on its own slow turn,
+      // deep blue, that the cycling cubes stream around. Only while awake; a passing wave lights it.
+      {
+        const ca = Math.min(1, Math.max(0, active.x)) * 0.45;
+        if (ca > 0.01) {
+          rotShared(-t * 0.06 + 0.9, pitch * 0.5 + 0.62, 0.32);
+          twistInto(0);
+          project(0.2);
+          const coreP = new Path2D();
+          for (let e = 0; e < 12; e++) {
+            const E = EDGES[e];
+            coreP.moveTo(SX[E[0]], SY[E[0]]);
+            coreP.lineTo(SX[E[1]], SY[E[1]]);
+          }
+          strokeEdges(coreP, ca, Math.max(0.7, unit * 0.45), 0.25 + life.centre() * 1.2, 1, 0, life.centre() * 0.6);
+          rotShared(yaw, pitch, roll);
+        }
+      }
+
       // pass 2: front faces and front edges, inner to outer
       for (let ii = 0; ii < N + 2; ii++) {
         const c = ii >= N ? ii : order[ii];

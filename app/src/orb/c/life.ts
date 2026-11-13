@@ -179,6 +179,8 @@ export function createLife(EDGES: number[][], N: number) {
     SX: Float32Array, SY: Float32Array, front: Uint8Array,
   ) => {
     if (act < 0.02) return;
+    // the shell's edges are already thick and white-cored: a slimmer bead there, or it reads as a pill
+    if (c >= N) w *= 0.62;
     for (let i = 0; i < MAX_TR; i++) {
       if (tC[i] !== c || tAge[i] >= tLife[i]) continue;
       const k = tAge[i] / tLife[i];
