@@ -17,6 +17,7 @@ import { Hotkeys } from "./Hotkeys";
 import { KitchenInset } from "./KitchenInset";
 import { Panel, usePanelCard } from "./Panel";
 import { beatFor, insetGone } from "./pick";
+import { onPhoneAudio } from "./phoneAudio";
 import { setVideoAudio, startRelay } from "./relay";
 import { Subtitles } from "./Subtitles";
 import { useOrbVoice } from "./voice";
@@ -94,6 +95,16 @@ export default function Stage() {
   // U: the actor through the inset's own mic (camera or phone) instead of the relay's kitchen mic, never both.
   const [videoAudio, setVideo] = useState(false);
   useEffect(() => setVideoAudio(videoAudio), [videoAudio]);
+  // With the fridge phone as the inset, U also makes the phone's mic what the stage session hears (M still
+  // wakes it and opens the gate). The stage laptop's mic is out of the session meanwhile.
+  useEffect(() => {
+    if (!videoAudio) return;
+    const off = onPhoneAudio((t) => brain.setInput(t));
+    return () => {
+      off();
+      brain.setInput(null);
+    };
+  }, [brain, videoAudio]);
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const t = e.target as HTMLElement | null;

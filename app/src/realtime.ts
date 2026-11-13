@@ -56,6 +56,9 @@ export class FridgeBrain {
   private heardText = new Map<string, string>();
   private micTrack: MediaStreamTrack | null = null;
   private micOn = true;
+  /** Another input instead of the mic (the fridge phone on the stage, U), or null for the mic. */
+  private input: MediaStreamTrack | null = null;
+  private sender: RTCRtpSender | null = null;
   private ctx: AudioContext | null = null;
   private inAnalyser: AnalyserNode | null = null;
   private outAnalyser: AnalyserNode | null = null;
@@ -102,7 +105,8 @@ export class FridgeBrain {
     });
     this.micTrack = mic.getTracks()[0];
     this.micTrack.enabled = this.micOn;
-    pc.addTrack(this.micTrack, mic);
+    this.sender = pc.addTrack(this.micTrack, mic);
+    if (this.input) void this.sender.replaceTrack(this.input);
     this.inAnalyser = this.analyser(mic);
     this.h.stream?.("kitchen", mic);
 
@@ -145,11 +149,11 @@ export class FridgeBrain {
   }
 
   private teardown() {
-    this.pc?.getSenders().forEach((s) => s.track?.stop());
+    this.micTrack?.stop(); // only the mic: an `input` track belongs to whoever set it
     this.pc?.close();
     void this.ctx?.close();
     this.pc = this.dc = null;
-    this.ctx = this.inAnalyser = this.outAnalyser = this.micTrack = null;
+    this.ctx = this.inAnalyser = this.outAnalyser = this.micTrack = this.sender = null;
     this.busy = this.wantResponse = this.playing = false;
     this.lines = [];
     if (this.pace) clearInterval(this.pace);
@@ -192,6 +196,14 @@ export class FridgeBrain {
   setMic(on: boolean) {
     this.micOn = on;
     if (this.micTrack) this.micTrack.enabled = on;
+    if (this.input) this.input.enabled = on;
+  }
+
+  /** What the session hears: another audio track (the fridge phone), or null for the mic again. Gated like the mic. */
+  setInput(track: MediaStreamTrack | null) {
+    this.input = track;
+    if (track) track.enabled = this.micOn;
+    void this.sender?.replaceTrack(track ?? this.micTrack);
   }
 
   get mic() {

@@ -38,6 +38,12 @@ function source(): string {
 const isClip = (s: string) => /\.(mp4|webm)(\?.*)?$/i.test(s);
 const camera = (s: string) => /^reolink(\d?)$/i.exec(s);
 
+/** The VDO.Ninja stream id when the inset shows the fridge phone, else null (phoneAudio.ts). */
+export function phoneRoom(): string | null {
+  const s = source();
+  return s && !camera(s) && !isClip(s) ? s : null;
+}
+
 function viewerUrl(room: string, muted: boolean): string {
   // cleanoutput: no VDO.Ninja chrome or pop-ups. lowlatency: minimal buffering. cover: fill the 16:9 box.
   // retry=10: look for a lost stream again every 10 s (the fridge phone drops off while the door is shut).
