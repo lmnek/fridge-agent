@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import { ACTIVE, clonePalette, IDLE, mixPalette, mixRgb, rgb, rgba } from "./c/palette";
 import type { OrbVariantProps } from "./types";
 
 /**
@@ -129,6 +130,8 @@ export default function OrbC({ status, levels }: OrbVariantProps) {
     // smoothed state
     const spin = spring(0.12), flow = spring(0.07), twist = spring(0.55), light = spring(0.7), lean = spring(0);
     const pulse = spring(0);
+    const active = spring(0); // 0 idle grey ice .. 1 awake ice blue: crossfades the palette
+    const pal = clonePalette(IDLE);
     let lvlIn = 0, lvlOut = 0, slowOut = 0;
     let yaw = 0.62, phase = 0.3, last = performance.now(), raf = 0;
 
@@ -187,26 +190,27 @@ export default function OrbC({ status, levels }: OrbVariantProps) {
       }
     };
 
-    const strokeEdges = (path: Path2D, a: number, w: number, core: number) => {
+    // tone: 0 = the palette's edge body, 1 = its deep colour (depth and pulses)
+    const strokeEdges = (path: Path2D, a: number, w: number, core: number, tone = 0) => {
       if (a < 0.004) return;
       ctx.globalAlpha = a * 0.11;
-      ctx.strokeStyle = "rgb(31,111,150)";
+      ctx.strokeStyle = rgb(pal.halo);
       ctx.lineWidth = w * 6.5;
       ctx.stroke(path);
       ctx.globalAlpha = Math.min(1, a * 0.58);
-      ctx.strokeStyle = "rgb(50,134,176)";
+      ctx.strokeStyle = mixRgb(pal.body, pal.deep, tone);
       ctx.lineWidth = w * 2.6;
       ctx.stroke(path);
       // a darker refraction line on the side away from the light
       ctx.translate(w * 0.75, w * 0.85);
       ctx.globalAlpha = Math.min(1, a * 0.62);
-      ctx.strokeStyle = "rgb(20,72,102)";
+      ctx.strokeStyle = rgb(pal.refr);
       ctx.lineWidth = w * 0.8;
       ctx.stroke(path);
       // the crisp white core, nudged toward the light
       ctx.translate(-w * 1.1, -w * 1.25);
       ctx.globalAlpha = Math.min(1, a * core);
-      ctx.strokeStyle = "#fff";
+      ctx.strokeStyle = rgb(pal.core);
       ctx.lineWidth = w * 1.05;
       ctx.stroke(path);
       ctx.translate(w * 0.35, w * 0.4);
@@ -229,21 +233,21 @@ export default function OrbC({ status, levels }: OrbVariantProps) {
         ctx.lineTo(SX[F[5]], SY[F[5]]);
         ctx.lineTo(SX[F[6]], SY[F[6]]);
         ctx.closePath();
-        ctx.fillStyle = "rgb(31,111,150)";
+        ctx.fillStyle = rgb(pal.face);
         ctx.globalAlpha = alpha * (wantFront ? 0.028 + Math.max(0, -d) * 0.05 : 0.022);
         ctx.fill();
         if (wantFront && d > 0) {
-          ctx.fillStyle = "#fff";
+          ctx.fillStyle = rgb(pal.glint);
           ctx.globalAlpha = alpha * d * d * 0.28 * lightK;
           ctx.fill();
           if (glint > 0 && d > 0.2) {
             // a soft diagonal streak of light across the lit faces of the shell
             const g = ctx.createLinearGradient(SX[F[3]], SY[F[3]], SX[F[5]], SY[F[5]]);
             const m = 0.5 + 0.28 * glint;
-            g.addColorStop(m - 0.2, "rgba(255,255,255,0)");
-            g.addColorStop(m - 0.03, "rgba(255,255,255,0.75)");
-            g.addColorStop(m, "rgba(255,255,255,0.9)");
-            g.addColorStop(m + 0.09, "rgba(255,255,255,0)");
+            g.addColorStop(m - 0.2, rgba(pal.glint, 0));
+            g.addColorStop(m - 0.03, rgba(pal.glint, 0.75));
+            g.addColorStop(m, rgba(pal.glint, 0.9));
+            g.addColorStop(m + 0.09, rgba(pal.glint, 0));
             ctx.fillStyle = g;
             ctx.globalAlpha = Math.min(1, (d - 0.2) * 0.75 * lightK);
             ctx.fill();
@@ -278,6 +282,8 @@ export default function OrbC({ status, levels }: OrbVariantProps) {
       step(light, tLight, dt, 30, 0.55);
       step(lean, tLean, dt, 40, 0.5);
       step(pulse, stress, dt, 120, 0.45);
+      step(active, st === "off" ? 0 : 1, dt, 3, 0.9);
+      mixPalette(pal, IDLE, ACTIVE, Math.min(1, Math.max(0, active.x)));
 
       yaw += spin.x * dt;
       phase += (flow.x + Math.max(0, pulse.x) * 0.9) * dt;
@@ -310,8 +316,8 @@ export default function OrbC({ status, levels }: OrbVariantProps) {
         ctx.translate(W / 2, sy);
         ctx.scale(1, 0.16);
         const g = ctx.createRadialGradient(0, 0, 0, 0, 0, r);
-        g.addColorStop(0, "rgba(20,60,82,0.085)");
-        g.addColorStop(1, "rgba(20,60,82,0)");
+        g.addColorStop(0, rgba(pal.shadow, 0.085));
+        g.addColorStop(1, rgba(pal.shadow, 0));
         ctx.fillStyle = g;
         ctx.globalAlpha = 1 - bob * 4;
         ctx.fillRect(-r, -r, r * 2, r * 2);
@@ -340,6 +346,8 @@ export default function OrbC({ status, levels }: OrbVariantProps) {
       const twistOf = (c: number) => (c >= N ? 0 : fold * Math.min(1 - cubeU[c], 0.5) * 1.9);
       const widthOf = (c: number) =>
         c === N + 1 ? Math.max(1.7, unit * 1.3) : c === N ? Math.max(0.8, unit * 0.6) : Math.max(0.75 + 0.6 * cubeU[c], unit * (0.35 + 0.6 * cubeU[c]));
+      // per-cube depth tone for the edge body (0 body .. 1 deep); the active animation drives this
+      const toneOf = (c: number) => (c >= N ? 0 : 0);
       const coreOf = (c: number) =>
         c >= N ? 0.55 + 0.35 * lk : (0.25 + 0.55 * cubeU[c]) * (0.7 + 0.3 * lk) + lvlOut * (1 - cubeU[c]) * 1.2 + Math.max(0, pulse.x) * 0.9;
 
@@ -358,16 +366,16 @@ export default function OrbC({ status, levels }: OrbVariantProps) {
           back.moveTo(SX[E[0]], SY[E[0]]);
           back.lineTo(SX[E[1]], SY[E[1]]);
         }
-        strokeEdges(back, a * 0.55, widthOf(c) * 0.85, coreOf(c) * 0.6);
+        strokeEdges(back, a * 0.55, widthOf(c) * 0.85, coreOf(c) * 0.6, toneOf(c));
       }
 
       // the voice, a cool light deep inside the ice
       if (lvlOut > 0.01 || lean.x > 0.01) {
         const r = px * 0.75;
         const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, r);
-        g.addColorStop(0, "rgba(255,255,255,0.9)");
-        g.addColorStop(0.35, "rgba(150,210,235,0.35)");
-        g.addColorStop(1, "rgba(150,210,235,0)");
+        g.addColorStop(0, rgba(pal.glow, 0.9));
+        g.addColorStop(0.35, rgba(pal.glowEdge, 0.35));
+        g.addColorStop(1, rgba(pal.glowEdge, 0));
         ctx.fillStyle = g;
         ctx.globalAlpha = Math.min(1, lvlOut * 0.55 + lean.x * 0.15);
         ctx.fillRect(cx - r, cy - r, r * 2, r * 2);
@@ -392,8 +400,8 @@ export default function OrbC({ status, levels }: OrbVariantProps) {
         }
         const w = widthOf(c);
         const core = coreOf(c);
-        strokeEdges(dimP, a, w, core * 0.75);
-        strokeEdges(litP, a, w * 1.1, core * 1.35);
+        strokeEdges(dimP, a, w, core * 0.75, toneOf(c));
+        strokeEdges(litP, a, w * 1.1, core * 1.35, toneOf(c));
 
         if (c === N + 1) {
           // frost along the shell's edges and corners
@@ -416,11 +424,11 @@ export default function OrbC({ status, levels }: OrbVariantProps) {
           }
           const fw = Math.max(0.9, unit * 0.8);
           const fl = 0.75 + 0.25 * Math.min(1, lk);
-          ctx.strokeStyle = "rgb(46,124,162)";
+          ctx.strokeStyle = rgb(pal.frostBody);
           ctx.lineWidth = fw * 1.8;
           ctx.globalAlpha = 0.1;
           ctx.stroke(f2);
-          ctx.strokeStyle = "#fff";
+          ctx.strokeStyle = rgb(pal.frost);
           ctx.lineWidth = fw * 1.3;
           ctx.globalAlpha = 0.22 * fl;
           ctx.stroke(f0);
