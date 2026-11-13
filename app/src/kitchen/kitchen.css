@@ -92,6 +92,11 @@
   justify-content: flex-end;
   max-height: calc(1.28em * 3);
   overflow: hidden;
+  transition: opacity 400ms ease;
+}
+
+.k-caption[data-faded="true"] {
+  opacity: 0;
 }
 
 .k-caption p {

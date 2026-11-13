@@ -10,13 +10,13 @@
   width: 880px;
   max-width: 100%;
   flex-shrink: 0;
-  /* Fixed height so the orb above never moves: one previous line plus two lines of the newest, each labelled. */
-  height: calc(2 * var(--who-h) + var(--prev-size) * var(--prev-lh) + 2 * var(--now-size) * var(--now-lh) + 18px);
+  /* Fixed height so the orb above never moves: one previous line plus three lines of the newest, each labelled. */
+  height: calc(2 * var(--who-h) + var(--prev-size) * var(--prev-lh) + 3 * var(--now-size) * var(--now-lh) + 18px);
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
   overflow: hidden;
-  transition: opacity 900ms ease;
+  transition: opacity 400ms ease;
 }
 
 .subtitles[data-faded="true"] {
@@ -82,7 +82,7 @@
 .subtitle[data-role="now"] .subtitle-text {
   font-size: var(--now-size);
   line-height: var(--now-lh);
-  max-height: calc(2 * var(--now-size) * var(--now-lh));
+  max-height: calc(3 * var(--now-size) * var(--now-lh));
 }
 
 .subtitle[data-role="prev"] {

@@ -5,6 +5,7 @@
  * a human's yes always wins. After IDLE_MS with nothing new, the card leaves and the orb glides back to the
  * centre, with a quiet one-line fridge status under it. App.tsx keeps every behaviour; this is layout only.
  */
+import { KCaption } from "./KCaption";
 import { AnimatePresence, motion } from "motion/react";
 import { type ReactNode, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { Orb } from "../Orb";
@@ -73,11 +74,7 @@ export function Kitchen(props: {
         <Orb status={status} levels={props.levels} onToggle={props.onWake} />
         <div className="k-voice" aria-live="polite">
           {STATUS_TEXT[status] ? <p className="k-state">{STATUS_TEXT[status]}</p> : null}
-          {caption ? (
-            <div className="k-caption">
-              <p>{caption}</p>
-            </div>
-          ) : null}
+          <KCaption text={caption} />
           {learned ? <p className="k-learned">Remembered: {learned}</p> : null}
           {error ? <p className="k-error">{error}</p> : null}
         </div>

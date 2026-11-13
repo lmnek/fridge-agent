@@ -4,17 +4,17 @@
  * Captions are grouped by `id` (one utterance each, later events replace the text). The newest utterance is
  * large, the one before it small and dimmed above it, each with a quiet speaker label above its text, so the
  * text gets the column's full width.
- * Long utterances show only their tail. Everything fades ~6 s after the last final with no newer speech.
+ * The newest wraps to up to 3 lines (the oldest lines clip off the top). Everything fades over 400 ms once
+ * max(4 s, chars / 15 per s) has passed after the last final with no newer speech.
  */
 import { useEffect, useState } from "react";
 import type { BusEvent } from "./bus";
 import "./subtitles.css";
 
-const FADE_AFTER_MS = 6000;
-/** Roughly two lines of the large size across the 880 px column. Longer text keeps its tail, cut at a word. */
-const TAIL_CHARS = 104;
-/** One line of the small size. */
-const PREV_CHARS = 76;
+/** A caption stays at least this long after its final, or text length at this reading speed, whichever is longer. */
+const MIN_HOLD_MS = 4000;
+const CHARS_PER_S = 15;
+const holdMs = (text: string) => Math.max(MIN_HOLD_MS, (text.length / CHARS_PER_S) * 1000);
 
 const LABELS: Record<string, string> = {
   coldex: "Coldex",
@@ -40,14 +40,6 @@ function utterances(events: BusEvent[]): Utterance[] {
   return [...byId.values()].filter((u) => u.text.trim());
 }
 
-function tail(text: string, max: number) {
-  const t = text.trim();
-  if (t.length <= max) return t;
-  const cut = t.slice(-max);
-  const space = cut.indexOf(" ");
-  return "…" + (space >= 0 ? cut.slice(space + 1) : cut);
-}
-
 export function Subtitles({ events }: { events: BusEvent[] }) {
   const all = utterances(events);
   const shown = all.slice(-3);
@@ -56,7 +48,7 @@ export function Subtitles({ events }: { events: BusEvent[] }) {
   const settled = all.length > 0 && all.every((u) => u.final);
 
   const [, tick] = useState(0);
-  const fadeAt = settled ? lastTs + FADE_AFTER_MS : 0;
+  const fadeAt = settled ? lastTs + holdMs(newest?.text ?? "") : 0;
   useEffect(() => {
     if (!fadeAt) return;
     const t = setTimeout(() => tick((n) => n + 1), Math.max(0, fadeAt - Date.now()) + 20);
@@ -71,7 +63,7 @@ export function Subtitles({ events }: { events: BusEvent[] }) {
         return (
           <div key={u.id} className="subtitle" data-role={role} data-who={u.who}>
             <span className="subtitle-who">{LABELS[u.who] ?? u.who}</span>
-            <p className="subtitle-text">{tail(u.text, role === "now" ? TAIL_CHARS : PREV_CHARS)}</p>
+            <p className="subtitle-text">{u.text.trim()}</p>
           </div>
         );
       })}
