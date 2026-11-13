@@ -140,8 +140,11 @@ export default function App() {
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.target instanceof HTMLInputElement || e.ctrlKey || e.metaKey || e.altKey || e.shiftKey) return;
+      if (e.target instanceof HTMLInputElement || e.ctrlKey || e.metaKey || e.altKey) return;
       const k = e.key.toLowerCase();
+      // HACK(demo): K (or Shift K, as on /stage) plays the scripted courier call (bridge/courier.py /fake).
+      if (k === "k") void fetch("/api/courier/fake", { method: "POST" }).catch(() => setError("Fake call failed: no bridge"));
+      if (e.shiftKey) return;
       if (k === "l") void lookRef.current();
       if (k === "u") setCam((c) => !c);
     };
