@@ -33,6 +33,20 @@ Gaps against the demo we want:
 4. **Design taste:** emoji on every food item and sparkle icons on buttons, both against `CLAUDE.md`. It's a quick cleanup.
 5. **Language:** it's Czech end to end, and we said English (§8).
 
+### 2.1 Judge feedback (13. 11., midday)
+
+One of the judges told us:
+- **UX is extremely important.**
+- He likes **talking to the fridge**: complaining about what's missing and saying what he has a taste for.
+- We should work out **how good it is to use day to day**, for example controlling it from the phone.
+
+What follows:
+- **Talking is the product.** B and C should feel like a conversation with the fridge, not commands. Proposed:
+  the actor's B line becomes a complaint plus a craving: "Out of milk again... and I'm craving carbonara tonight."
+- **Complaints are handled (done).** `bridge/memory/instructions.md` treats "we're out of X" as fact: X leaves
+  the inventory and goes in the next order. Coldex never argues or asks you to check.
+- **Phone control** is open, see §8.
+
 ## 3. Decisions
 
 | Topic | Decision | Notes |
@@ -143,6 +157,17 @@ See the build table in [DEMO.md](DEMO.md#build-owners-suggested-swap-freely).
 - [ ] **Network**: the hub, cams and laptop must share a LAN, and venue Wi-Fi often isolates clients, so
       **bring a travel router or hotspot**.
 - [ ] **Courier** (Honza): contact, time window, contents of the bag, cue signal.
+- [ ] **Phone control** (from the judge, §2.1). The stage app stays the main screen of the demo either way. Options:
+      1. **The same web app on the phone** (recommended). Open the tunnel URL and add it to the home screen. The
+         Realtime app already has a mobile layout, and it shares the bridge, memory and cart, so a craving said
+         at the fridge is known on the phone. Almost no new code.
+      2. **A Telegram bot.** It's familiar and can push messages, but it needs a second brain (Realtime is voice
+         over WebRTC, Telegram is text and voice notes) sharing the same tools. About 1.5 h, and §3 cut it.
+      Where it goes in the demo: the 3:00 is full and the courier is the climax, so a separate phone beat at the
+      end weakens the close. Cheaper options: say C's "let's order now" into the presenter's phone while the
+      projector shows the stage view (Coldex's voice then has to reach the stage speakers from the phone, and
+      the stage view has to follow tool calls through the bridge), a few seconds of the phone in H, or keep it
+      for Q&A.
 - [ ] **Schedule**: when is our demo slot? Can we touch code between 17:45 and the slot?
 
 ## 9. References

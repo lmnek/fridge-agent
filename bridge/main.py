@@ -357,7 +357,7 @@ def session_config(rohlik: bool = True) -> dict[str, Any]:
             "Note something about the household that every conversation should know.",
             {
                 "fact": {"type": "string", "description": "One short sentence, e.g. 'Kryštof is craving carbonara tonight.'"},
-                "category": {"type": "string", "enum": ["craving", "diet", "preference", "habit"]},
+                "category": {"type": "string", "enum": ["craving", "missing", "diet", "preference", "habit"]},
             },
             ["fact", "category"],
         ),
