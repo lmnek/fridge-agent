@@ -12,8 +12,9 @@ import { type CallAudio, playCallAudio } from "./callAudio";
 let relay: CallAudio | null = null;
 let videoAudio = false;
 let calling = false;
+let fallback = false;
 
-const apply = () => relay?.mute(videoAudio || calling);
+const apply = () => relay?.mute(videoAudio || calling || fallback);
 
 /** Call from a click or key handler. Safe to call again. */
 export function startRelay() {
@@ -25,7 +26,7 @@ export function startRelay() {
 
 /** Coldex's level from the kitchen, 0..1, or null while no kitchen audio arrives (relay off or dead). */
 export function relayColdexLevel(): number | null {
-  if (!relay || performance.now() - relay.lastAt() > 1000) return null;
+  if (!relay || fallback || performance.now() - relay.lastAt() > 1000) return null;
   return relay.level("coldex");
 }
 
@@ -38,5 +39,11 @@ export function setVideoAudio(on: boolean) {
 /** The courier call has the speakers (beat F). */
 export function setCalling(on: boolean) {
   calling = on;
+  apply();
+}
+
+/** A fallback run plays on the stage (Z or X): the kitchen goes quiet and stops driving the orb. */
+export function setFallback(on: boolean) {
+  fallback = on;
   apply();
 }

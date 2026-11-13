@@ -1,5 +1,5 @@
 /**
- * Stage hotkeys and their overlays (type the C line, cut to a clip, help, mic state). Owned by part 1, sub-task 3.
+ * Stage hotkeys and their overlays (type the C line, the fallback runs, help, mic state). Owned by part 1, sub-task 3.
  * Press ? on the stage for the key map. Nothing here can place an order: the worst a key does is fill the bus.
  */
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -7,6 +7,7 @@ import type { FridgeBrain } from "../realtime";
 import { publish, useBus } from "./bus";
 import { endCallAudio, startCourierCall } from "./call";
 import { publishCaption } from "./captions";
+import { fallbackPlaying, playFallback, stopFallback } from "./fallbackRun";
 import "./hotkeys.css";
 
 const BEAT_KEYS: Record<string, string> = { "1": "A", "2": "B", "3": "C", "4": "DE", "5": "F", "6": "G", "7": "H" };
@@ -20,7 +21,7 @@ const HELP: [string, string][] = [
   ["K", "Call the courier"],
   ["Shift K", "Fake courier call (scripted)"],
   ["1 – 7", "Force beat A, B, C, D/E, F, G, H"],
-  ["Z / X", "Cut to the B / C clip"],
+  ["Z / X", "Fallback: play the scripted run from B / C (again stops it)"],
   ["Shift R", "Reset every screen"],
   ["?", "This help"],
 ];
@@ -29,8 +30,6 @@ const DEV_HELP: [string, string][] = [
   ["N", "Dev player: next event"],
   ["[ / ]", "Dev player: previous / next beat"],
 ];
-
-type Clip = "b" | "c";
 
 /** True while the user types into a field, so letters go to the field and not to the stage. */
 export function typing(e: KeyboardEvent) {
@@ -43,7 +42,6 @@ export function Hotkeys({ brain, wake }: { brain: FridgeBrain; wake: () => Promi
   const [mic, setMic] = useState(brain.mic);
   const [toast, setToast] = useState<string | null>(null);
   const [typed, setTyped] = useState<string | null>(null);
-  const [clip, setClip] = useState<Clip | null>(null);
   const [help, setHelp] = useState(false);
   const toastTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
   const seen = useRef(0);
@@ -76,7 +74,6 @@ export function Hotkeys({ brain, wake }: { brain: FridgeBrain; wake: () => Promi
       const lower = k.toLowerCase();
 
       if (k === "Escape") {
-        setClip(null);
         setHelp(false);
         return;
       }
@@ -85,10 +82,12 @@ export function Hotkeys({ brain, wake }: { brain: FridgeBrain; wake: () => Promi
         return;
       }
       if (BEAT_KEYS[k]) {
+        stopFallback();
         void publish({ type: "stage", beat: BEAT_KEYS[k] });
         return;
       }
       if (e.shiftKey && lower === "r") {
+        stopFallback();
         void publish({ type: "stage", action: "reset" });
         return;
       }
@@ -122,11 +121,12 @@ export function Hotkeys({ brain, wake }: { brain: FridgeBrain; wake: () => Promi
           startCourierCall(brain).catch((err) => say(String(err?.message ?? err)));
           break;
         case "z":
-        case "x": {
-          const want: Clip = lower === "z" ? "b" : "c";
-          setClip((c) => (c === want ? null : want));
+        case "x":
+          // HACK(demo): no recordings. The fixture run plays on this screen from B or C (fallbackRun.ts).
+          playFallback(lower === "z" ? "B" : "C")
+            .then(() => say(fallbackPlaying() ? `Fallback: the scripted ${lower === "z" ? "B" : "C"} run` : "Fallback stopped"))
+            .catch((err) => say(String(err?.message ?? err)));
           break;
-        }
       }
     };
     window.addEventListener("keydown", onKey);
@@ -188,7 +188,6 @@ export function Hotkeys({ brain, wake }: { brain: FridgeBrain; wake: () => Promi
         </div>
       ) : null}
 
-      {clip ? <ClipCut clip={clip} /> : null}
 
       {help ? (
         <div className="hk-scrim" onClick={() => setHelp(false)}>
@@ -206,20 +205,5 @@ export function Hotkeys({ brain, wake }: { brain: FridgeBrain; wake: () => Promi
         </div>
       ) : null}
     </>
-  );
-}
-
-/** HACK(demo): fallback recordings, added by hand to app/public/demo/ (DEMO.md, Recordings). */
-function ClipCut({ clip }: { clip: Clip }) {
-  const [missing, setMissing] = useState(false);
-  useEffect(() => setMissing(false), [clip]);
-  return (
-    <div className="hk-clip" data-clip={clip}>
-      {missing ? (
-        <p className="hk-clip-missing">{clip.toUpperCase()} clip missing</p>
-      ) : (
-        <video key={clip} src={`/demo/${clip}-clip.mp4`} autoPlay playsInline onError={() => setMissing(true)} />
-      )}
-    </div>
   );
 }

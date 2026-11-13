@@ -1,6 +1,7 @@
 /**
  * What drives the stage orb. Priority: the courier call audio (F), then the stage session if it's awake (the
- * T fallback), then Coldex's voice from the kitchen relay (B and C, relay.ts). The orb gets Coldex's level
+ * T fallback), then the C narration of a fallback run (fallbackRun.ts), then Coldex's voice from the kitchen
+ * relay (B and C, relay.ts). The orb gets Coldex's level
  * only, never the actor's. If no kitchen audio arrives (relay dead, the video call's audio on instead), it
  * mirrors the kitchen's captions with a synthetic level. Owned by part 1, sub-task 2.
  */
@@ -8,6 +9,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { FridgeBrain, Status } from "../realtime";
 import type { BusEvent } from "./bus";
 import { callLevel } from "./call";
+import { fallbackLevel } from "./fallbackRun";
 import { relayColdexLevel } from "./relay";
 
 const KITCHEN_WINDOW_MS = 900;
@@ -67,7 +69,7 @@ export function useOrbVoice(brain: FridgeBrain, status: Status, events: BusEvent
   const loudAt = useRef(0);
   useEffect(() => {
     const t = setInterval(() => {
-      const lv = relayColdexLevel();
+      const lv = fallbackLevel() ?? relayColdexLevel();
       if (lv !== null && lv > SPEAKING_LEVEL) loudAt.current = performance.now();
       setRelay(lv === null ? "none" : performance.now() - loudAt.current < HANGOVER_MS ? "speaking" : "quiet");
     }, 50);
@@ -91,7 +93,7 @@ export function useOrbVoice(brain: FridgeBrain, status: Status, events: BusEvent
     const call = callLevel();
     if (call !== null) return { input: call, output: call };
     if (statusRef.current !== "off" && !callActive(eventsRef.current)) return brain.levels();
-    const kitchen = relayColdexLevel();
+    const kitchen = fallbackLevel() ?? relayColdexLevel();
     if (kitchen !== null && !callActive(eventsRef.current)) return { input: 0, output: kitchen };
     const s = kitchenSpeakingSince(eventsRef.current);
     const speaking = callActive(eventsRef.current) || (s !== null && Date.now() - s < KITCHEN_WINDOW_MS);

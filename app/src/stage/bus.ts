@@ -12,6 +12,12 @@ export type BusEvent = { type: string; [k: string]: any };
 let events: BusEvent[] = [];
 const listeners = new Set<() => void>();
 let source: EventSource | null = null;
+let paused = false;
+
+/** HACK(demo): while a fallback run plays (fallbackRun.ts), live events are dropped, except the hotkeys' stage events. */
+export function pauseLive(on: boolean) {
+  paused = on;
+}
 
 function emit() {
   for (const l of listeners) l();
@@ -52,7 +58,8 @@ function connect() {
   source = new EventSource("/api/events");
   source.onmessage = (m) => {
     try {
-      feed(JSON.parse(m.data));
+      const ev = JSON.parse(m.data);
+      if (!paused || ev.type === "stage") feed(ev);
     } catch {
       // not JSON, ignore
     }
