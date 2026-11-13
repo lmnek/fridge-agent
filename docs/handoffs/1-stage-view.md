@@ -20,7 +20,7 @@ It has to look clean and calm, and the orb is the one place to go all-out.
   use placeholders until they land.
 - **The stage session's mic stays off until C** (a hotkey turns it on). Otherwise it answers the kitchen
   audio coming through the video call.
-- **Hotkeys:** replay the B frames, type the C line instead of speaking it, cut to the B or C clip, force a
+- **Hotkeys:** "door closed" (runs the B vision pipeline on captured frames when the cameras aren't live, part 4), type the C line instead of speaking it, cut to the B or C clip, force a
   beat (D/E, G, H, idle).
 - **The kitchen page** wakes once and stays listening, and its voice plays through the fridge speaker.
 - **The orb** is part 9 (the ice tesseract). Use its component as is, and pass it the status and the mic and voice levels (`levels()` in `realtime.ts`).
