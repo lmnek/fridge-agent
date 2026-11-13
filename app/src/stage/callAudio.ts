@@ -14,8 +14,8 @@
 export interface CallAudio {
   stop(): void;
   level(who?: string): number;
-  /** Silences the speakers. The levels keep working. */
-  mute(on: boolean): void;
+  /** Silences the speakers, or one side only (`who`). The levels keep working. */
+  mute(on: boolean, who?: string): void;
   /** When the last chunk arrived (performance.now()), 0 if none yet. */
   lastAt(): number;
   /** Latency so far, ms: transit (kitchen to stage, needs the sender's `t`) and the playback queue, p50 and p95. */
@@ -84,6 +84,8 @@ export function playCallAudio(path = "/api/courier/listen", { format = "mulaw8k"
   all.fftSize = 512;
   all.connect(out);
   const sides: Record<string, AnalyserNode> = {};
+  const gains: Record<string, GainNode> = {};
+  const mutedSides = new Set<string>();
   const playhead: Record<string, number> = {};
   const transit: number[] = [];
   const queue: number[] = [];
@@ -97,7 +99,9 @@ export function playCallAudio(path = "/api/courier/listen", { format = "mulaw8k"
     if (!sides[who]) {
       sides[who] = ctx.createAnalyser();
       sides[who].fftSize = 512;
-      sides[who].connect(all);
+      gains[who] = ctx.createGain();
+      gains[who].gain.value = mutedSides.has(who) ? 0 : 1;
+      sides[who].connect(gains[who]).connect(all);
     }
     return sides[who];
   };
@@ -142,7 +146,13 @@ export function playCallAudio(path = "/api/courier/listen", { format = "mulaw8k"
     level(who?: string) {
       return rms(who ? sides[who] : all, wave);
     },
-    mute(on: boolean) {
+    mute(on: boolean, who?: string) {
+      if (who) {
+        if (on) mutedSides.add(who);
+        else mutedSides.delete(who);
+        if (gains[who]) gains[who].gain.value = on ? 0 : 1;
+        return;
+      }
       out.gain.value = on ? 0 : 1;
     },
     lastAt: () => last,

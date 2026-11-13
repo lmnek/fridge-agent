@@ -57,7 +57,7 @@ export default function Stage() {
   }, [brain]);
 
   // The kitchen relay plays from the first click or key on (browsers only start audio after a gesture).
-  // U swaps it for the video call's own audio, the fallback when the relay dies. Never both at once.
+  // U: the actor through the inset's own mic (camera or phone) instead of the relay's kitchen mic, never both.
   const [videoAudio, setVideo] = useState(false);
   useEffect(() => setVideoAudio(videoAudio), [videoAudio]);
   useEffect(() => {
@@ -100,7 +100,7 @@ export default function Stage() {
         <Panel card={card} events={events} />
       </section>
       <KitchenInset size={gone ? "hidden" : "large"} muted={!videoAudio} />
-      {videoAudio ? <p className="stage-audio">Video call audio</p> : null}
+      {videoAudio ? <p className="stage-audio">Actor on the camera mic</p> : null}
       {line ? <p className="stage-error">{line}</p> : null}
       <Hotkeys brain={brain} wake={wake} />
       <DevPlayer />

@@ -1,0 +1,16 @@
+# HACK(demo): `infra/go2rtc.sh --test`. ffmpeg's test pattern and a tone (H.264 + AAC at 16 kHz, like the
+# Reolink stream) stand in for both cameras, so the stage inset and its audio can be tried without the hub.
+
+api:
+  listen: ":1984"
+  origin: "*"
+
+rtsp:
+  listen: "127.0.0.1:8554" # exec's {output} publishes here
+
+streams:
+  fridge_cam0: exec:ffmpeg -hide_banner -loglevel error -re -f lavfi -i testsrc2=size=1280x720:rate=15 -f lavfi -i sine=frequency=330:sample_rate=16000 -c:v libx264 -preset ultrafast -tune zerolatency -g 30 -pix_fmt yuv420p -c:a aac -ac 1 -b:a 48k -f rtsp {output}
+  fridge_cam1: exec:ffmpeg -hide_banner -loglevel error -re -f lavfi -i testsrc=size=1280x720:rate=15 -f lavfi -i sine=frequency=520:sample_rate=16000 -c:v libx264 -preset ultrafast -tune zerolatency -g 30 -pix_fmt yuv420p -c:a aac -ac 1 -b:a 48k -f rtsp {output}
+
+log:
+  level: info

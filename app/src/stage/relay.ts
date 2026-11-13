@@ -4,8 +4,9 @@
  * this, never through the video call. Starts on the first click or key on the stage, because browsers only
  * start audio after a gesture.
  *
- * One path at a time: it's silent while the courier call plays, and while the video call's own audio is on
- * (the U key, the fallback when the relay dies), so Coldex is never heard twice.
+ * One path at a time: it's silent while the courier call plays. And while the inset's own audio is on (the
+ * U key: the Reolink camera's mic or the fridge phone's), the relay's `kitchen` channel is muted, so the actor
+ * is never heard twice. Coldex always comes through the relay.
  */
 import { type CallAudio, playCallAudio } from "./callAudio";
 
@@ -14,7 +15,10 @@ let videoAudio = false;
 let calling = false;
 let fallback = false;
 
-const apply = () => relay?.mute(videoAudio || calling || fallback);
+const apply = () => {
+  relay?.mute(calling || fallback);
+  relay?.mute(videoAudio, "kitchen");
+};
 
 /** Call from a click or key handler. Safe to call again. */
 export function startRelay() {
@@ -30,7 +34,7 @@ export function relayColdexLevel(): number | null {
   return relay.level("coldex");
 }
 
-/** The fallback when the relay dies: the video call's audio instead of the relay's. */
+/** The inset's own mic (camera or phone) instead of the relay's kitchen mic. Coldex stays on the relay. */
 export function setVideoAudio(on: boolean) {
   videoAudio = on;
   apply();

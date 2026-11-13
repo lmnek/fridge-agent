@@ -313,7 +313,7 @@
 
 /* ---------------------------------------------------------------- audio fallback (U) */
 
-/* Only while the video call's audio stands in for the kitchen relay, so the presenter knows. */
+/* Only while the inset's mic stands in for the relay's kitchen mic (U), so the presenter knows. */
 .stage-audio {
   position: fixed;
   top: 36px;
