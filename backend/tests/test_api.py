@@ -148,3 +148,19 @@ def test_twilio_webhooks_require_signature_when_live(settings):
     with TestClient(create_app(live)) as c:
         r = c.post("/voice/status", data={"CallSid": "CA1", "CallStatus": "completed"})
         assert r.status_code == 403
+
+
+def test_unknown_api_paths_are_404_even_with_built_frontend(tmp_path, settings, monkeypatch):
+    """SPA fallback vrací index.html jen pro stránky aplikace, ne pro /api a /voice."""
+    import frida.main as main_mod
+
+    dist = tmp_path / "dist"
+    (dist / "assets").mkdir(parents=True)
+    (dist / "index.html").write_text("<!doctype html><title>Frida</title>")
+    monkeypatch.setattr(main_mod, "FRONTEND_DIST", dist)
+    with TestClient(main_mod.create_app(settings)) as c:
+        assert c.get("/nakup").text.startswith("<!doctype html>")
+        assert c.get("/api/neexistuje").status_code == 404
+        assert c.get("/voice/neexistuje").status_code == 404
+        assert c.get("/api/snapshots/..%2F..%2Fetc%2Fpasswd").status_code == 404
+        assert c.get("/..%2Fbackend%2Fpyproject.toml").text.startswith("<!doctype html>")

@@ -20,6 +20,7 @@ from dataclasses import dataclass
 from ..food.catalog import find_spec
 from ..geo.service import haversine_m
 from ..schemas import Deal, GeoPoint, PlanItem, PlanStop, ShoppingPlan, Store
+from ..text import km
 
 MISSING_MARKUP = 1.3
 
@@ -65,46 +66,56 @@ def best_offer_per_chain(deals_by_query: dict[str, list[Deal]]) -> dict[str, dic
     return out
 
 
+Result = tuple[float, dict[str, list[tuple[str, Deal, float]]], list[str], float, int]
+
+
 def _evaluate(
     chains: tuple[str, ...],
     offers: dict[str, dict[str, Deal]],
+    regular: dict[str, float],
     stores: dict[str, Store],
     home: GeoPoint,
     cfg: PlannerConfig,
-) -> tuple[float, list[PlanStop], list[str], float, float, int]:
-    assignment: dict[str, list[PlanItem]] = {c: [] for c in chains}
+) -> Result:
+    """Cena jedné kombinace obchodů. Jen čísla, objekty se staví až pro vítěze (běží stovkykrát)."""
+    assignment: dict[str, list[tuple[str, Deal, float]]] = {}
     missing: list[str] = []
     goods = 0.0
     regular_total = 0.0
     for query, per_chain in offers.items():
-        regular = regular_price(query)
-        candidates = [(per_chain[c].price_czk, c) for c in chains if c in per_chain]
-        if candidates:
-            price, chain = min(candidates)
-            deal = per_chain[chain]
-            reg = deal.original_price_czk or regular
-            assignment[chain].append(PlanItem(query=query, deal=deal, price_czk=price, regular_price_czk=reg))
-            goods += price
+        best: Deal | None = None
+        for c in chains:
+            d = per_chain.get(c)
+            if d is not None and (best is None or d.price_czk < best.price_czk):
+                best = d
+        if best is not None:
+            reg = best.original_price_czk or regular[query]
+            assignment.setdefault(best.chain, []).append((query, best, reg))
+            goods += best.price_czk
             regular_total += reg
         else:
             missing.append(query)
-            goods += regular * MISSING_MARKUP
-            regular_total += regular
-    used = [c for c in chains if assignment[c]]
-    used_stores = [stores[c] for c in used if c in stores]
-    travel = route_m(home, used_stores)
+            goods += regular[query] * MISSING_MARKUP
+            regular_total += regular[query]
+    used = [c for c in chains if c in assignment]
+    travel = route_m(home, [stores[c] for c in used if c in stores])
     cost = goods + cfg.stop_cost_czk * len(used) + cfg.km_cost_czk * travel / 1000
-    stops = [
+    return cost, {c: assignment[c] for c in used}, missing, regular_total, travel
+
+
+def _stops(assignment: dict[str, list[tuple[str, Deal, float]]], stores: dict[str, Store]) -> list[PlanStop]:
+    return [
         PlanStop(
             kind="store",
-            chain=c,
-            store=stores.get(c),
-            items=assignment[c],
-            subtotal_czk=round(sum(i.price_czk or 0 for i in assignment[c]), 1),
+            chain=chain,
+            store=stores.get(chain),
+            items=[
+                PlanItem(query=q, deal=d, price_czk=d.price_czk, regular_price_czk=reg) for q, d, reg in lines
+            ],
+            subtotal_czk=round(sum(d.price_czk for _, d, _ in lines), 1),
         )
-        for c in used
+        for chain, lines in assignment.items()
     ]
-    return cost, stops, missing, goods, regular_total, travel
 
 
 def plan_shopping(
@@ -124,19 +135,21 @@ def plan_shopping(
         fav = set(favorite_chains)
         chains = [c for c in chains if c in fav] or chains
     plans: list[ShoppingPlan] = []
+    regular = {q: regular_price(q) for q in offers}
 
-    best_split = None
-    best_single = None
+    best_split: Result | None = None
+    best_single: Result | None = None
     for k in range(1, min(cfg.max_stops, len(chains)) + 1):
         for combo in itertools.combinations(chains, k):
-            result = _evaluate(combo, offers, stores_by_chain, home, cfg)
+            result = _evaluate(combo, offers, regular, stores_by_chain, home, cfg)
             if best_split is None or result[0] < best_split[0]:
                 best_split = result
             if k == 1 and (best_single is None or result[0] < best_single[0]):
                 best_single = result
 
-    def make(strategy: str, title: str, res, explanation: str) -> ShoppingPlan:
-        cost, stops, missing, _goods, regular_total, travel = res
+    def make(strategy: str, title: str, res: Result, explanation: str) -> ShoppingPlan:
+        cost, assignment, missing, regular_total, travel = res
+        stops = _stops(assignment, stores_by_chain)
         total = round(sum(s.subtotal_czk for s in stops), 1)
         return ShoppingPlan(
             strategy=strategy,  # type: ignore[arg-type]
@@ -154,19 +167,18 @@ def plan_shopping(
         )
 
     if best_split is not None:
-        stops = best_split[1]
-        names = ", ".join(s.chain for s in stops)
+        used = list(best_split[1])
         plans.append(
             make(
                 "cheapest_split",
-                f"Nejvýhodněji: {names}",
+                f"Nejvýhodněji: {', '.join(used)}",
                 best_split,
-                f"Celkem {len(stops)} {'obchod' if len(stops) == 1 else 'obchody'}, trasa "
-                f"{best_split[5] / 1000:.1f} km. Započítaná je i cesta a čas na každou zastávku.",
+                f"Celkem {len(used)} {'obchod' if len(used) == 1 else 'obchody'}, trasa "
+                f"{km(best_split[4])}. Započítaná je i cesta a čas na každou zastávku.",
             )
         )
     if best_single is not None and (best_split is None or len(best_split[1]) > 1):
-        chain = best_single[1][0].chain if best_single[1] else "?"
+        chain = next(iter(best_single[1]), "?")
         plans.append(
             make(
                 "single_store",

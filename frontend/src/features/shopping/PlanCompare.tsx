@@ -126,11 +126,7 @@ export function PlanCompare({
   onFillCart: () => void;
   filling: boolean;
 }) {
-  const res = useAsync<ShoppingPlan[]>(async () => {
-    // plán se na serveru počítá nejdéle, ať nejdřív doběhnou rychlé dotazy
-    await new Promise((r) => window.setTimeout(r, 450));
-    return api.plan([]);
-  }, [refreshKey]);
+  const res = useAsync<ShoppingPlan[]>(() => api.plan([]), [refreshKey]);
   const plans = res.data ?? [];
   const bestScore = Math.min(...plans.map((p) => p.score));
   const maxTotal = Math.max(1, ...plans.map((p) => p.total_czk));

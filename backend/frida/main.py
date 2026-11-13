@@ -10,7 +10,7 @@ import logging
 from contextlib import asynccontextmanager
 from pathlib import Path
 
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
@@ -24,6 +24,7 @@ from .services import build_services
 log = logging.getLogger("frida")
 
 FRONTEND_DIST = Path(__file__).resolve().parents[2] / "frontend" / "dist"
+API_PREFIXES = {"api", "voice", "ws", "healthz", "docs", "openapi.json", "assets"}
 
 
 def create_app(settings: Settings | None = None) -> FastAPI:
@@ -63,8 +64,10 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
         @app.get("/{path:path}", include_in_schema=False)
         async def spa(path: str) -> FileResponse:
-            candidate = FRONTEND_DIST / path
-            if path and candidate.is_file() and FRONTEND_DIST in candidate.resolve().parents:
+            if path.split("/", 1)[0] in API_PREFIXES:
+                raise HTTPException(404, "Not Found")  # neznámé API nesmí vracet index.html
+            candidate = (FRONTEND_DIST / path).resolve()
+            if path and candidate.is_file() and FRONTEND_DIST.resolve() in candidate.parents:
                 return FileResponse(candidate)
             return FileResponse(FRONTEND_DIST / "index.html")
 

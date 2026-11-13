@@ -7,6 +7,7 @@ kdy která věc dojde.
 
 from __future__ import annotations
 
+import logging
 import uuid
 from collections import defaultdict
 from collections.abc import Callable
@@ -63,6 +64,9 @@ def _contains(outer: BBox, inner: BBox) -> bool:
     return outer.x <= cx <= outer.x + outer.w and outer.y <= cy <= outer.y + outer.h
 
 
+log = logging.getLogger(__name__)
+
+
 class InventoryService:
     def __init__(
         self,
@@ -79,6 +83,9 @@ class InventoryService:
         self.tz = ZoneInfo(tz)
         self.clock = clock or (lambda: datetime.now(UTC))
         self._misses: dict[str, int] = defaultdict(int)
+        # Volá se po ruční změně (aplikace, agent, vaření). Demo režim tím drží simulovanou lednici
+        # ve shodě s inventářem, jinak by ji příští snímek ohlásil jako změnu.
+        self.on_manual_change: Callable[[InventoryItem, InventoryItem | None], None] | None = None
 
     # ------------------------------------------------------------------ util
     def today(self) -> date:
@@ -224,8 +231,16 @@ class InventoryService:
         if new_qty < old_qty:
             self._record_consumption(item, old_qty - new_qty)
         self._check_item_alerts(item)
+        self._manual_changed(item)
         self.broadcast()
         return item
+
+    def _manual_changed(self, item: InventoryItem, *, gone: bool = False) -> None:
+        if self.on_manual_change is not None:
+            try:
+                self.on_manual_change(item, None if gone or item.quantity <= 0 else item)
+            except Exception:  # simulace nesmí shodit skutečnou změnu
+                log.exception("on_manual_change selhalo")
 
     def consume(self, item_id: str, amount: float | None = None) -> InventoryItem | None:
         """Ubere množství (výchozí 1 jednotka). Při nule položku vyřadí."""
@@ -239,6 +254,7 @@ class InventoryService:
             return self.remove(item_id, reason="consumed")
         item = self._save(item.model_copy(update={"quantity": remaining}))
         self._check_item_alerts(item)
+        self._manual_changed(item)
         self.broadcast()
         return item
 
@@ -267,7 +283,7 @@ class InventoryService:
             self.events.emit(
                 "item_out",
                 f"{item.emoji} Došlo: {item.name}",
-                detail="Patří mezi základní potraviny, přidávám ho do nákupu.",
+                detail="Je to základní potravina, dávám ji do nákupu.",
                 severity="warning",
                 item_id=item.id,
                 data={"canonical": item.canonical, "reason": reason},
@@ -276,11 +292,13 @@ class InventoryService:
             self.store.delete(ITEMS, item_id)
             self.events.emit(
                 "item_removed",
-                f"{item.emoji} {item.name} {'skončil v koši' if wasted else 'zmizel z lednice'}",
+                f"{item.emoji} {'Vyhozeno' if wasted else 'Zmizelo z lednice'}: {item.name}",
                 severity="warning" if wasted else "info",
                 item_id=item.id,
                 data={"canonical": item.canonical, "reason": "wasted" if wasted else reason},
             )
+        if reason != "taken":  # "taken" hlásí kamera, scéna už odpovídá
+            self._manual_changed(item, gone=True)
         self.broadcast()
         return item
 
@@ -438,8 +456,12 @@ class InventoryService:
         self.events.emit(
             "item_added",
             f"{item.emoji} Přibylo: {item.name}",
-            detail=f"Kamera {obs.camera_id}, jistota {round(det.confidence * 100)} %"
-            + (f", spotřebujte do {item.expires_on:%d. %m.}" if item.expires_on else ""),
+            detail=f"{obs.camera_name or obs.camera_id}, jistota {round(det.confidence * 100)} %"
+            + (
+                f", spotřebuj do {_short_date(item.expires_on, obs.taken_at.date())}"
+                if item.expires_on
+                else ""
+            ),
             severity="success",
             item_id=item.id,
             camera_id=obs.camera_id,
@@ -478,15 +500,16 @@ class InventoryService:
                 data={"canonical": item.canonical},
             )
         elif item.status == "expiring" and self._alert_once("expiring", item):
+            days = item.days_left or 0
             when = (
                 "dnes"
-                if item.days_left == 0
-                else ("zítra" if item.days_left == 1 else f"za {item.days_left} dny")
+                if days <= 0
+                else ("zítra" if days == 1 else f"za {days} {'dny' if days < 5 else 'dní'}")
             )
             self.events.emit(
                 "item_expiring",
-                f"{item.emoji} {item.name} expiruje {when}",
-                detail="Navrhnu recept, ve kterém ho spotřebuješ.",
+                f"{item.emoji} Končí {when}: {item.name}",
+                detail="Navrhnu recept, ve kterém to spotřebuješ.",
                 severity="warning",
                 item_id=item.id,
                 data={"canonical": item.canonical, "days_left": item.days_left},
@@ -494,8 +517,8 @@ class InventoryService:
         elif item.status == "expired" and self._alert_once("expired", item):
             self.events.emit(
                 "item_expired",
-                f"{item.emoji} {item.name} je po datu spotřeby",
-                detail="Zkontroluj ho, než ho sníš.",
+                f"{item.emoji} Po datu spotřeby: {item.name}",
+                detail="Zkontroluj to, než to sníš.",
                 severity="critical",
                 item_id=item.id,
                 data={"canonical": item.canonical},
@@ -594,3 +617,8 @@ class InventoryService:
             )
             cursor = (cursor - timedelta(days=1)).replace(day=1)
         return list(reversed(out))
+
+
+def _short_date(d: date, today: date) -> str:
+    """13. 11. a u jiného roku 9. 9. 2027."""
+    return f"{d.day}. {d.month}." + (f" {d.year}" if d.year != today.year else "")

@@ -108,6 +108,23 @@ RECIPES: tuple[Recipe, ...] = (
         ),
     ),
     Recipe(
+        "pizza-listove",
+        "Domácí pizza z listového těsta",
+        "🍕",
+        30,
+        ("syr-eidam",),
+        ("mozzarella", "sunka", "salam", "zampiony", "paprika", "rajcata"),
+        ("oregano", "olivový olej"),
+        ("listové těsto", "rajčatový protlak"),
+        ("pizza", "italske"),
+        (
+            "Listové těsto rozválej na plech s pečicím papírem a okraje přehni.",
+            "Potři protlakem ochuceným oreganem a trochou oleje.",
+            "Obloz, co je v lednici, posyp nastrouhaným sýrem.",
+            "Peč na 220 °C asi 15 minut, dokud není těsto zlatavé.",
+        ),
+    ),
+    Recipe(
         "losos-brokolice",
         "Losos s brokolicí a citronem",
         "🐟",
@@ -579,6 +596,19 @@ def _match_item(name: str, items: list[InventoryItem]) -> InventoryItem | None:
 
 
 # ----------------------------------------------------------------- služba
+def _builtin_message(recipes: list[RecipeSuggestion]) -> str | None:
+    if not recipes:
+        return None
+    top = recipes[0]
+    if top.rescue_score >= 25 and top.uses:
+        return (
+            f"Nejvíc pomůže {top.title.lower()}. Spotřebuje se: {', '.join(u.lower() for u in top.uses[:2])}."
+        )
+    if not top.missing:
+        return f"Z lednice zvládneš {top.title.lower()} za {top.minutes} minut."
+    return f"Na {top.title.lower()} stačí dokoupit {', '.join(top.missing)}."
+
+
 class RecipeService:
     def __init__(self, settings: Settings, client: AsyncAnthropic | None, delivery: DeliveryProvider) -> None:
         self.settings = settings
@@ -601,7 +631,9 @@ class RecipeService:
                 return msg, recipes[:limit]
             except Exception as exc:
                 log.warning("recepty přes Claude selhaly, beru vestavěné: %s", exc)
-        return None, builtin_suggestions(items, craving=craving, prefs=prefs)[:limit]
+        recipes = builtin_suggestions(items, craving=craving, prefs=prefs)[:limit]
+        # U chuti skládá zprávu craving() (vaření hned, dokoupení, rozvoz).
+        return (None if craving else _builtin_message(recipes)), recipes
 
     async def craving(
         self,

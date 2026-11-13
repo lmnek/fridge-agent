@@ -212,6 +212,21 @@ class DemoWorld:
                 return camera, obj
         return None
 
+    def mirror(self, canonical: str, *, fill_level: float | None, quantity: float | None, gone: bool) -> None:
+        """Promítne ruční změnu z aplikace (vaření, smazání) do scény."""
+        for objs in self.objects.values():
+            for obj in objs:
+                if obj.spec.key != canonical:
+                    continue
+                if gone:
+                    objs.remove(obj)
+                    return
+                if fill_level is not None and obj.fill_level is not None:
+                    obj.fill_level = round(fill_level, 2)
+                if quantity is not None and obj.quantity is not None:
+                    obj.quantity = quantity
+                return
+
     def _free_slot(self, camera: str, shelf: Shelf) -> int | None:
         used = {o.slot for o in self.objects[camera]}
         layout = self.layouts[camera]

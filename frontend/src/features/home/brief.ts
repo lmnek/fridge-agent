@@ -30,7 +30,7 @@ export function composeBrief(items: InventoryItem[]): Brief {
   if (expired.length) {
     const first = expired[0];
     return {
-      line: `${first.name} je po datu spotřeby. Když už se to nedá jíst, označ to v lednici jako vyhozené.`,
+      line: `Po datu spotřeby: ${first.name.toLowerCase()}. Když už se to nedá jíst, označ to v lednici jako vyhozené.`,
       prompt: "Co mám v lednici prošlého?",
       promptLabel: "Co je prošlé?",
     };

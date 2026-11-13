@@ -216,6 +216,13 @@ def build_services(settings: Settings) -> Services:
     else:
         demo_world = DemoWorld()
         demo_world.seed_default()
+        world = demo_world
+        inventory.on_manual_change = lambda before, after: world.mirror(
+            before.canonical,
+            fill_level=after.fill_level if after else None,
+            quantity=after.quantity if after else None,
+            gone=after is None,
+        )
         cameras = [DemoCamera(demo_world, "cam0", names[0], 0), DemoCamera(demo_world, "cam1", names[1], 1)]
 
     manager = CameraManager(

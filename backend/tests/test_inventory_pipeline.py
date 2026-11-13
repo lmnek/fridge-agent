@@ -97,3 +97,26 @@ def test_shopping_needs_include_out_staples(services):
     item = inv.create(InventoryItemCreate(name="Vejce", quantity=2, min_quantity=1, staple=True), emit=False)
     inv.remove(item.id)
     assert any(n.id == item.id for n in inv.shopping_needs())
+
+
+async def test_manual_changes_do_not_come_back_as_camera_changes(services):
+    """Vaření nebo smazání v aplikaci se promítne do simulované lednice.
+
+    Jinak by příští otevření dveří (kdy se na stejné kameře změní něco jiného) nahlásilo
+    falešnou změnu hladiny kečupu a pivo by se do lednice „vrátilo“.
+    """
+    await seed_demo(services)
+    ketchup = next(i for i in services.inventory.list() if i.canonical == "kecup")
+    beer = next(i for i in services.inventory.list() if i.canonical == "pivo")
+    services.inventory.update(ketchup.id, InventoryItemUpdate(fill_level=0.17))
+    services.inventory.remove(beer.id, reason="consumed")
+    before = {e.id for e in services.events.recent(500)}
+
+    await services.cameras.simulate("take", "horcice")  # dveře (kam1), vedle kečupu
+    await services.cameras.simulate("take", "okurka")  # police (kam0), kde bylo pivo
+
+    titles = [e.title for e in services.events.recent(500) if e.id not in before]
+    assert not [t for t in titles if "Kečup" in t or "Pivo" in t], titles
+    assert any("Hořčice" in t for t in titles), "skutečná změna se pořád hlásí"
+    assert next(i for i in services.inventory.list() if i.canonical == "kecup").fill_level == 0.17
+    assert not any(i.canonical == "pivo" for i in services.inventory.list())

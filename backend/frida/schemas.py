@@ -164,6 +164,7 @@ class Observation(BaseModel):
     taken_at: datetime
     image_url: str
     provider: str
+    camera_name: str | None = None
     detections: list[Detection]
     latency_ms: int
     brightness: float | None = None  # 0..1, tma = zavřené dveře

@@ -133,6 +133,7 @@ class VisionPipeline:
         obs = Observation(
             id=f"obs_{uuid.uuid4().hex[:10]}",
             camera_id=frame.camera_id,
+            camera_name=camera_name,
             taken_at=frame.taken_at,
             image_url=image_url,
             provider=getattr(self.provider, "name", "unknown"),
