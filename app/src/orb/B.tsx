@@ -72,15 +72,19 @@ export default function OrbB({ status, levels }: OrbVariantProps) {
     let scale = Math.min(window.devicePixelRatio || 1, 1.25) * QUALITY;
     let cssW = 1, cssH = 1;
     const resize = () => {
-      const r = canvas.getBoundingClientRect();
-      cssW = Math.max(1, r.width);
-      cssH = Math.max(1, r.height);
+      cssW = Math.max(1, canvas.clientWidth);
+      cssH = Math.max(1, canvas.clientHeight);
       canvas.width = Math.round(cssW * scale);
       canvas.height = Math.round(cssH * scale);
       gl.viewport(0, 0, canvas.width, canvas.height);
     };
     resize();
-    const ro = new ResizeObserver(resize);
+    // Resizing clears the canvas after this frame's draw, so redraw at once or it blanks while the stage glides.
+    const ro = new ResizeObserver(() => {
+      resize();
+      cancelAnimationFrame(raf);
+      frame(performance.now());
+    });
     ro.observe(canvas);
 
     const verts = new Float32Array(48);

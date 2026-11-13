@@ -111,15 +111,19 @@ export default function OrbC({ status, levels }: OrbVariantProps) {
     let W = 1, H = 1;
     const resize = () => {
       const dpr = Math.min(window.devicePixelRatio || 1, 2);
-      const r = canvas.getBoundingClientRect();
-      W = Math.max(1, r.width);
-      H = Math.max(1, r.height);
+      W = Math.max(1, canvas.clientWidth);
+      H = Math.max(1, canvas.clientHeight);
       canvas.width = Math.round(W * dpr);
       canvas.height = Math.round(H * dpr);
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     };
     resize();
-    const ro = new ResizeObserver(resize);
+    // Resizing clears the canvas after this frame's draw, so redraw at once or it blanks while the stage glides.
+    const ro = new ResizeObserver(() => {
+      resize();
+      cancelAnimationFrame(raf);
+      draw(performance.now());
+    });
     ro.observe(canvas);
 
     // smoothed state

@@ -30,13 +30,17 @@ export default function OrbLegacy({ status, levels }: OrbVariantProps) {
 
     const resize = () => {
       const dpr = Math.min(window.devicePixelRatio || 1, 2);
-      const { width, height } = canvas.getBoundingClientRect();
-      canvas.width = Math.round(width * dpr);
-      canvas.height = Math.round(height * dpr);
+      canvas.width = Math.round(canvas.clientWidth * dpr);
+      canvas.height = Math.round(canvas.clientHeight * dpr);
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     };
     resize();
-    const ro = new ResizeObserver(resize);
+    // Resizing clears the canvas after this frame's draw, so redraw at once or it blanks while the stage glides.
+    const ro = new ResizeObserver(() => {
+      resize();
+      cancelAnimationFrame(raf);
+      draw(performance.now());
+    });
     ro.observe(canvas);
 
     const draw = (now: number) => {
@@ -51,7 +55,8 @@ export default function OrbLegacy({ status, levels }: OrbVariantProps) {
       level += (Math.min(1, target) - level) * Math.min(1, dt * (target > level ? 14 : 5));
       spin += dt * (st === "connecting" ? 2.4 : st === "thinking" ? 0.9 : 0.12);
 
-      const { width: w, height: h } = canvas.getBoundingClientRect();
+      const w = canvas.clientWidth;
+      const h = canvas.clientHeight;
       const cx = w / 2;
       const cy = h / 2;
       const base = Math.min(w, h) * 0.21;

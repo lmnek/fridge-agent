@@ -1,6 +1,6 @@
 import { Environment, Lightformer, MeshTransmissionMaterial } from "@react-three/drei";
-import { useFrame } from "@react-three/fiber";
-import { useMemo, useRef } from "react";
+import { useFrame, useStore } from "@react-three/fiber";
+import { useEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
 import type { Status } from "../../realtime";
 import type { Levels } from "../types";
@@ -97,6 +97,11 @@ export function IceTesseract({ status, levels }: { status: Status; levels: Level
   const light = useRef<THREE.PointLight>(null);
   const statusRef = useRef(status);
   statusRef.current = status;
+
+  // gl.setSize clears the canvas outside the render loop, so render at once on a resize or the orb blanks
+  // while the stage glides it. r3f's own size listener runs first, so this frame has the new size.
+  const store = useStore();
+  useEffect(() => store.subscribe((st, prev) => st.size !== prev.size && st.advance(performance.now())), [store]);
 
   const s = useRef({
     time: 0,

@@ -1,22 +1,23 @@
 import { lazy, Suspense, type ComponentType } from "react";
+import OrbC from "./orb/C";
 import { bigStyle, useOrbDev } from "./orb/dev";
-import Legacy from "./orb/Legacy";
 import type { Levels, OrbVariantProps } from "./orb/types";
 import type { Status } from "./realtime";
 
 /**
- * Coldex's orb. The look is picked by `?orb=a|b|c` while we compare variants (part 9); without it,
- * the old fridge light. Each variant lives in `orb/` and only gets `status` and `levels`.
+ * Coldex's orb: the ice cube with cubes inside it receding without end (variant C, picked at 14:00).
+ * The retired experiments stay behind `?orb=` and out of the default bundle (three.js only loads for a):
  *   a: glass mesh (a 4D hypercube with a refractive material, three.js)
  *   b: raymarched ice tesseract (one fragment shader)
- *   c: nested cubes receding without end
+ *   legacy: the old fridge light
+ * Each variant lives in `orb/` and only gets `status` and `levels`.
  */
 const variants: Record<string, ComponentType<OrbVariantProps>> = {
   a: lazy(() => import("./orb/A")),
   b: lazy(() => import("./orb/B")),
-  c: lazy(() => import("./orb/C")),
+  legacy: lazy(() => import("./orb/Legacy")),
 };
-const Variant = variants[new URLSearchParams(window.location.search).get("orb") ?? ""] ?? Legacy;
+const Variant = variants[new URLSearchParams(window.location.search).get("orb") ?? ""] ?? OrbC;
 
 export function Orb({ status, levels, onToggle }: { status: Status; levels: Levels; onToggle: () => void }) {
   const dev = useOrbDev(status, levels);
