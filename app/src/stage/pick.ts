@@ -77,12 +77,15 @@ export function latestCard(events: BusEvent[]): { card: PanelId; at: number; for
   return { card: "idle", at: -1, forced: false };
 }
 
-/** The beat for the layout. A forced H wins over idle, everything else follows the card. */
+/**
+ * The beat for the layout. Idle is A (stream large) only before anything happened or when A is forced;
+ * an idle later in the run (H, or idle after H) keeps the orb large.
+ */
 export function beatFor(card: PanelId, events: BusEvent[]): Beat {
   if (card !== "idle") return card === "B" ? "B" : card.startsWith("C") ? "C" : (card as Beat);
   for (let i = events.length - 1; i >= 0; i--) {
     const ev = events[i];
-    if (ev.type === "stage" && ev.beat) return ev.beat === "H" ? "H" : "A";
+    if (ev.type === "stage" && ev.beat) return ev.beat === "A" ? "A" : "H";
   }
   return "A";
 }
