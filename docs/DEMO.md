@@ -12,13 +12,16 @@ recorded or replayed fallback.
   backend laptop on our own travel router. A tablet at the fridge runs Coldex, the one session for both B and C,
   and the actor hears it through an earbud from the tablet. A phone **inside the fridge, facing out**, streams
   the fridge's-eye view to the stage over VDO.Ninja, video only: dark while the door is shut, then the light
-  and the actor's face when it opens.
+  and the actor's face when it opens. The phone opens
+  `https://vdo.ninja/?push=<room>&webcam&autostart&videodevice=back&audiodevice=0&quality=1&maxframerate=30&outboundvideobitrate=2500`
+  (some Android phones need `videodevice=rear`), gets one tap so it holds its wake lock, and runs on a charger
+  with auto-lock off. The stage opens `/stage?kitchen=<room>`.
 - **Stage:** the presenter's laptop and the projector, running the **stage view** (below). The app is opened
   through the Cloudflare Tunnel URL, which Twilio also needs for the live call in F.
 - **Audio: the stage app plays every sound, one path at a time.** In B and C it plays the kitchen relay: the
-  tablet sends its mic (the actor) and Coldex's voice straight to the bridge, and the stage plays them. The
-  video call stays muted, and its audio is the fallback. In F the stage plays the phone call audio (see F
-  below). The stage mic stays off.
+  tablet sends its mic (the actor) and Coldex's voice straight to the bridge, and the stage plays them, starting
+  from the first click or key on the stage. The video call stays muted, and the U key swaps the relay for its
+  audio as the fallback. In F the stage plays the phone call audio (see F below). The stage mic stays off.
 - **People:** the actor in the kitchen, the presenter on stage, and the **real Rohlík courier** waiting at the
   office entrance (we have a deal with Rohlík).
 

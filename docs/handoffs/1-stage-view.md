@@ -53,8 +53,20 @@ From the old Frida build: `frontend/src/components/orb/` and `frontend/src/featu
 
 ## Risks
 
-- **Echo:** the stage speakers feeding the stage mic, and the fridge speaker feeding the tablet mic. Rehearse with the real speakers.
-- **Audio has one path at a time** (DEMO.md, Setup): the video call audio in B, Coldex from C on, the phone call in F.
+- **The shut fridge blocks the phone's Wi-Fi.** VDO.Ninja reconnects by itself, but roughly 5–15 s after the
+  network comes back (read from its source, not measured), which is longer than the door beat. Rehearse a
+  close, wait, open cycle and watch the stage. If the picture is late, put the travel router right next to the
+  fridge, or have the actor open the door a few seconds early. The stage's viewer re-checks every 10 s (`retry=10`).
+- **The cold drains the phone's battery**, and a sleeping phone ends the stream: keep it on a charger (the cable
+  through the door seal), auto-lock and battery saver off, the browser in front, one tap after it starts.
+- **The dark fridge drops the camera's frame rate**, and it takes a moment to ramp up when the light comes on.
+  Check that `videodevice=back` really picks the outward camera on the actual phone.
+- **The relay starts on the first click or key on the stage.** Click the stage once before A. If the relay dies,
+  U plays the video call's audio instead, but only if the phone pushes audio (DEMO.md Setup has it off).
+- **Echo mostly goes away:** the actor hears Coldex in an earbud (the tablet's echo cancellation handles the
+  rest), and the stage mic stays off, so the stage speakers feed nothing back.
+- **Audio has one path at a time** (DEMO.md, Setup): the kitchen relay in B and C, the phone call in F (the
+  relay goes quiet while the call plays).
 
 ## Update: fridge's-eye view, one kitchen session, the stage plays the audio
 
