@@ -9,8 +9,9 @@ Living doc. Update it when a decision changes or an open question gets answered.
 > your kitchen every day.
 
 Event: AI Tinkerers hackathon. **Build deadline 17:45**, then a **3-minute demo with a hard stop**. Demo slots are sometime after (time TBD).
-Judging: **creativity** first. The special prize is a **Mac mini, judged by PostHog**, for making the product
-**self-driving and self-improving**. That prize shapes the design (§6), so the loop has to be visible and measured.
+Main judging: **creativity** and an impressive demo. That comes first.
+Side prize: a **Mac mini, judged by PostHog**, for the most **self-driving and self-improving** product (§6).
+We target it because the learning loop also strengthens the main demo, but never at the main demo's expense.
 
 ## 2. Decisions
 
@@ -18,7 +19,7 @@ Judging: **creativity** first. The special prize is a **Mac mini, judged by Post
 
 | Topic | Decision | Notes |
 |---|---|---|
-| Agent core | **Hermes Agent** (Nous Research) as the single brain | It ships a Telegram gateway, an MCP client with OAuth, an OpenAI-compatible API server, plugins and hooks, cron, and memory plus self-written skills (the prize angle). |
+| Agent core | **Hermes Agent** (Nous Research) as the single brain | It ships a Telegram gateway, an MCP client with OAuth, an OpenAI-compatible API server, plugins and hooks, cron, and memory plus self-written skills (the side-prize angle). |
 | LLM | **Anthropic Claude** | |
 | Cameras | **Reolink Hub 1 + 2× Argus B310** (battery cams, 128 GB microSD) | No custom firmware, so we integrate through the hub. **Placement still open** (§5.1). |
 | Ordering | **Real Rohlík cart + real order after explicit human approval** | Official MCP `https://mcp.rohlik.cz/mcp` (OAuth). Minimum order is 749 CZK. |
@@ -43,7 +44,7 @@ Judging: **creativity** first. The special prize is a **Mac mini, judged by Post
 | Fridge mic | Camera audio over the hub's RTSP, then STT, then Hermes. Stretch until verified. | Fallback: the app's voice mode on a device next to the fridge. |
 | Scraping | Apify as one more MCP server in Hermes (e.g. leaflet deals from kupi.cz or Lidl). Stretch. | No pipeline, and possible sponsor points. |
 | 3D fridge | Stretch. Ship a clean 2D view first. | |
-| PostHog | Events, LLM analytics and replay from the first commit. Add PostHog MCP to Hermes for the Fridge Scout. Simulated household for the learning curve. | The Mac mini prize is judged by PostHog (§6). |
+| Self-improvement loop | Signals in the bridge event log, a Fridge Scout self-review, a human-approved self-edit, then measurement. A simulated household produces the learning curve. | Side prize (Mac mini) judged by PostHog. PostHog itself isn't required (§6). |
 
 ## 3. Demo: 3:00 run of show (draft)
 
@@ -168,9 +169,9 @@ API_SERVER_KEY=...
 - Decide at 12:45. Risk for A: a tool-heavy Hermes turn may be too slow for conversational timing. Mitigation:
   short spoken acknowledgement first, details on screen.
 
-## 6. Self-driving + self-improving: the prize angle
+## 6. Self-driving + self-improving: the side prize
 
-**The Mac mini prize is judged by PostHog: "how to make the product self-driving and self-improving".**
+**The Mac mini side prize is judged by PostHog: "how to make the product self-driving and self-improving".**
 PostHog has a specific definition, and we should mirror it on purpose
 ([self-improving loop](https://posthog.com/docs/self-driving/self-improving-loop)): *collect signals → group
 into reports → an agent investigates → it proposes a change → a human reviews it → it measures whether the
@@ -183,32 +184,31 @@ approve. Our "nothing gets ordered on its own" is the same principle as their "n
 **Self-improving** means the loop closes on *measured outcomes*. The agent reads its own metrics, changes its
 own behaviour, and proves the change helped.
 
-### 6.1 The PostHog loop inside the fridge (proposal)
-1. **Instrument everything (~30 min):**
-   - Product events from the bridge: `item_added/removed`, `vision_corrected`, `order_proposed/approved/edited/rejected`,
-     `recipe_suggested/cooked/skipped`, `voice_session`.
-   - PostHog LLM analytics on our Claude calls (the vision calls are easy to wrap; Hermes calls via a plugin hook).
-   - posthog-js autocapture, session replay and error tracking in the app.
-2. **Fridge Scout.** A nightly Hermes cron job, also triggerable on stage, queries *its own* PostHog data
-   through the PostHog MCP (`mcp.posthog.com`). It finds the weakest spot ("40 % of my recipe suggestions get
-   skipped, mostly ones over 30 min"), writes a report, and **proposes an edit to its own skill or prompt**.
+### 6.1 The loop inside the fridge (proposal)
+The organisers said **integrating PostHog is not required**. The judges care about the loop, not the tool,
+so we build it on our own event log, which the bridge already keeps, with no extra dependency.
+1. **Log signals:** every meaningful event goes to the bridge event log: `item_added/removed`, `vision_corrected`,
+   `order_proposed/approved/edited/rejected`, `recipe_suggested/cooked/skipped`, plus timing and tool-call count per agent task.
+2. **Fridge Scout.** A nightly Hermes cron job, also triggerable on stage, reads *its own* metrics through a
+   bridge tool (`get_metrics`). It finds the weakest spot ("40 % of my recipe suggestions get skipped, mostly
+   ones over 30 min"), writes a short report, and **proposes an edit to its own skill or prompt**.
 3. **Human review.** The proposal lands in the app's brain panel or on Telegram as a diff with Approve / Decline.
-4. **Ship behind a flag and measure.** The approved change goes out behind a PostHog feature flag or
-   experiment, and the next Scout run checks whether the metric moved. The result is a new signal.
+4. **Measure.** The approved edit becomes a new skill version, and the next Scout run compares the metric
+   before and after. The result is a new signal, which closes the loop.
 5. **Earned autonomy (self-driving that grows).** After N approved orders of an item with no edits, the agent
-   asks "should I auto-reorder milk under 100 CZK from now on?" The autonomy level is a feature flag driven by
-   the approval rate, and it stays within an explicit opt-in budget cap. That cap is the money gate.
+   asks "should I auto-reorder milk under 100 CZK from now on?" Autonomy rises with the approval rate, and it
+   stays within an explicit opt-in budget cap. That cap is the money gate.
+
+Optional, only if it's cheap: mirroring the events to PostHog gives us a dashboard the judges recognise, but
+it isn't needed.
 
 ### 6.2 Make the curve real in hours, not weeks: a simulated household
 We can't wait a week for real usage, so a second LLM plays the family. It has hidden traits (vegetarian kid,
 hates coriander, oat milk, cooks only on weekdays) and runs through "simulated days" against the real agent
-via the bridge and Hermes. Every interaction emits real PostHog events. Then we run sim days, the Scout
-reviews, the agent self-edits, a human approves, and we run more sim days. The result is a **real learning
-curve on a PostHog dashboard** (proposal acceptance rising, corrections and order tool-calls falling). It's
-honest, measured, and exactly the artefact PostHog judges want to see. Label it as simulation on stage.
-
-Bonus if setup is cheap: connect this repo to **PostHog's own self-driving beta** (Scouts watching our app's
-errors and replays, opening PRs) and report "PostHog opened N PRs on us today, we merged M".
+via the bridge and Hermes. Every interaction lands in the event log. Then we run sim days, the Scout reviews,
+the agent self-edits, a human approves, and we run more sim days. The result is a **real, measured learning
+curve** (proposal acceptance rising, corrections and order tool-calls falling) that the app can chart. Label
+it as simulation on stage.
 
 ### 6.3 Runtime learning ideas
 
@@ -235,7 +235,7 @@ Ideas, ranked by demo value:
    and rewrites its own skills and rules. The brain panel shows a **changelog of its own brain** (a diff of
    the skill files). This is literally an agent improving its own instructions.
 
-Demo plan: 1 is the foundation. The learning beat (§3, 1:45) shows the PostHog learning curve from the sim,
+Demo plan: 1 is the foundation. The learning beat (§3, 1:45) shows the learning curve from the sim,
 plus one Scout proposal (a diff of its own skill) that we approve live. Idea 2's numbers go on the brain
 panel. Instrument from the very first commit so the numbers are real by demo time.
 
@@ -277,8 +277,6 @@ Scheduled backwards from the **17:45 build deadline**:
 - [ ] **Courier** (Honza): contact, time window, contents of the bag, cue signal.
 - [ ] **Apify**: hosted MCP URL and auth (Bearer token or OAuth)? Is there a ready actor for Czech leaflet deals
       (kupi.cz, Lidl, Kaufland), or does the generic web scraper do it? Do the hackathon credits cover it?
-- [ ] **PostHog**: what's the MCP auth (personal API key or OAuth)? Can a Hermes plugin hook capture LLM
-      generations (`$ai_generation`)? Can we get into the self-driving beta quickly? US or EU cloud?
 - [ ] **Schedule**: when is our demo slot? Can we touch code or hardware between 17:45 and the slot, or is 17:45 a hard submission?
 - [ ] **Telegram**: bot token. Approval UX: is a text "yes" enough, or can Hermes send inline buttons?
 

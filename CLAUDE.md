@@ -3,9 +3,9 @@
 ## The event
 
 AI Tinkerers hackathon. **Build deadline 17:45**, then a **3-minute demo with a hard stop**. Demo slots are sometime after the deadline (exact time TBD).
-Judging puts **creativity** first. The special prize is a **Mac mini, judged by PostHog**: how **self-driving and
-self-improving** the product is. It needs to notice, act and improve on its own, measured with real data,
-with humans approving the changes (see PLAN §6).
+Main judging is **creativity** and an impressive demo. There's also a **side prize** (a Mac mini, judged by PostHog)
+for how **self-driving and self-improving** the product is. It needs to notice, act and improve on its own, measured with real data,
+with humans approving the changes. PostHog integration isn't required (see PLAN §6).
 We also have free Apify credits.
 
 Team: Kryštof and Honza, each driving several coding agents in parallel.
@@ -25,8 +25,8 @@ What it does:
 - **Shops.** It builds a Rohlík cart and places a **real order after a human says yes**, either in the app or
   on the phone through Telegram.
 - **Learns.** It builds a profile of the household (diets, preferences, favourite recipes, brands, how fast
-  things get eaten). It also reviews its own PostHog metrics, proposes edits to its own skills, and proves
-  they helped once a human approves them. This is the prize angle.
+  things get eaten). It also reviews its own metrics, proposes edits to its own skills, and proves
+  they helped once a human approves them. This is the side-prize angle.
 - **Talks back** through the app (feed, chat, and a voice mode with an animated orb) and through Telegram.
 
 Demo story: groceries go in and the last milk comes out. The agent notices. Someone says a craving out loud.
