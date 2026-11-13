@@ -34,7 +34,9 @@ export function ProductCard({ ev }: { ev: BusEvent }) {
         {was > price ? <p className="pc-was">was {czk(was)}</p> : null}
         <div className="pc-deal">
           <span className="pc-store">{String(ev.store)}</span>
-          {ev.distance_m != null ? <span className="pc-deal-price">{dist(Number(ev.distance_m))} away</span> : null}
+          <span className="pc-deal-price">
+            {ev.distance_m != null ? `${dist(Number(ev.distance_m))} away` : "delivered within the hour"}
+          </span>
         </div>
       </div>
     </motion.article>
