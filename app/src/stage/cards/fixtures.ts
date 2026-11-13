@@ -205,7 +205,10 @@ export const demoRun: Timed[] = [
   at(178, { type: "stage", beat: "idle", action: "idle" }),
 ].sort((a, b) => a.at - b.at);
 
-/** Every event up to `ms` into the run, which is what a card sees at that moment. */
-export function eventsAt(ms: number): BusEvent[] {
-  return demoRun.filter((t) => t.at <= ms).map((t) => t.event);
+/**
+ * Every event up to `ms` into the run, which is what a card sees at that moment. Each gets `ts` (epoch ms) as if
+ * the run were live right now, like the bus stamps arrivals, so cards can run timers off it.
+ */
+export function eventsAt(ms: number, now = Date.now()): BusEvent[] {
+  return demoRun.filter((t) => t.at <= ms).map((t) => ({ ...t.event, ts: now - (ms - t.at) }));
 }
