@@ -61,8 +61,10 @@ it, `docs/rozhodnuti.md` the architecture, and `docs/napojeni.md` connecting the
 
 The app should be clean, simple and cool, and explicitly **not AI slop**: no purple gradients, no ✨ icons,
 no "AI" badges or pill clutter, no emoji, no glassmorphism, no template-dashboard look. Bet on a few features
-that are genuinely good rather than many average ones. The one place to go all-out is the **voice-mode orb**,
-which should react to speech and feel deeply satisfying. Use the `frontend-design` skill for UI work.
+that are genuinely good rather than many average ones. The one place to go all-out is the **voice-mode orb**, which should react to speech and feel deeply satisfying.
+The brand is **Coldex** with an **ice cube** logo, and the orb is a see-through **ice tesseract**, a cube of ice
+with endless dimensions ([docs/handoffs/9-brand-orb.md](docs/handoffs/9-brand-orb.md)). See-through applies to the
+ice only: panels stay solid, with no frosted glass. Use the `frontend-design` skill for UI work.
 
 ## More
 

@@ -16,6 +16,7 @@ start one, give it this:
 | [6. Courier call](6-courier-call.md) | F | Honza |
 | [7. Telegram](7-telegram.md) | H | whoever frees up first |
 | [8. Grocery scraping](8-scraping.md) | C3, C4 | Honza |
+| [9. Brand and the orb](9-brand-orb.md) | all | Kryštof |
 
 ## How the system fits together (decided: Realtime-first)
 

@@ -23,7 +23,7 @@ It has to look clean and calm, and the orb is the one place to go all-out.
 - **Hotkeys:** replay the B frames, type the C line instead of speaking it, cut to the B or C clip, force a
   beat (D/E, G, H, idle).
 - **The kitchen page** wakes once and stays listening, and its voice plays through the fridge speaker.
-- **The orb** reacts to speech and feels deeply satisfying. Mic and voice levels already exist (`levels()` in `realtime.ts`).
+- **The orb** is part 9 (the ice tesseract). Use its component as is, and pass it the status and the mic and voice levels (`levels()` in `realtime.ts`).
 
 ## Where
 
@@ -41,7 +41,7 @@ window laid over a reserved slot is the fallback. Check the free tier's limits o
 1. Layout, mode switch and the kitchen stream inset.
 2. Subtitles: caption publishing from both apps, and rendering them.
 3. Hotkeys and a dev event player, which replays a recorded list of bus events so part 2 can work without keys.
-4. Orb polish.
+
 
 ## Fake mode
 
@@ -50,7 +50,7 @@ the bus during a real run.
 
 ## Reuse
 
-`app/src/Orb.tsx`. From the old Frida build: `frontend/src/components/orb/` and `frontend/src/features/call/CallLayer.tsx`.
+From the old Frida build: `frontend/src/components/orb/` and `frontend/src/features/call/CallLayer.tsx`.
 
 ## Risks
 
