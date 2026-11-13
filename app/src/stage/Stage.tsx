@@ -196,7 +196,9 @@ export default function Stage() {
   const micLive = phone && videoAudio;
   const fridgeOff = phone && !videoAudio && status !== "off";
   const cardUp = card !== "idle" && !camera;
-  const split = cardUp || (camera && LAYOUT !== "b");
+  // Fridge on and no card: the camera fills its big slot (right half) again, also after the door closed.
+  const big = !fridgeOff && (camera || (micLive && card === "idle"));
+  const split = cardUp || (big && LAYOUT !== "b");
   const orb = useOrbVoice(brain, status, events);
   const system = events.findLast((e) => e.type === "system");
   const line = error ?? (system ? String(system.message ?? "") : null);
@@ -211,7 +213,7 @@ export default function Stage() {
       data-split={split}
       data-beat={beat}
       data-card={card}
-      data-inset={camera ? "large" : "gone"}
+      data-inset={big ? "large" : "gone"}
       data-orb={orb.status}
     >
       <p className="stage-mark">
@@ -228,7 +230,7 @@ export default function Stage() {
         <Panel card={card} events={events} />
       </section>
       <KitchenInset
-        size={fridgeOff ? "hidden" : camera ? "large" : micLive ? "pip" : "hidden"}
+        size={big ? "large" : micLive && !fridgeOff ? "pip" : "hidden"}
         muted={!videoAudio}
         level={micLive ? inputLevel : undefined}
       />
