@@ -27,6 +27,7 @@ from pydantic import BaseModel
 import camera
 import courier
 import kitchen_audio
+import telegram
 import vision
 from rohlik import SAFE_TOOLS
 
@@ -368,6 +369,10 @@ app.include_router(courier.router)
 
 # Beats B and C: the kitchen tablet's mic and Coldex's voice, relayed to the stage (bridge/kitchen_audio.py).
 app.include_router(kitchen_audio.router)
+
+# Beat H: Coldex posts what it does to the presenter's Telegram chat (bridge/telegram.py).
+telegram.attach(_subscribers)
+app.include_router(telegram.router)
 
 
 # --------------------------------------------------------------------------- Realtime session
