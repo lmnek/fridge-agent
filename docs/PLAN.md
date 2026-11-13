@@ -62,6 +62,8 @@ What follows:
 | Self-improvement | **Household profile** plus a Scout loop with human-approved self-edits | §6 |
 | Language | **English**, including the courier call | Decided 13. 11. |
 | Scraping | **Honza scrapes grocery prices and deals** (handoffs, part 8). Apify credits are there if it helps. | Feeds the C3 overview and the sale tags. |
+| Coldex's voice | **`marin`** (`REALTIME_VOICE`), until a human picks by ear | Candidates `cedar`, `coral`, `sage`: `uv run python try_demo.py --voices marin,cedar,coral,sage` saves WAVs to `data/voices/`. |
+| C3 deals | **`show_shops` (part 3) reads `data/deals.json`**, which part 8's scrape writes in the `deals` event shape | No separate deals tool. Until the scrape lands, a `HACK(demo)` sample with a staged banana sale. To be confirmed with Honza. |
 | Kitchen stream | **VDO.Ninja in an iframe on the stage view**: the kitchen phone opens `vdo.ninja/?push=<room>`, the stage opens `/stage?kitchen=<room>` | Free, no account, no time limit (meet.jit.si cuts embedded calls at 5 min, Whereby Embedded needs a paid plan). The stage resizes it and mutes it from C on via the iframe API. Fallback: a reserved slot with a call window laid over it. Decided 13. 11. |
 
 ### 3.1 Honza's simpler version: one OpenAI Realtime session (`bridge/` + `app/`)
