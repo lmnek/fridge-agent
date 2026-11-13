@@ -175,7 +175,7 @@ async def tool_events(request: Request, call_next):
     name = request.url.path.removeprefix("/tools/")
     args = json.loads(await request.body() or b"{}")
     screen = request.headers.get("x-coldex-screen")  # kitchen or stage, so the stage knows who called
-    token = pacing.begin(request.headers, _send)  # X-Coldex-Show-In: the model gets its answer now, the bus later
+    token = pacing.begin(name, request.headers, _send)  # X-Coldex-Show-In: the model gets its answer now, the bus later
     try:
         emit("tool", name=name, args=args, phase="start", screen=screen)
         response = await call_next(request)

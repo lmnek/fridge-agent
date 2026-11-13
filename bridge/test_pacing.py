@@ -85,3 +85,20 @@ def test_no_header_publishes_live():
         assert [e.get("phase") for _, e in tap.got if e["type"] == "tool"] == ["start", "done"]
 
     _run(scenario)
+
+
+def test_no_card_tools_wait_for_the_voice_but_add_no_dwell():
+    async def scenario(c, tap):
+        h = {"X-Coldex-Show-In": "0", "X-Coldex-Screen": "stage"}
+        t0 = time.monotonic()
+        await c.post("/tools/get_household", headers=h)
+        await c.post("/tools/remember", json={"fact": "Craves carbonara", "category": "craving"}, headers=h)
+        await c.post("/tools/show_recipe", json=RECIPE, headers=h)
+        await c.post("/tools/get_household", headers={**h, "X-Coldex-Show-In": "300"})
+        await asyncio.sleep(0.6)
+        starts = [(t - t0, e["name"]) for t, e in tap.got if e["type"] == "tool" and e["phase"] == "start"]
+        assert [n for _, n in starts] == ["get_household", "remember", "show_recipe", "get_household"]
+        assert starts[2][0] < 0.2  # the card wasn't pushed back by the no-card tools before it
+        assert 0.25 < starts[3][0] < 0.5  # a no-card tool still waits for the voice, not for the dwell
+
+    _run(scenario)

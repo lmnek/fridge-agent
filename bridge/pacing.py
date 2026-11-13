@@ -14,6 +14,11 @@ import time
 from typing import Any, Callable
 
 CARD_MIN_DWELL_S = 3.0
+# Tools that put a card up (app/src/stage/pick.ts TOOLS, plus the product and nearby cards). Only these get the dwell.
+CARD_TOOLS = {
+    "get_inventory", "update_inventory", "show_recipe", "show_shops", "show_cart", "add_to_cart", "view_cart",
+    "show_product", "show_nearby", "call_courier",
+}
 
 _batch: contextvars.ContextVar[_Batch | None] = contextvars.ContextVar("coldex_show_batch", default=None)
 _last: dict[str | None, float] = {}  # screen -> when its last held tool call lands (monotonic)
@@ -35,15 +40,17 @@ class _Batch:
         self.events.clear()
 
 
-def begin(headers: Any, send: Callable[[str, dict[str, Any]], None]) -> contextvars.Token | None:
+def begin(name: str, headers: Any, send: Callable[[str, dict[str, Any]], None]) -> contextvars.Token | None:
     """Called by the tool middleware on the event loop. No header, no holding."""
     raw = headers.get("x-coldex-show-in")
     if raw is None:
         return None
     screen = headers.get("x-coldex-screen")
     now = time.monotonic()
-    at = max(now + max(0.0, float(raw)) / 1000, _last.get(screen, 0.0) + CARD_MIN_DWELL_S)
-    _last[screen] = at
+    at = now + max(0.0, float(raw)) / 1000
+    if name in CARD_TOOLS:  # no-card tools wait for the voice too, but don't push later cards back
+        at = max(at, _last.get(screen, 0.0) + CARD_MIN_DWELL_S)
+        _last[screen] = at
     batch = _Batch(send)
     batch.handle = asyncio.get_running_loop().call_later(at - now, batch.flush)
     _pending.add(batch)
