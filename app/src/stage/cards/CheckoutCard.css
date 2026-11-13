@@ -9,8 +9,8 @@
 .ck-checkout-load { height: 4px; background: var(--ck-line); }
 .ck-checkout-load i { display: block; height: 100%; background: var(--ck-lamp); transition: width 0.5s ease-out; }
 .ck-checkout-view { flex: 1; min-height: 0; display: flex; background: var(--ck-bg); }
-/* contain: the whole page stays visible, nothing cut; the white around it is the page's own white. */
-.ck-checkout-video { display: block; width: 100%; height: 100%; object-fit: contain; background: var(--ck-bg); }
+/* contain: the whole recorded page stays visible, nothing cut; any spare strip is the page grey below it. */
+.ck-checkout-video { display: block; width: 100%; height: 100%; object-fit: contain; object-position: top center; background: var(--ck-sunk); }
 
 /* HACK(demo) fallback: the checkout as four steps, name left, value right, on one 88 px row grid. */
 .ck-checkout-steps { flex: 1; margin: 0; padding: 16px 32px; list-style: none; display: flex; flex-direction: column; justify-content: center; }
