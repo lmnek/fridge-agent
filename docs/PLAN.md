@@ -157,8 +157,10 @@ See the build table in [DEMO.md](DEMO.md#build-owners-suggested-swap-freely).
 - [ ] **Network**: the hub, cams and laptop must share a LAN, and venue Wi-Fi often isolates clients, so
       **bring a travel router or hotspot**.
 - [ ] **Courier** (Honza): contact, time window, contents of the bag, cue signal.
-- [x] **Phone control** (from the judge, §2.1). **Decided: option 1.** The phone is the same web app, shown in H as a
-      line plus a phone frame on stage (DEMO.md). Telegram and Hermes aren't built. The options were:
+- [x] **Phone control** (from the judge, §2.1). **Decided: Telegram, shown in H** (DEMO.md). Step 1: the bridge
+      posts Coldex's events into a Telegram chat (one-way, no second brain, no Hermes). Step 2, only once C
+      rehearses cleanly: two-way text, a small loop in the bridge with the same tools, memory and
+      `instructions.md`, so "do all of this from your pocket" holds up when a judge messages it. The options were:
       1. **The same web app on the phone** (recommended). Open the tunnel URL and add it to the home screen. The
          Realtime app already has a mobile layout, and it shares the bridge, memory and cart, so a craving said
          at the fridge is known on the phone. Almost no new code.

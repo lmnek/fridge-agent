@@ -30,7 +30,7 @@ recorded or replayed fallback.
 | **D/E: Fast forward** | 1:20–1:35 | **Rec** | The clock speeds up. "Order placed." "Courier on the way." | **Rohlík mini browser:** a sped-up screen recording of the real order being placed on rohlik.cz. Then "courier on the way". | |
 | **F: Courier call** | 1:35–2:25 | Live | Coldex phones the **real Rohlík courier** at the office entrance, and the call plays through the stage speakers: "Hi, this is Kryštof's agent. You're delivering his Rohlík order. Skip the door and come straight onto the stage." | Call card: courier caller ID, a call timer, and **live subtitles for both sides** | Honza texts the courier the cue. If the audio fails, the subtitles carry it. |
 | **G: Courier** | 2:25–2:45 | Live | The courier walks onto the stage with the bag. | Delivered: a check mark | The courier comes on Honza's cue anyway. |
-| **H: Close** | 2:45–3:00 | Live | "It noticed, decided, ordered and called. We just opened the fridge." The presenter holds up their phone: "And everything you just saw works from your phone too." | A phone frame with the real Coldex app inside, then Coldex idle again | The line alone |
+| **H: Close** | 2:45–3:00 | Live | "It noticed, decided, ordered and called. We just opened the fridge." The presenter holds up their phone with the Coldex Telegram chat: "And you can do all of this from your pocket." | The presenter's phone, mirrored: the Telegram chat that filled up during the demo (carbonara noted, cart ready, order placed). Then Coldex idle again | The presenter holds up the phone and says the line |
 
 **Live subtitles for everything anyone says** (Coldex, the actor, the presenter, the courier) run under the orb
 from A to H. If the audio fails, the text still carries the story.
@@ -48,11 +48,12 @@ from A to H. If the audio fails, the text still carries the story.
 - Reuse Frida's existing pieces: the orb, the store radar, the cart panel, the tool-step chips, the call layer,
   and the camera view with detection boxes. Animate with `motion`, which is already installed. Design rules
   are in `CLAUDE.md`, with no emoji.
-- **The H card is a phone frame** with the real app inside (an iframe at phone width), so the audience sees the
-  phone version without filming the presenter's phone.
+- **The H shot is Telegram on the presenter's phone, mirrored to the projector.** The bridge posts what Coldex
+  does into the chat (craving noted, cart ready, order placed) during the demo, so it's real and already full
+  by H.
 - Hotkeys: replay the B frames, type the C line, cut to the B or C clip.
 - Priority if time runs short: C4 cart, then the B analysis, then C3 map, then the D/E mini browser, then the F
-  call card, then C1 and C2, then the H phone frame.
+  call card, then C1 and C2, then the H Telegram push.
 
 ## Must be real in the data
 
@@ -103,7 +104,7 @@ from A to H. If the audio fails, the text still carries the story.
 |---|---|---|
 | **By 12:00** | Pick the language. Seed the household profile. | Check that the hub returns snapshots, and capture the B frames. Get the Rohlík OAuth token. Get a Twilio account and number, and ask about the courier's language. |
 | **By 13:30** | The craving is saved where every conversation sees it. Coldex's voice in the browser sounds good (ElevenLabs). | Real camera → inventory works end to end. A real cart fills from the agent. The tunnel is up. |
-| **13:30–15:30** | The C turn, fast and narrated, with reasons on each item. The stage view: the B analysis card, the C cards, subtitles, hotkeys, the mini browser, and the H phone frame. | The courier call: briefing prompt, allowlist, audio to the stage, both-sides transcript. Record the D/E checkout. Remove the emoji and sparkle icons from the UI. |
+| **13:30–15:30** | The C turn, fast and narrated, with reasons on each item. The stage view: the B analysis card, the C cards, subtitles, hotkeys, the mini browser, and the Telegram push for H. | The courier call: briefing prompt, allowlist, audio to the stage, both-sides transcript. Record the D/E checkout. Remove the emoji and sparkle icons from the UI. |
 | **15:30–17:45** | Record the backup video and the B and C clips. Rehearse at least 3 runs. Code freeze at 16:45. | The same. Also brief the courier and agree on a cue. |
 
 ## Before the slot
@@ -116,4 +117,4 @@ from A to H. If the audio fails, the text still carries the story.
 - [ ] A test call reaches the courier, and the audio plays on stage.
 - [ ] The courier is at the entrance and knows the backup cue.
 - [ ] The D/E recording, the B and C clips, and the backup video are on the stage laptop.
-- [ ] The presenter's phone has Coldex open on the tunnel URL.
+- [ ] The presenter's phone has the Coldex Telegram chat open, and its screen mirrors to the projector.
