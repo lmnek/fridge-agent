@@ -1,4 +1,13 @@
-.ck-delivered { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 24px; padding-bottom: 40px; }
-.ck-delivered-mark { width: 280px; height: 280px; }
-.ck-delivered-word { margin: 0; font-family: "Barlow Semi Condensed", sans-serif; font-size: 88px; font-weight: 600; line-height: 1; letter-spacing: -0.01em; }
-.ck-delivered-line { margin: 0; color: var(--ck-slate); font-size: var(--ck-t-body); }
+/* G: the check and the word on one line, a short receipt under it. Labels left in mute, values right in ink. */
+.ck-delivered { flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 48px; min-height: 0; }
+.ck-delivered-hero { display: flex; align-items: center; gap: 32px; }
+.ck-delivered-mark { width: 168px; height: 168px; flex: none; }
+.ck-delivered-word { margin: 0; font-family: "Barlow Semi Condensed", sans-serif; font-size: 112px; font-weight: 600; line-height: 1; letter-spacing: -0.015em; color: var(--ck-ink); }
+
+.ck-receipt { margin: 0; }
+.ck-receipt-row { display: flex; align-items: baseline; justify-content: space-between; gap: 24px; padding: 16px 0; border-top: 1.5px solid var(--ck-line); }
+.ck-receipt-row dt { color: var(--ck-mute); font-size: var(--ck-t-body); }
+.ck-receipt-row dd { margin: 0; color: var(--ck-ink); font-size: var(--ck-t-body); font-weight: 500; text-align: right; font-variant-numeric: tabular-nums; }
+.ck-receipt-row.is-total { border-top: 2px solid var(--ck-ink); padding-top: 20px; }
+.ck-receipt-row.is-total dt { color: var(--ck-ink); font-weight: 600; }
+.ck-receipt-row.is-total dd { font-family: "Barlow Semi Condensed", sans-serif; font-size: 44px; font-weight: 600; line-height: 1; }
