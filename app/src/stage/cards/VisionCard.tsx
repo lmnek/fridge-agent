@@ -4,7 +4,7 @@
 import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useState } from "react";
 import type { BusEvent } from "../bus";
-import { CardFrame, Steps, latest } from "./ui";
+import { CardFrame, Steps, Tag, latest } from "./ui";
 import "./VisionCard.css";
 
 type Frame = { when: "before" | "after"; camera: string; url: string };
@@ -178,7 +178,7 @@ export default function VisionCard({ events }: { events: BusEvent[] }) {
                   }}
                 >
                   <span className="ck-vision-name">{n}</span>
-                  <span className="ck-vision-status">{s === "out" ? "out" : "new"}</span>
+                  <Tag tone={s === "out" ? "gone" : "lamp"}>{s === "out" ? "taken out" : "put in"}</Tag>
                 </motion.li>
               ))}
               {removed.length + added.length === 0 && <li className="is-none">Everything is where it was.</li>}

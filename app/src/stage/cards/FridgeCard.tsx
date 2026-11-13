@@ -32,7 +32,7 @@ function expiry(days: number | null): { text: string; soon: boolean } {
 }
 
 const Cross = () => (
-  <svg width="30" height="30" viewBox="0 0 26 26" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round">
+  <svg width="28" height="28" viewBox="0 0 26 26" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round">
     <path d="M6 6l14 14M20 6L6 20" />
   </svg>
 );
@@ -68,7 +68,7 @@ export default function FridgeCard({ events }: { events: BusEvent[] }) {
   const title = count ? `${count === 1 ? "One thing" : count === 2 ? "Two things" : `${count} things`} ran out` : "Nothing ran out";
 
   return (
-    <CardFrame kicker="Fridge check" title={title} aside={`${items.length} items inside`}>
+    <CardFrame kicker="Fridge check" title={title} live={false} aside={`${items.length} items inside`}>
       <motion.div className="ck-fridge-body" variants={stagger} initial="hidden" animate="show">
         {count > 0 && (
           <div className="ck-fridge-out">
@@ -76,7 +76,7 @@ export default function FridgeCard({ events }: { events: BusEvent[] }) {
               <motion.div key={n} variants={rise} className="ck-fridge-outrow">
                 <span className="ck-fridge-x"><Cross /></span>
                 <span className="ck-fridge-outname">{n}</span>
-                <Tag tone="gone">Out</Tag>
+                <Tag tone="gone">ran out</Tag>
               </motion.div>
             ))}
           </div>

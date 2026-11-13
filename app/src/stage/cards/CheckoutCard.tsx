@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import type { BusEvent } from "../bus";
-import { CardFrame, latest } from "./ui";
+import { CardFrame, czk, latest } from "./ui";
 import "./CheckoutCard.css";
 
 const SPEED = 3; // playbackRate of the recording, and the "×N" shown in the indicator
@@ -43,6 +43,12 @@ export default function CheckoutCard({ events }: { events: BusEvent[] }) {
   const elapsed = Math.max(0, (now - start) / 1000);
   const placed = ended || elapsed >= PLACED_AFTER_S;
   const step = Math.min(STEPS.length - 1, Math.floor(elapsed / STEP_S));
+
+  // The receipt on the done state: what was just bought, from the newest cart.
+  const cart = latest(events, "cart");
+  const lines: any[] = cart?.items ?? cart?.cart ?? [];
+  const total = Number(cart?.total_czk ?? lines.reduce((s, r) => s + Number(r.qty ?? r.quantity ?? 1) * Number(r.price_czk ?? r.price ?? 0), 0));
+  const pcs = lines.reduce((s, r) => s + Number(r.qty ?? r.quantity ?? 1), 0);
 
   return (
     <CardFrame
@@ -102,6 +108,16 @@ export default function CheckoutCard({ events }: { events: BusEvent[] }) {
           </motion.div>
         ) : (
           <motion.div key="done" className="ck-checkout-done" variants={{ hidden: {}, show: { transition: { staggerChildren: 0.5 } } }} initial="hidden" animate="show">
+            {lines.length > 0 && (
+              <motion.div className="ck-checkout-receipt" variants={rowIn}>
+                <span className="ck-checkout-receipt-total ck-num">{czk(total)}</span>
+                <span className="ck-checkout-receipt-note">
+                  {lines.length} products, {pcs} pcs
+                  <br />
+                  paid in Rohlík
+                </span>
+              </motion.div>
+            )}
             {[
               { t: "Order placed", s: "Confirmed by Rohlík" },
               { t: "Courier on the way", s: "Arriving within the hour" },

@@ -10,9 +10,9 @@ type Store = { name: string; distance_m: number | null; delivery_min?: number };
 
 const DELIVERY = "Rohlík";
 const WALK_M_PER_MIN = 80;
-const SIZE = 320;
+const SIZE = 296;
 const C = SIZE / 2;
-const R = 142;
+const R = 130;
 // HACK(demo): fixed bearings so the blips land in calm, readable spots (we have no coordinates, only distances).
 const BEARINGS = [-50, 205, 120, 20, 290];
 

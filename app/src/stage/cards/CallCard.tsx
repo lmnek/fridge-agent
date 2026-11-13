@@ -54,11 +54,11 @@ export default function CallCard({ events }: { events: BusEvent[] }) {
       aside={<span className={`ck-call-time${phase === "ended" ? " is-ended" : ""}`}>{clock}</span>}
     >
       <div className="ck-call-meta">
-        <Tag tone={failed || phase === "ended" ? "gone" : phase === "answered" ? "ok" : "lamp"}>
+        <Tag tone={failed ? "gone" : phase === "ended" ? undefined : phase === "answered" ? "ok" : "lamp"}>
           {label}
           {!call || phase === "dialing" || phase === "ringing" ? "…" : ""}
         </Tag>
-        <span>Coldex is calling{call?.number ? ` ${call.number}` : ""}</span>
+        <span>Coldex {phase === "ended" ? "called" : "is calling"}{call?.number ? ` ${call.number}` : ""}</span>
       </div>
 
       {failed && <p className="ck-call-error">{String(call?.error ?? "The call could not be completed.")}</p>}
@@ -78,7 +78,7 @@ export default function CallCard({ events }: { events: BusEvent[] }) {
                 layout="position"
                 className={`ck-call-line ${l.who}${age === 0 ? " is-new" : ""}`}
                 initial={{ opacity: 0, y: 24 }}
-                animate={{ opacity: age === 0 ? 1 : age === 1 ? 0.55 : age === 2 ? 0.3 : 0.15, y: 0 }}
+                animate={{ opacity: phase === "ended" ? (age === 0 ? 1 : 0.7) : age === 0 ? 1 : age === 1 ? 0.6 : age === 2 ? 0.4 : 0.25, y: 0 }}
                 exit={{ opacity: 0 }}
                 transition={{ type: "spring", stiffness: 300, damping: 32 }}
               >

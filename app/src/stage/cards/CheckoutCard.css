@@ -23,7 +23,10 @@
 .ck-checkout-ff-speed { font-weight: 500; }
 .ck-checkout-ff-clock { font-size: 28px; color: var(--ck-ink); font-variant-numeric: tabular-nums; }
 
-.ck-checkout-done { flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 56px; }
+.ck-checkout-done { flex: 1; display: flex; flex-direction: column; gap: 56px; }
+.ck-checkout-receipt { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; padding: 8px 0 36px; border-bottom: 1px solid var(--ck-line); }
+.ck-checkout-receipt-total { font-family: "Barlow Semi Condensed", sans-serif; font-size: 120px; font-weight: 600; line-height: 0.9; letter-spacing: -0.01em; }
+.ck-checkout-receipt-note { color: var(--ck-mute); font-size: 24px; text-align: right; line-height: 1.35; }
 .ck-checkout-row { display: flex; align-items: center; gap: 32px; }
 .ck-checkout-tick { flex: none; width: 96px; height: 96px; padding: 20px; box-sizing: border-box; border-radius: 50%; background: var(--ck-ok-soft); color: var(--ck-ok); }
 .ck-checkout-row-t { margin: 0; font-family: "Barlow Semi Condensed", sans-serif; font-size: 56px; font-weight: 600; line-height: 1.05; }

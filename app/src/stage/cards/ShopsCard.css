@@ -4,7 +4,7 @@
   display: flex;
   align-items: center;
   gap: 36px;
-  margin: -8px 0 24px;
+  margin: -12px 0 18px;
 }
 
 .ck-shops-radar {
@@ -24,7 +24,7 @@
   font-size: 18px;
 }
 .ck-shops-sweep {
-  transform-origin: 160px 160px;
+  transform-origin: 148px 148px;
   animation: ck-shops-spin 2.4s linear infinite;
 }
 @keyframes ck-shops-spin {
@@ -114,14 +114,14 @@
   display: grid;
   align-items: stretch;
   border-bottom: 1px solid var(--ck-line);
-  min-height: 50px;
+  min-height: 46px;
 }
 .ck-shops-row > span {
   display: flex;
   align-items: center;
 }
 .ck-shops-row.is-head {
-  min-height: 46px;
+  min-height: 40px;
   color: var(--ck-mute);
   font-size: 18px;
   font-weight: 500;

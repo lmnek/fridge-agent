@@ -26,7 +26,7 @@ export default function RecipeCard({ events }: { events: BusEvent[] }) {
   const gf = (n: string) => /gluten/i.test(n);
 
   return (
-    <CardFrame kicker="Recipe for tonight" title={recipe.title} aside={`${missing.length} to add`}>
+    <CardFrame kicker="Recipe for tonight" title={recipe.title} live={false} aside={`${missing.length} to add`}>
       <motion.ul className="ck-recipe-list" variants={stagger} initial="hidden" animate="show">
         {missing.map((n) => (
           <motion.li key={n} variants={rise} className="ck-recipe-row is-missing">

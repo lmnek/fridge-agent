@@ -189,7 +189,7 @@
 }
 .ck-vision-diff li {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   justify-content: space-between;
   gap: 24px;
   padding: 6px 0 8px;
@@ -203,16 +203,6 @@
   font-size: 40px;
   font-weight: 600;
   line-height: 1.1;
-}
-.ck-vision-status {
-  font-size: 34px;
-  font-weight: 600;
-}
-.ck-vision-diff .is-out .ck-vision-status {
-  color: var(--ck-gone);
-}
-.ck-vision-diff .is-new .ck-vision-status {
-  color: var(--ck-lamp);
 }
 .ck-vision-diff .is-none {
   color: var(--ck-mute);

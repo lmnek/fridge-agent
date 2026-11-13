@@ -12,10 +12,10 @@ const ago = (ms: number) => {
 export default function DeliveredCard({ events }: { events: BusEvent[] }) {
   const g = latest(events, "stage", (e) => e.beat === "G");
   const de = latest(events, "stage", (e) => e.beat === "DE");
-  const line = g?.ts && de?.ts && g.ts > de.ts ? `Ordered ${ago(g.ts - de.ts)} ago, on stage now` : undefined;
+  const line = g?.ts && de?.ts && g.ts > de.ts ? `Ordered ${ago(g.ts - de.ts)} ago` : undefined;
 
   return (
-    <CardFrame kicker="Rohlík order" title="Delivered">
+    <CardFrame kicker="Rohlík order" title="The courier is here" live={false}>
       <div className="ck-delivered">
         <svg viewBox="0 0 120 120" className="ck-delivered-mark" aria-hidden>
           <motion.circle cx="60" cy="60" r="54" fill="none" stroke="var(--ck-ok)" strokeWidth="3" initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ duration: 0.9, ease: [0.65, 0, 0.35, 1] }} />

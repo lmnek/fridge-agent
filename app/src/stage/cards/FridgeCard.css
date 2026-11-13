@@ -1,16 +1,14 @@
 .ck-fridge-body { display: flex; flex-direction: column; }
-.ck-fridge-out { display: flex; flex-direction: column; gap: 14px; margin-bottom: 36px; }
+.ck-fridge-out { display: flex; flex-direction: column; margin-bottom: 36px; border-bottom: 1px solid var(--ck-line); }
 .ck-fridge-outrow {
-  display: flex; align-items: center; gap: 20px;
-  padding: 22px 26px; border-radius: 14px;
-  background: var(--ck-gone-soft); border: 1px solid var(--ck-gone); color: var(--ck-gone);
+  display: flex; align-items: center; gap: 18px;
+  padding: 20px 0; border-top: 1px solid var(--ck-line); color: var(--ck-gone);
 }
-.ck-fridge-x { display: grid; place-items: center; flex: none; }
+.ck-fridge-x { display: grid; place-items: center; flex: none; width: 28px; }
 .ck-fridge-outname {
   flex: 1; font-family: "Barlow Semi Condensed", "Barlow", sans-serif;
   font-size: 40px; font-weight: 600; line-height: 1.1; color: var(--ck-ink);
 }
-.ck-fridge-outrow .ck-tag { background: var(--ck-gone); color: #fff; font-size: 20px; }
 .ck-fridge-label { margin: 0 0 6px; color: var(--ck-mute); font-size: 20px; font-weight: 500; }
 .ck-fridge-list { margin: 0; padding: 0; list-style: none; }
 .ck-fridge-row {

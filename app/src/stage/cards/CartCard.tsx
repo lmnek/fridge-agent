@@ -90,6 +90,7 @@ export default function CartCard({ events }: { events: BusEvent[] }) {
     <CardFrame
       kicker="Rohlík cart"
       title="Tonight's order"
+      live={false}
       aside={`${items.length} products, ${count} pcs`}
       foot={
         <div className="ck-cart-foot">
