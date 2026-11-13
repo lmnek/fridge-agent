@@ -7,8 +7,8 @@
   --ck-sunk: #f3f6f7;
   --ck-line: #dce5e9;
   --ck-ink: #14222b;
-  --ck-mute: #586a75;
-  --ck-faint: #8a9aa3;
+  --ck-mute: #44545e;
+  --ck-faint: #667780;
   --ck-lamp: #1f6f96;
   --ck-lamp-soft: #e3eff5;
   --ck-soon: #9a5b00;
@@ -51,7 +51,7 @@
   gap: 10px;
   margin: 0 0 6px;
   color: var(--ck-mute);
-  font-size: 18px;
+  font-size: 20px;
   font-weight: 500;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -111,8 +111,8 @@
   border-radius: 6px;
   background: var(--ck-sunk);
   color: var(--ck-mute);
-  font-size: 18px;
-  font-weight: 500;
+  font-size: 20px;
+  font-weight: 600;
   line-height: 1.2;
   white-space: nowrap;
 }
@@ -146,7 +146,7 @@
   align-items: center;
   gap: 8px;
   color: var(--ck-faint);
-  font-size: 18px;
+  font-size: 20px;
   font-weight: 500;
 }
 .ck-steps li + li::before {

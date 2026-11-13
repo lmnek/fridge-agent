@@ -10,7 +10,7 @@
 .ck-checkout-fake { flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 36px; padding: 0 56px; background: var(--ck-bg); }
 .ck-checkout-fake-line { margin: 0; font-family: "Barlow Semi Condensed", sans-serif; font-size: 40px; font-weight: 600; }
 .ck-checkout-fake-steps { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 18px; }
-.ck-checkout-fake-steps li { display: flex; align-items: center; gap: 16px; font-size: 28px; color: var(--ck-faint); }
+.ck-checkout-fake-steps li { display: flex; align-items: center; gap: 16px; font-size: 28px; color: var(--ck-mute); }
 .ck-checkout-fake-mark { width: 18px; height: 18px; border-radius: 50%; border: 2px solid currentColor; box-sizing: border-box; }
 .ck-checkout-fake-steps li.is-done { color: var(--ck-ink); }
 .ck-checkout-fake-steps li.is-done .ck-checkout-fake-mark { background: var(--ck-ok); border-color: var(--ck-ok); }

@@ -31,6 +31,7 @@
   gap: 26px;
   overflow: hidden;
   padding-top: 24px;
+  padding-bottom: 10px; /* the growing newest line keeps its descenders */
   -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 90px);
   mask-image: linear-gradient(to bottom, transparent 0, #000 90px);
 }
@@ -51,7 +52,7 @@
   display: block;
   margin-bottom: 4px;
   color: var(--ck-mute);
-  font-size: 18px;
+  font-size: 22px;
   font-weight: 600;
 }
 .ck-call-line.coldex .ck-call-speaker {

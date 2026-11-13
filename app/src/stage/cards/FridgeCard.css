@@ -16,6 +16,6 @@
   padding: 16px 0; border-top: 1px solid var(--ck-line); font-size: 26px;
 }
 .ck-fridge-name { font-weight: 500; }
-.ck-fridge-qty { color: var(--ck-mute); }
-.ck-fridge-exp { color: var(--ck-mute); text-align: right; }
+.ck-fridge-qty { color: var(--ck-mute); font-weight: 500; }
+.ck-fridge-exp { color: var(--ck-mute); font-weight: 500; text-align: right; }
 .ck-fridge-exp.soon { color: var(--ck-soon); font-weight: 600; }

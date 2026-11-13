@@ -1,9 +1,11 @@
 // Dev-only preview of the side panel cards, driven by the fixtures. Open /?cards (all cards) or
 // /?cards=C4&t=70 (one card, 70 s into the run). Space plays and pauses, arrow keys step 1 s.
+// /?cards=C4&live shows the card from the real bus (the bridge's SSE) instead of the fixtures.
 // The panel box matches the stage layout: the orb area on the left, the card on the right, at 1920x1080.
 import { useEffect, useMemo, useState } from "react";
 import { cards, type CardId } from "./index";
 import { latestCard } from "../pick";
+import { useBus } from "../bus";
 import { demoRun, eventsAt } from "./fixtures";
 
 // The moment in the run where each card looks complete, for ?cards=<id> without t.
@@ -40,7 +42,9 @@ export default function Preview() {
     return () => removeEventListener("keydown", onKey);
   }, []);
 
-  const events = useMemo(() => eventsAt(t * 1000), [t]);
+  const live = useBus();
+  const fixture = useMemo(() => eventsAt(t * 1000), [t]);
+  const events = params.has("live") ? live : fixture;
   const ids = Object.keys(cards) as CardId[];
   const auto = only === "auto" ? latestCard(events).card : null;
   const shown: CardId | null = only === "auto" ? (auto === "idle" ? null : auto) : only && only in cards ? (only as CardId) : null;
