@@ -111,7 +111,7 @@ export function Kitchen(props: {
 
 /**
  * The stage's card picking, plus two kitchen rules: an inventory change asks for the fridge card (C1), and
- * the card goes back to idle IDLE_MS after the last ask. Returns the card id with the events it reads.
+ * the card goes back to idle IDLE_MS after the last ask. Returns the card id and the bus for the cards.
  */
 function useKitchenCard() {
   const bus = useBus();
@@ -135,7 +135,8 @@ function useKitchenCard() {
   }, [lastAsk]);
 
   const fresh = lastAsk > 0 && Date.now() - lastAsk < IDLE_MS;
-  return { card: fresh ? shown : ("idle" as const), events };
+  // The cards read the bus as it is: the synthetic get_inventory asks only move the panel.
+  return { card: fresh ? shown : ("idle" as const), events: bus };
 }
 
 /** Scales the stage's 860x920 card box to whatever the side has, centred. */
