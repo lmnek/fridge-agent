@@ -3,8 +3,8 @@
 This is the source of truth for the demo, and every build task should serve a beat here. The letters are stable
 IDs, so use them in tasks and commits (e.g. "C4 cart card"). Everything is in English, including the courier call.
 
-**Everything is live except D/E**, which plays a recording of the real Rohlík checkout. Every live beat has a
-recorded or replayed fallback.
+**Everything is live except D/E**, which shows the checkout as a stepped animation in the card. Every live beat
+has a scripted or replayed fallback, and none of them needs a recording.
 
 ## Setup
 
@@ -30,9 +30,9 @@ recorded or replayed fallback.
 | | Time | Live / Rec | What happens | Side panel | Fallback |
 |---|---|---|---|---|---|
 | **A: Opener** | 0:00–0:10 | Live | Presenter: "This is Coldex, an autonomous agent that runs your fridge: what's inside, what you eat, and what gets ordered. Let's watch it work." | Coldex idle, with a quiet fridge summary | |
-| **B: Kitchen** | 0:10–0:40 | Live | The large inset shows the fridge's-eye view: dark, then the door opens and the light comes on. The actor looks in, takes the last milk and the eggs, and talks to the fridge: "Ugh, the last milk again. And I'm craving carbonara tonight. Coldex, order what we need." The actor closes the door, the view goes dark, and the stage fades the inset out for good. | **The camera analysis, step by step:** frame captured → analysing → detection boxes → "milk: out, eggs: out". Then a carbonara craving card drops in. | The cameras may not run live (router settings). Then a "door closed" hotkey, pressed as the actor closes the fridge, runs the same vision pipeline on captured frames: real Reolink frames from rehearsal, or phone photos of the same fridge. The panel looks identical. Without any frames, Coldex goes by what the actor said. If the fridge stream dies, cut to the B clip. If the kitchen relay dies, unmute the video call. |
-| **C: Order** | 0:40–1:20 | Live | Coldex answers the actor from the kitchen session, heard on the stage, while the B analysis finishes: "Ordering three things. What just ran out: milk, lactose-free as always, and eggs, which carbonara needs anyway. For tonight: guanciale and spaghetti, with a gluten-free pack for Anna. And your weekly basics: yogurt, and bananas, which are on sale today. Lidl is 400 m away, but Rohlík delivers within the hour, so Rohlík. 812 Kč, ordering now." | **C1** fridge check, with the missing items highlighted. **C2** carbonara broken into ingredients, each marked have or missing. **C3** where to buy: an overview of the scraped prices and today's deals for these items across Rohlík, Lidl and the nearby shops, with a radar sweep showing Lidl at 400 m against Rohlík within the hour. **C4** the cart: rows with image, quantity and price, plus a why tag (*ran out*, *for carbonara*, *gluten-free · Anna*, *lactose-free*, *weekly*, *−20 % sale*). The total counts up. | A hotkey lets the presenter type the order into the stage session, which runs C the same way. Then the C clip. |
-| **D/E: Fast forward** | 1:20–1:35 | **Rec** | The clock speeds up. "Order placed." "Courier on the way." | **Rohlík mini browser:** a sped-up screen recording of the real order being placed on rohlik.cz. Then "courier on the way". | |
+| **B: Kitchen** | 0:10–0:40 | Live | The large inset shows the fridge's-eye view: dark, then the door opens and the light comes on. The actor looks in, takes the last milk and the eggs, and talks to the fridge: "Ugh, the last milk again. And I'm craving carbonara tonight. Coldex, order what we need." The actor closes the door, the view goes dark, and the stage fades the inset out for good. | **The camera analysis, step by step:** frame captured → analysing → detection boxes → "milk: out, eggs: out". Then a carbonara craving card drops in. | The cameras may not run live (router settings). Then a "door closed" hotkey, pressed as the actor closes the fridge, runs the same vision pipeline on saved frames: real Reolink frames kept from rehearsal, else part 2's drawn stand-ins with a saved result (no camera, no vision call). The panel looks identical. Without any frames, Coldex goes by what the actor said. If the fridge stream or the kitchen session dies, Z plays the scripted run on the stage from B. If the kitchen relay dies, U plays the video call's audio. |
+| **C: Order** | 0:40–1:20 | Live | Coldex answers the actor from the kitchen session, heard on the stage, while the B analysis finishes: "Ordering three things. What just ran out: milk, lactose-free as always, and eggs, which carbonara needs anyway. For tonight: guanciale and spaghetti, with a gluten-free pack for Anna. And your weekly basics: yogurt, and bananas, which are on sale today. Lidl is 400 m away, but Rohlík delivers within the hour, so Rohlík. 812 Kč, ordering now." | **C1** fridge check, with the missing items highlighted. **C2** carbonara broken into ingredients, each marked have or missing. **C3** where to buy: an overview of the scraped prices and today's deals for these items across Rohlík, Lidl and the nearby shops, with a radar sweep showing Lidl at 400 m against Rohlík within the hour. **C4** the cart: rows with image, quantity and price, plus a why tag (*ran out*, *for carbonara*, *gluten-free · Anna*, *lactose-free*, *weekly*, *−20 % sale*). The total counts up. | A hotkey lets the presenter type the order into the stage session, which runs C the same way. Then X plays the scripted run on the stage from C, with the rendered narration if it's there. |
+| **D/E: Fast forward** | 1:20–1:35 | **Staged** | The clock speeds up. "Order placed." "Courier on the way." | **Rohlík mini browser:** the checkout steps (cart, delivery slot, payment, order placed) advancing in the card. Then "courier on the way". | |
 | **F: Courier call** | 1:35–2:25 | Live | Coldex phones the **real Rohlík courier** at the office entrance, and the call plays through the stage speakers: "Hi, this is Kryštof's agent. You're delivering his Rohlík order. Skip the door and come straight onto the stage." | Call card: courier caller ID, a call timer, and **live subtitles for both sides** | Honza texts the courier the cue. If the audio fails, the subtitles carry it. |
 | **G: Courier** | 2:25–2:45 | Live | The courier walks onto the stage with the bag. | Delivered: a check mark | The courier comes on Honza's cue anyway. |
 | **H: Close** | 2:45–3:00 | Live | "It noticed, decided, ordered and called. We just opened the fridge." The presenter holds up their phone with the Coldex Telegram chat: "And you can do all of this from your pocket." | The presenter's phone, mirrored: the Telegram chat that filled up during the demo (carbonara noted, cart ready, order placed). Then Coldex idle again | The presenter holds up the phone and says the line |
@@ -47,15 +47,16 @@ from A to H. If the audio fails, the text still carries the story.
 - **The side panel follows the agent's tool calls, not a script.** Every tool call goes onto the bridge's event bus, so the panel switches cards based on which tool is running. It stays truthful and adds no latency.
 - **The B card shows the vision pipeline live:** the captured frame, an "analysing" state, the detection boxes,
   then the diff ("milk: out, eggs: out").
-- **The D/E card is a mini browser frame** playing the recording of the real Rohlík checkout, sped up. It's a
-  recording, not a simulated Rohlík page, because it's honest and costs nothing to build.
+- **The D/E card is a mini browser frame** with the checkout steps advancing on a timer. Decided 13. 11.: no
+  recording, so nothing has to be captured before the slot.
 - Reuse pieces from the old Frida build: the orb, the store radar, the cart panel, the tool-step chips, the call layer,
   and the camera view with detection boxes. Animate with `motion`, which is already installed. Design rules
   are in `CLAUDE.md`, with no emoji.
 - **The H shot is Telegram on the presenter's phone, mirrored to the projector.** The bridge posts what Coldex
   does into the chat (craving noted, cart ready, order placed) during the demo, so it's real and already full
   by H.
-- Hotkeys: replay the B frames, type the C line, cut to the B or C clip.
+- Hotkeys: replay the B frames (D), type the C line (T), play the scripted run from B or C (Z / X), swap the
+  relay for the video call's audio (U). Press ? on the stage for all of them.
 - Priority if time runs short: C4 cart, then the B analysis, then C3 map, then the D/E mini browser, then the F
   call card, then C1 and C2, then the H Telegram push.
 
@@ -86,18 +87,16 @@ from A to H. If the audio fails, the text still carries the story.
 
 | What | When | Notes |
 |---|---|---|
-| **D/E checkout** (plays in the demo) | When the real cart works | Screen-record the real Rohlík order on the phone or laptop. Coordinate the delivery with the Rohlík deal. |
-| **B frames** (replay fallback) | At the first real camera test | Real snapshots of the fridge before and after taking out the milk and eggs. |
-| **B clip** (fallback) | At a good rehearsal | The kitchen video side by side with the app. OBS for the screen, a phone for the kitchen, ffmpeg to put them side by side. |
-| **C clip** (fallback) | At a good rehearsal | A screen recording of the stage view during C. |
+| **B frames** (replay fallback, optional) | At the first real camera test | Real snapshots of the fridge before and after taking out the milk and eggs: `POST /vision/keep?name=b` after a good run. Without them D replays the drawn stand-ins. |
+| **C narration** (optional) | When the voice is picked | `cd bridge && uv run python try_voices.py --narration <voice>` writes `app/public/demo/c-narration.wav`, which X plays in sync. Without it X runs silent with subtitles. |
 | **Backup video** (the whole demo) | 15:30–16:00 | One clean full run. |
 
 ## Fallbacks
 
 | Beat | If it fails |
 |---|---|
-| B | No live cameras: the "door closed" hotkey runs captured frames through the same pipeline. No frames: Coldex goes by what the actor said. Cut to the B clip if the stream dies. Unmute the video call if the kitchen relay dies. |
-| C | The presenter types the order into the stage session, then falls back to the C clip. |
+| B | No live cameras: D runs saved frames through the same pipeline (rehearsal frames, else the drawn stand-ins). No frames at all: Coldex goes by what the actor said. The stream or the kitchen session dies: Z plays the scripted run from B. The kitchen relay dies: U plays the video call's audio. |
+| C | The presenter types the order into the stage session (T), then X plays the scripted run from C. |
 | F | Honza texts the courier the cue, and the subtitles carry the story. |
 | The whole demo | The backup video. |
 
@@ -108,7 +107,7 @@ from A to H. If the audio fails, the text still carries the story.
 | **By 12:00** | Seed the household profile. | Check that the hub returns snapshots, and capture the B frames. Get the Rohlík OAuth token. Get a Twilio account and number, and check that the courier is fine with a call in English. |
 | **By 13:30** | Get a small Bluetooth speaker for the fridge (borrow one at the venue, or buy one). The craving is saved where every conversation sees it. Coldex's voice in the browser sounds good (ElevenLabs). | Real camera → inventory works end to end. A real cart fills from the agent. The tunnel is up. |
 | **13:30–15:30** | The C turn, fast and narrated, with reasons on each item. The stage view: the B analysis card, the C cards, subtitles, hotkeys, the mini browser, and the Telegram push for H. | The courier call: briefing prompt, allowlist, audio to the stage, both-sides transcript. Record the D/E checkout. Remove the emoji and sparkle icons from the UI. |
-| **15:30–17:45** | Record the backup video and the B and C clips. Rehearse at least 3 runs. Code freeze at 16:45. | The same. Also brief the courier and agree on a cue. |
+| **15:30–17:45** | Record the backup video. Rehearse at least 3 runs. Code freeze at 16:45. | The same. Also brief the courier and agree on a cue. |
 
 ## Before the slot
 
@@ -120,5 +119,5 @@ from A to H. If the audio fails, the text still carries the story.
 - [ ] The fridge phone is plugged in and streaming from inside the fridge, and its picture comes back fast when the door opens after being shut.
 - [ ] A test call reaches the courier, and the audio plays on stage.
 - [ ] The courier is at the entrance and knows the backup cue.
-- [ ] The D/E recording, the B and C clips, and the backup video are on the stage laptop.
+- [ ] The backup video is on the stage laptop. Z, X and D work with no recordings (check them once on the stage).
 - [ ] The presenter's phone has the Coldex Telegram chat open, and its screen mirrors to the projector.
