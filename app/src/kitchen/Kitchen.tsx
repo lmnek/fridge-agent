@@ -177,21 +177,6 @@ function Fit({ children }: { children: ReactNode }) {
   );
 }
 
-function fridgeLine(items: Item[]): string {
-  if (items.length === 0) return "The fridge is empty. Close the door and I'll look.";
-  const count = `${items.length} ${items.length === 1 ? "thing" : "things"} inside.`;
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const soon = items
-    .filter((i) => i.expires)
-    .map((i) => ({ name: i.name, days: Math.round((new Date(`${i.expires}T00:00:00`).getTime() - today.getTime()) / 86_400_000) }))
-    .filter((i) => i.days >= 0 && i.days <= 2)
-    .sort((a, b) => a.days - b.days)[0];
-  if (!soon) return count;
-  const when = soon.days === 0 ? "today" : soon.days === 1 ? "tomorrow" : `in ${soon.days} days`;
-  return `${count} ${soon.name} goes off ${when}.`;
-}
-
 function ago(at: number): string {
   const min = Math.round((Date.now() - at) / 60_000);
   return min < 1 ? "just now" : min === 1 ? "a minute ago" : `${min} minutes ago`;
