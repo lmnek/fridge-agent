@@ -11,9 +11,9 @@ panel stays truthful and adds no latency. The cards share one visual language an
 
 | Card | Shows | Driven by |
 |---|---|---|
-| **C4 cart** | rows with image, quantity, price and a why tag (*ran out*, *for carbonara*, *gluten-free · Anna*, *lactose-free*, *weekly*, *−20 % sale*). The total counts up toward the 749 Kč bar | `cart` event (`show_cart`) |
+| **C4 cart** | rows with image, quantity, price and a why tag (*ran out*, *for carbonara*, *gluten-free · Anna*, *lactose-free*, *weekly*, *−20 % sale*). The total counts up | `cart` event (`show_cart`) |
 | **B analysis** | the captured frame, an "analysing" state, detection boxes, then "milk: out, eggs: out". Then a craving card drops in | `vision` events, then `learned` with category `craving` |
-| **C3 shops** | a map with a radar sweep: Lidl 400 m against Rohlík within the hour, and Rohlík wins | `tool` `show_shops` (part 3 adds it) |
+| **C3 where to buy** | an overview of the scraped prices and today's deals for the cart items across Rohlík, Lidl and the nearby shops, with a radar sweep: Lidl 400 m against Rohlík within the hour, and Rohlík wins | `deals` event (part 8), `tool` `show_shops` |
 | **D/E mini browser** | a browser frame playing the sped-up recording of the real Rohlík checkout, then "courier on the way" | `stage` event (hotkey). The recording comes from part 5 |
 | **F call card** | the courier's caller ID, a call timer, and live subtitles for both sides | `call` events, `caption` from coldex and courier |
 | **C1 fridge check** | the fridge contents, with the missing usual items highlighted (milk, eggs) | `tool` `get_inventory`, `inventory` |

@@ -98,7 +98,7 @@ async def run() -> None:
     print("\n\nCart:")
     for i in cart:
         print(f"  {i.get('qty', 1):>4} x {i['name']:<28} {i.get('price_czk', '?'):>6} Kč  [{i.get('reason', 'NO REASON')}]")
-    print(f"  total {total:.0f} Kč, {'clears' if total >= 749 else 'BELOW'} the 749 Kč minimum")
+    print(f"  total {total:.0f} Kč")
     print(f"\nNotes:\n{(main.NOTES_FILE.read_text() if main.NOTES_FILE.exists() else '(none)')}")
 
 

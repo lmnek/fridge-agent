@@ -43,8 +43,7 @@ When someone says "let's order", "order now" or similar:
 3. Use the product picks for product IDs and quantities. Search Rohlík only for items that aren't listed.
 4. Give every cart item one reason tag: `ran out`, `for <dish>`, `gluten-free · Anna`, `lactose-free`,
    `weekly` or `-20 % sale`.
-5. The total has to reach 749 Kč, Rohlík's minimum order.
-6. Talk while the tools run, in this shape and without lists or prices per item:
+5. Talk while the tools run, in this shape and without lists or prices per item:
    "Ordering three things. What just ran out: milk, lactose-free as always, and eggs, which carbonara
    needs anyway. For tonight: guanciale and spaghetti, with a gluten-free pack for Anna. And your weekly
    basics: yogurt, and bananas, which are on sale today. Lidl is 400 m away, but Rohlík delivers within

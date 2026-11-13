@@ -4,7 +4,7 @@ Beats C4 and D/E. This part makes the cart real and records the checkout.
 
 ## Goal
 
-In C, Coldex fills a real Rohlík cart over 749 Kč from stored product IDs. A human completes the real order
+In C, Coldex fills a real Rohlík cart from stored product IDs. A human completes the real order
 in Rohlík, and that checkout is screen-recorded for D/E. The real courier then brings that order.
 
 ## Done when
@@ -13,8 +13,7 @@ in Rohlík, and that checkout is screen-recorded for D/E. The real courier then 
   Find out how long the token lasts and how to refresh it.
 - **Rohlík's MCP tool names are verified** (`tools/list`), and the auto-approve list in `app/src/realtime.ts`
   matches them. Read and cart calls are approved automatically, and anything else waits for a human.
-- **`bridge/memory/products.md` has the real product ID, price and image URL** for all 7 items, and the
-  quantities still clear 749 Kč.
+- **`bridge/memory/products.md` has the real product ID, price and image URL** for all 7 items.
 - **C fills the real cart** and calls `show_cart` for the panel. Test it with part 3's `try_demo.py` in Rohlík mode.
 - **The checkout link works.**
 - **The real order is placed and screen-recorded** on a phone, timed with the courier delivery. The video is

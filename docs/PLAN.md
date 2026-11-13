@@ -31,7 +31,7 @@ Gaps against the demo we want:
 2. **The voice is the browser's speech engine,** so it sounds robotic. The orb exists but isn't the all-out piece yet.
 3. **No demo story yet.** There's lots of breadth (deals, store radar, analytics, delivery), so the 3 minutes need a script (§3).
 4. **Design taste:** emoji on every food item and sparkle icons on buttons, both against `CLAUDE.md`. It's a quick cleanup.
-5. **Language:** it's Czech end to end, and we said English (§8).
+5. **Language:** English, including the courier call (§8).
 
 ### 2.1 Judge feedback (13. 11., midday)
 
@@ -55,13 +55,13 @@ What follows:
 | Agent core | **Realtime-first: one OpenAI Realtime session per screen** (`bridge/` + `app/`). The old Frida build is a parts bin. Hermes is dropped. | Verified 13. 11.: C ran in 16.5 s with the right cart. The parts and their handoffs are in `docs/handoffs/`. |
 | LLM | `claude-opus-5-5`, with effort `medium` for chat, `low` for voice and `high` for vision | `FRIDA_AGENT_*` in `.env`. |
 | Cameras | **Reolink Home Hub + 2× Argus B310**, snapshots on door events | Placement is still open (§8). |
-| Ordering | **Frida fills the Rohlík cart. A human completes the order in Rohlík via the checkout link.** | Rohlík's MCP terms say an order only completes when the customer confirms it in the e-shop. Tapping the checkout link on a phone is our approval beat. The minimum order is 749 CZK. Blocked tools are listed in `grocery/rohlik_mcp.py`. |
+| Ordering | **Frida fills the Rohlík cart. A human completes the order in Rohlík via the checkout link.** | Rohlík's MCP terms say an order only completes when the customer confirms it in the e-shop. Tapping the checkout link on a phone is our approval beat. We have a Rohlík pro account, so there's no minimum order. Blocked tools are listed in `grocery/rohlik_mcp.py`. |
 | Delivery | **Staged**: Honza arranges a Rohlík courier waiting nearby | |
 | Notifications | **Twilio** calls, SMS and WhatsApp (already built). Telegram is dropped unless someone wants it. | "The fridge calls you" can be a live beat if Twilio is set up (§8). |
 | Demo beats | Core loop + **expiry scan** + **craving → recipe** + **learning moment** | §4 |
 | Self-improvement | **Household profile** plus a Scout loop with human-approved self-edits | §6 |
-| Language | **Undecided** (§8) | |
-| Apify | Not needed. Frida scrapes akcniceny.cz itself. | |
+| Language | **English**, including the courier call | Decided 13. 11. |
+| Scraping | **Honza scrapes grocery prices and deals** (handoffs, part 8). Apify credits are there if it helps. | Feeds the C3 overview and the sale tags. |
 
 ### 3.1 Honza's simpler version: one OpenAI Realtime session (`bridge/` + `app/`)
 
@@ -144,14 +144,12 @@ See the build table in [DEMO.md](DEMO.md#build-owners-suggested-swap-freely).
 
 ## 8. Open questions
 
-- [ ] **Language**: Czech as built, English throughout, or an English agent with the Czech UI? Changing only
-      the agent is one file (`agent/prompts.py`) plus the voice language. A UI sweep touches every frontend file,
-      so do it once, close to freeze.
+- [x] **Language**: English throughout, including the courier call (decided 13. 11.).
 - [ ] **Reolink**: on-demand snapshots of both cams through the hub? Wake latency? Wi-Fi through a closed
       fridge door? Cold kills batteries, so run on USB power. Honza's notes are in `docs/integrace/reolink-kamera.md`.
 - [ ] **Camera placement**: both inside (Frida's default: "Police" and "Dveře") or one outside facing the fridge?
 - [ ] **Rohlík**: get the OAuth token (MCP inspector "Quick OAuth Flow", see `docs/integrace/rohlik-mcp.md`),
-      check that the cart and checkout link work live, and clear 749 CZK.
+      check that the cart and checkout link work live.
 - [ ] **Twilio**: do we have an account with a CZ-capable number and a public URL (Cloudflare Tunnel)? Is
       the phone call a demo beat?
 - [ ] **Network**: the hub, cams and laptop must share a LAN, and venue Wi-Fi often isolates clients, so

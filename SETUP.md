@@ -58,8 +58,7 @@ registration, scopes `openid email roles`. The quickest way to get a token by ha
 4. Copy the access token into `bridge/.env` as `ROHLIK_TOKEN=...`.
 
 Unknown so far: how long the token lives and whether a refresh token is issued. If OpenAI rejects the
-MCP setup, the bridge falls back to the fake cart and the app shows "Rohlík MCP rejected". Rohlík's
-minimum order is 749 CZK.
+MCP setup, the bridge falls back to the fake cart and the app shows "Rohlík MCP rejected". We have a Rohlík pro account, so there's no minimum order.
 
 ### Reolink hub
 

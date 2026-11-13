@@ -22,9 +22,9 @@ Beats B and C. This part covers what Coldex knows, what it says and which tools 
     *−20 % sale* tag.
 - **`show_cart`**: a tool the model calls with every item (reason, quantity, price, image), which publishes the
   `cart` event for C4. It's needed because the real Rohlík MCP cart has no reasons, and the bridge never sees it.
-- **`show_shops`** for C3.
+- **Deals and shops for C3:** C reads today's scraped deals through part 8's tool, so the banana sale is real. Decide with Honza whether `show_shops` stays a separate tool or folds into that one.
 - **Input transcription** is on in the session config, so the humans' speech gets subtitles (part 1).
-- **Voice and language:** pick the best Realtime voice and decide the language (PLAN §8). Either is one line.
+- **Voice:** pick the best Realtime voice. The language is English (decided).
 - **Real Rohlík mode:** C fills the real cart through the MCP and also calls `show_cart`. Test this with part 5.
 - **It survives a judge** who complains or craves something else. Try a few variations, like a different dish or a different missing item.
 
@@ -35,7 +35,7 @@ Beats B and C. This part covers what Coldex knows, what it says and which tools 
 ## Parallelize
 
 1. Tune the prompt in a loop with `try_demo.py`, running it 3 times per change.
-2. Add `show_cart`, `show_shops` and input transcription.
+2. Add `show_cart`, the C3 tool and input transcription.
 3. Write variation scenarios (other cravings and complaints) into `try_demo.py`.
 
 ## Risks

@@ -5,7 +5,7 @@ searching, which keeps the order turn fast.
 
 <!-- HACK(demo): the IDs are still TODO and the prices are estimates chosen so the demo cart totals
 812 Kč. Once the Rohlík token works, look each one up (batch_search_products, 4 per call), paste the real
-ID and price, and adjust the quantities so the total still clears 749 Kč. -->
+ID and price. -->
 
 | Item | Rohlík product | Product ID | Qty | Price (Kč) | Note |
 |---|---|---|---|---|---|

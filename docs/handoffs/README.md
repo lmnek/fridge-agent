@@ -15,6 +15,7 @@ start one, give it this:
 | [5. Rohlík](5-rohlik.md) | C4, D/E | Honza |
 | [6. Courier call](6-courier-call.md) | F | Honza |
 | [7. Telegram](7-telegram.md) | H | whoever frees up first |
+| [8. Grocery scraping](8-scraping.md) | C3, C4 | Honza |
 
 ## How the system fits together (decided: Realtime-first)
 
@@ -44,6 +45,7 @@ Anything that should show up on stage goes through the bridge. Screens never tal
 | `learned` | `fact`, `category` (craving, missing, diet, preference, habit) | `remember` tool | B craving card, Telegram |
 | `recipe` | `recipe` (`title`, `have`, `missing`, `steps`) | `show_recipe` tool | C2 |
 | `cart` | `items` (`name`, `qty`, `price_czk`, `reason`, `image_url`), `total_czk` | `show_cart` tool (part 3) | C4, Telegram |
+| `deals` | `items` (`item`, `store`, `price_czk`, `was_czk`), `stores` (`name`, `distance_m`), `scraped_at` | the deals tool (part 8) | C3 overview |
 | `approval` | `approval`, `order` | bridge | Telegram |
 | `look` | `reason` (motion, manual, replay) | bridge | kitchen page or the vision pipeline |
 | `vision` | `phase` (captured, analysing, done), `frames`, `boxes`, `removed`, `added` | part 4 | B card |
@@ -63,6 +65,8 @@ The call audio is too heavy for the bus. Part 6 exposes its own WebSocket, and t
 - Every part needs a fake mode marked `HACK(demo)`, so the demo survives if that part dies.
 - Coldex only fills the cart. A human completes the order.
 - The product is **Coldex** in the UI, the copy and the prompts.
+- Everything is in **English**: the UI, the prompts and the courier call.
+- **No minimum order.** We have a Rohlík pro account.
 - Design: the rules in `CLAUDE.md` (no emoji, no sparkles, no gradients, no AI slop). Use the `frontend-design` skill.
 
 ## Timeline
