@@ -1,6 +1,6 @@
 """The Reolink Home Hub on the LAN: snapshots and the motion state of its battery cameras.
 
-Setup and pitfalls: docs/integrace/reolink-kamera.md (Czech) and ~/Downloads/fridge-agent-kamery.md.
+Setup: SETUP.md (Reolink hub). Research and pitfalls: docs/integrace/reolink-kamera.md (Czech).
 """
 
 from __future__ import annotations

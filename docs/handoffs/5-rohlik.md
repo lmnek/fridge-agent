@@ -35,6 +35,25 @@ in Rohlík, and that checkout is screen-recorded for D/E. The real courier then 
 
 `docs/integrace/rohlik-mcp.md` (the tools, the OAuth flow and the terms) and the old `backend/frida/grocery/rohlik_mcp.py`.
 
+## Built (13. 11., Honza)
+
+- **`bridge/rohlik.py`**, run from `bridge/` with `uv run python rohlik.py <command>`:
+  - `status`: is the token valid, and when does it expire
+  - `tools`: the server's tools, with the ones Coldex may use marked SAFE
+  - `search`: the top hits for every row in `products.md`, 4 per call, with the raw replies (image URLs too)
+    in `data/rohlik-search.json`
+  - `cart`: what's in the real cart now
+  - `fill`: adds `products.md` to the real cart and prints the checkout link. It stops if the cart isn't empty.
+- **The session only sees safe tools.** `session_config` passes `rohlik.SAFE_TOOLS` as `allowed_tools`, with
+  `require_approval: "never"`: search, product details, cart, checkout link and discounts. Nothing in the
+  session can order, cancel or claim. `AUTO_APPROVE` in `app/src/realtime.ts` lists the same exact names.
+- **`try_demo.py --rohlik`** runs C against the real cart and prints the Rohlík calls.
+- **For part 3 and C4:** in Rohlík mode the cart calls run on OpenAI's side, so no `tool` event reaches the
+  bus. The C4 card only appears if Coldex calls `show_cart` (with reasons and image URLs) after adding to
+  the Rohlík cart. The prompt has to ask for that.
+- Not yet run against Rohlík. Check that `GET /api/realtime/token` answers `"rohlik": true`. If it says
+  false, OpenAI rejected the MCP setup and the session is on the fake cart.
+
 ## Fake mode
 
 The fake cart in the bridge. The D/E recording is a recording anyway.

@@ -52,6 +52,8 @@ in `bridge/memory/courier.md`, tests in `bridge/test_courier.py`, stage playback
 - `call` events: `phase` (dialing, ringing, answered, ended), `number` (masked). `caption` events: `who`
   (coldex, courier), `id`, `text` so far, `final`.
 - For the stage, part 1 calls `playCallAudio()` from the hotkey handler and uses `level()` for the orb.
+- If Coldex should start the call itself (the fixtures use a `call_courier` tool), that tool only needs to
+  `POST /courier/call`.
 - Setup: the Twilio and tunnel steps in `SETUP.md`. It hasn't run against Twilio yet.
 
 ## Fake mode
