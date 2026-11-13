@@ -1,18 +1,50 @@
 {
  "home": "50.0755,14.4378",
- "note": "From the 14:45 OpenStreetMap run on 13. 11. 2026 (Overpass was down later). Only the chains that had deals that day. Delete this file to fetch the full list again.",
+ "lat": 50.0755,
+ "lon": 14.4378,
+ "note": "OpenStreetMap, 13. 11. 2026, nearest store of each chain. Delete to fetch again.",
  "stores": {
+  "billa": {
+   "name": "Billa",
+   "distance_m": 820,
+   "lat": 50.0689085,
+   "lon": 14.4327967,
+   "address": "Bělehradská 50"
+  },
   "albert": {
+   "name": "Albert",
    "distance_m": 60,
+   "lat": 50.0760444,
+   "lon": 14.4376028,
+   "address": "náměstí Míru 8/1356"
+  },
+  "lidl": {
+   "name": "Lidl",
+   "distance_m": 1050,
+   "lat": 50.0847991,
+   "lon": 14.4400866,
    "address": ""
   },
-  "billa": {
-   "distance_m": 820,
+  "tesco": {
+   "name": "Tesco",
+   "distance_m": 440,
+   "lat": 50.0762688,
+   "lon": 14.4317569,
+   "address": "Vocelova 11"
+  },
+  "zabka": {
+   "name": "Žabka",
+   "distance_m": 340,
+   "lat": 50.073191,
+   "lon": 14.4409186,
    "address": ""
   },
   "penny": {
+   "name": "Penny",
    "distance_m": 1170,
-   "address": ""
+   "lat": 50.0649959,
+   "lon": 14.4376497,
+   "address": "Vrtbova 1678"
   }
  }
 }

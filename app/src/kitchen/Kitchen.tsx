@@ -16,6 +16,7 @@ import { Panel, usePanelCard } from "../stage/Panel";
 import { cardFor } from "../stage/pick";
 import { type Approval, ApprovalCard } from "./ApprovalCard";
 import { ProductCard } from "./ProductCard";
+import { NearbyCard } from "./NearbyCard";
 import "./kitchen.css";
 
 export type { Approval };
@@ -54,8 +55,10 @@ export function Kitchen(props: {
 }) {
   const { status, caption, learned, error, approval, peek } = props;
   const { card, events } = useKitchenCard();
-  const product = useProduct(events);
-  const side = approval ? "approval" : product ? "product" : card;
+  const product = useFresh(events, "product", 9_000);
+  const nearby = useFresh(events, "nearby", 14_000);
+  const quick = [product, nearby].filter(Boolean).sort((a, b) => (b?.ts ?? 0) - (a?.ts ?? 0))[0] ?? null;
+  const side = approval ? "approval" : quick ? "quick" : card;
 
   return (
     <div className="kitchen" data-side={side === "idle" ? "off" : "on"}>
@@ -96,9 +99,9 @@ export function Kitchen(props: {
               <div className="k-approval">
                 <ApprovalCard approval={approval} onDecide={props.onDecide} />
               </div>
-            ) : product ? (
+            ) : quick ? (
               <div className="k-approval">
-                <ProductCard ev={product} />
+                {quick.type === "nearby" ? <NearbyCard ev={quick} /> : <ProductCard ev={quick} />}
               </div>
             ) : (
               <Fit>
@@ -116,11 +119,9 @@ export function Kitchen(props: {
  * The stage's card picking, plus two kitchen rules: an inventory change asks for the fridge card (C1), and
  * the card goes back to idle IDLE_MS after the last ask. Returns the card id and the bus for the cards.
  */
-const PRODUCT_MS = 9_000;
-
-/** The newest `product` event while it's fresh: the price card shows for PRODUCT_MS, then leaves. */
-function useProduct(events: BusEvent[]) {
-  const ev = events.findLast((e) => e.type === "product");
+/** The newest event of a type while it's fresh: the quick cards (price, nearby shops) show for `ms`, then leave. */
+function useFresh(events: BusEvent[], type: string, PRODUCT_MS: number) {
+  const ev = events.findLast((e) => e.type === type);
   const [, rerender] = useState(0);
   const ts = ev?.ts ?? 0;
   useEffect(() => {

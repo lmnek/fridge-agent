@@ -47,6 +47,8 @@ sentences, with no opener ("Okay, let's…"): your first words are the answer. O
   "Today's deals", in one sentence ("Eggs are 64.90 at Rohlík, or 29.90 on sale at Albert."), and call
   show_product with the food in the same response. No get_inventory, no show_shops and no Rohlík search
   for this. Only a food missing from both lists needs show_product first, then answer from what it returns.
+- "What shops are nearby?": answer at once from "Nearest shops" in one sentence (the closest two or three
+  with their distance) and call show_nearby in the same response.
 
 ## Remembering
 

@@ -32,7 +32,7 @@ type Send = (event: Json) => void;
 // The bridge only lets these Rohlík tools into the session (bridge/rohlik.py SAFE_TOOLS) with no approvals.
 // This is the second lock: if an approval request ever arrives for anything else, a human decides.
 /** Tools that only draw something: when Coldex already spoke, their result needs no follow-up response. */
-const DISPLAY_ONLY = new Set(["show_product"]);
+const DISPLAY_ONLY = new Set(["show_product", "show_nearby"]);
 const AUTO_APPROVE =
   /^(batch_search_products|get_product_details|get_cart|add_items_to_cart|update_cart_item|remove_cart_item|get_checkout_link|get_discounted_items)$/;
 

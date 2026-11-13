@@ -153,7 +153,7 @@ def deals_markdown() -> str:
         for i in d["items"]
         if i.get("was_czk")
     ]
-    shops = ", ".join(f"{s['name']} {s['distance_m']} m" for s in d["stores"] if s.get("distance_m") is not None)
+    shops = ", ".join(f"{s['name']} {s['distance_m']} m" for s in nearby_shops()["shops"])
     return (
         "# Today's deals\n\nScraped prices around the flat. On sale today:\n\n"
         + "\n".join(sales or ["- nothing"])
@@ -253,6 +253,20 @@ def _image_later(pid: Any, card: dict[str, Any]) -> None:
     threading.Thread(target=run, daemon=True).start()
 
 
+def nearby_shops() -> dict[str, Any]:
+    """HACK(demo): the flat's nearest store of each chain, from OpenStreetMap, fixed in bridge/replay/stores.json."""
+    saved = json.loads((bridge.ROOT / "replay" / "stores.json").read_text())
+    shops = sorted(saved["stores"].values(), key=lambda s: s["distance_m"])[:6]
+    return {"home": {"lat": saved["lat"], "lon": saved["lon"]}, "shops": shops}
+
+
+@router.post("/tools/show_nearby")
+def tool_show_nearby() -> dict[str, Any]:
+    n = nearby_shops()
+    bridge.emit("nearby", **n)
+    return {"ok": True, "shops": [{"name": s["name"], "distance_m": s["distance_m"]} for s in n["shops"]]}
+
+
 TOOLS = [
     bridge._fn(
         "show_cart",
@@ -277,6 +291,12 @@ TOOLS = [
             }
         },
         ["items"],
+    ),
+    bridge._fn(
+        "show_nearby",
+        "Show the shops near the flat on a map on the kitchen screen. Call it when someone asks what shops are "
+        "nearby, in the same response as your spoken answer.",
+        {},
     ),
     bridge._fn(
         "show_product",
