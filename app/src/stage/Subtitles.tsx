@@ -2,7 +2,8 @@
  * Live subtitles under the orb, for everyone who speaks (`caption` events). Owned by part 1, sub-task 2.
  *
  * Captions are grouped by `id` (one utterance each, later events replace the text). The newest utterance is
- * large, the one before it small and dimmed above it, each with a quiet speaker label in a hanging column.
+ * large, the one before it small and dimmed above it, each with a quiet speaker label above its text, so the
+ * text gets the column's full width.
  * Long utterances show only their tail. Everything fades ~6 s after the last final with no newer speech.
  */
 import { useEffect, useState } from "react";
@@ -10,8 +11,10 @@ import type { BusEvent } from "./bus";
 import "./subtitles.css";
 
 const FADE_AFTER_MS = 6000;
-/** Roughly two lines of the large size in the slot. Longer text keeps its tail, cut at a word. */
-const TAIL_CHARS = 80;
+/** Roughly two lines of the large size across the 880 px column. Longer text keeps its tail, cut at a word. */
+const TAIL_CHARS = 104;
+/** One line of the small size. */
+const PREV_CHARS = 76;
 
 const LABELS: Record<string, string> = {
   coldex: "Coldex",
@@ -68,7 +71,7 @@ export function Subtitles({ events }: { events: BusEvent[] }) {
         return (
           <div key={u.id} className="subtitle" data-role={role} data-who={u.who}>
             <span className="subtitle-who">{LABELS[u.who] ?? u.who}</span>
-            <p className="subtitle-text">{tail(u.text, role === "now" ? TAIL_CHARS : 56)}</p>
+            <p className="subtitle-text">{tail(u.text, role === "now" ? TAIL_CHARS : PREV_CHARS)}</p>
           </div>
         );
       })}

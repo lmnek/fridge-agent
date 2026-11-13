@@ -1,15 +1,17 @@
 /* Live subtitles under the stage orb. Owned by part 1, sub-task 2. */
 
 .subtitles {
-  --now-size: 42px;
+  --now-size: 40px;
   --now-lh: 1.18;
   --prev-size: 25px;
   --prev-lh: 1.25;
-  width: 860px;
+  --who-h: 21px;
+  /* The whole left column: the speaker sits above the text, so every line gets the full measure. */
+  width: 880px;
   max-width: 100%;
   flex-shrink: 0;
-  /* Fixed height so the orb above never moves: one previous line plus two lines of the newest. */
-  height: calc(var(--prev-size) * var(--prev-lh) + 2 * var(--now-size) * var(--now-lh) + 18px);
+  /* Fixed height so the orb above never moves: one previous line plus two lines of the newest, each labelled. */
+  height: calc(2 * var(--who-h) + var(--prev-size) * var(--prev-lh) + 2 * var(--now-size) * var(--now-lh) + 18px);
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
@@ -22,11 +24,7 @@
 }
 
 .subtitle {
-  display: grid;
-  grid-template-columns: 112px 1fr;
-  column-gap: 20px;
-  /* Not baseline: a clipped, bottom-aligned text box has its first baseline outside the box. */
-  align-items: start;
+  display: block;
   max-height: 140px;
   transition:
     opacity 360ms ease,
@@ -35,17 +33,14 @@
 }
 
 .subtitle-who {
+  display: block;
+  height: var(--who-h);
   font-family: "Barlow", system-ui, sans-serif;
   font-size: 17px;
   font-weight: 500;
+  line-height: var(--who-h);
   color: var(--slate);
-  line-height: 1.4;
-  text-align: right;
-  /* Sits on the first text line's baseline, by hand (see .subtitle). */
-  padding-top: 15px;
-  transition:
-    font-size 360ms ease,
-    padding 360ms ease;
+  transition: font-size 360ms ease;
 }
 
 .subtitle[data-who="coldex"] .subtitle-who {
@@ -104,7 +99,6 @@
 .subtitle[data-role="prev"] .subtitle-who,
 .subtitle[data-role="gone"] .subtitle-who {
   font-size: 15px;
-  padding-top: 5px;
 }
 
 /* The oldest one collapses away above the previous line. */
