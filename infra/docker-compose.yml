@@ -1,0 +1,55 @@
+# Frida doma: backend + frontend v jednom kontejneru, go2rtc pro živý obraz,
+# volitelně Cloudflare Tunnel pro veřejnou HTTPS adresu (Twilio webhooky).
+# Žádné cloudové služby kromě API, která si sám zapneš v .env.
+#
+#   cp .env.example .env        # v kořeni repa, vyplň, co chceš zapnout
+#   docker compose -f infra/docker-compose.yml up -d --build
+#   docker compose -f infra/docker-compose.yml --profile tunnel up -d   # i s tunelem
+
+name: frida
+
+services:
+  frida:
+    build:
+      context: ..
+      dockerfile: infra/Dockerfile
+    env_file:
+      - path: ../.env
+        required: false
+    environment:
+      FRIDA_DATA_DIR: /data
+      FRIDA_GO2RTC_URL: http://go2rtc:1984
+    volumes:
+      - frida-data:/data
+    ports:
+      - "8000:8000"
+    restart: unless-stopped
+    depends_on:
+      - go2rtc
+
+  go2rtc:
+    image: alexxit/go2rtc:1.9.15
+    env_file:
+      - path: ../.env
+        required: false
+    volumes:
+      - ./go2rtc.yaml:/config/go2rtc.yaml:ro
+    ports:
+      - "1984:1984"
+      - "8555:8555/tcp"
+      - "8555:8555/udp"
+    restart: unless-stopped
+    # Na Linuxu je pro WebRTC v LAN nejspolehlivější `network_mode: host` (pak smaž `ports`).
+
+  tunnel:
+    image: cloudflare/cloudflared:2026.11.0
+    command: tunnel --no-autoupdate run
+    environment:
+      TUNNEL_TOKEN: ${CLOUDFLARE_TUNNEL_TOKEN:-}
+    restart: unless-stopped
+    profiles: ["tunnel"]
+    depends_on:
+      - frida
+
+volumes:
+  frida-data:

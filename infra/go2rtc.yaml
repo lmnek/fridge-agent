@@ -1,0 +1,29 @@
+# go2rtc: živý obraz z kamer Reolink do prohlížeče (WebRTC, záložně MSE).
+# Hodnoty ${...} doplní go2rtc z proměnných prostředí (viz .env.example).
+#
+# Bateriové kamery (Argus B310) spí. Stream je jen na vyžádání, proto tu NENÍ `preload`.
+# Reolink doporučuje HTTP-FLV před RTSP. RTSP je záloha s delším timeoutem, kamera se probouzí.
+# Kanál 0 = první kamera na Home Hubu, kanál 1 = druhá.
+
+api:
+  listen: ":1984"
+  origin: "*"
+
+webrtc:
+  listen: ":8555"
+  candidates:
+    - stun:8555
+
+rtsp:
+  listen: ""
+
+streams:
+  fridge_cam0:
+    - http://${REOLINK_HOST}/flv?port=1935&app=bcs&stream=channel0_main.bcs&user=${REOLINK_USER}&password=${REOLINK_PASSWORD}
+    - rtsp://${REOLINK_USER}:${REOLINK_PASSWORD}@${REOLINK_HOST}:554/Preview_01_sub#timeout=30
+  fridge_cam1:
+    - http://${REOLINK_HOST}/flv?port=1935&app=bcs&stream=channel1_main.bcs&user=${REOLINK_USER}&password=${REOLINK_PASSWORD}
+    - rtsp://${REOLINK_USER}:${REOLINK_PASSWORD}@${REOLINK_HOST}:554/Preview_02_sub#timeout=30
+
+log:
+  level: info
