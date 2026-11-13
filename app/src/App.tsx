@@ -3,7 +3,8 @@ import { grabFrames } from "./camera";
 import { type Approval, Kitchen } from "./kitchen/Kitchen";
 import { KitchenRelay } from "./kitchenAudio";
 import { FridgeBrain, type Status } from "./realtime";
-import { publish } from "./stage/bus";
+import { publish, useBus } from "./stage/bus";
+import { type CallAudio, playCallAudio } from "./stage/callAudio";
 import { publishCaption } from "./stage/captions";
 
 const AWAKE = "coldex-awake"; // sessionStorage: this tab was woken, so it wakes again after a reload
@@ -146,6 +147,23 @@ export default function App() {
       setError(e instanceof Error ? e.message : String(e));
     }
   };
+
+  // The courier call (part 6): the kitchen plays both voices, the courier's and Coldex's phone voice, and mutes
+  // its own mic meanwhile, so the kitchen Coldex doesn't hear the call through the speakers and answer it.
+  const bus = useBus();
+  const call = useRef<CallAudio | null>(null);
+  const lastCall = bus.findLast((e) => e.type === "call");
+  useEffect(() => {
+    if (!lastCall) return;
+    if (lastCall.phase === "ended") {
+      call.current?.stop();
+      call.current = null;
+      brain.setMic(true);
+    } else if (!call.current) {
+      brain.setMic(false);
+      call.current = playCallAudio();
+    }
+  }, [lastCall, brain]);
 
   // A page reload (Vite reloads on every realtime.ts change, so on every git pull) used to leave Coldex asleep
   // until someone tapped again. Once woken, this tab wakes itself after a reload. If the browser blocks the

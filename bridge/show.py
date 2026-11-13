@@ -280,6 +280,18 @@ def tool_show_order() -> dict[str, Any]:
     return {"ok": True, **_order_event()}
 
 
+@router.post("/tools/call_courier")
+async def tool_call_courier() -> dict[str, Any]:
+    """Coldex phones the courier (part 6, bridge/courier.py). The kitchen plays both sides of the call."""
+    import courier
+    from fastapi import HTTPException
+
+    try:
+        return await courier.call()
+    except HTTPException as e:
+        return {"ok": False, "error": str(e.detail)}
+
+
 def nearby_shops() -> dict[str, Any]:
     """HACK(demo): the flat's nearest store of each chain, from OpenStreetMap, fixed in bridge/replay/stores.json."""
     saved = json.loads((bridge.ROOT / "replay" / "stores.json").read_text())
@@ -339,6 +351,13 @@ TOOLS = [
     bridge._fn(
         "show_order",
         "Show the order so far on the kitchen screen, for 'what's in my order?'. Returns the items and the total.",
+        {},
+    ),
+    bridge._fn(
+        "call_courier",
+        "Phone the Rohlík courier who is bringing the order. A second voice of yours talks to them, and the kitchen "
+        "hears both sides. Call it when they ask you to call the courier, after a few words like 'Calling the "
+        "courier now.' Then stay quiet until the call ends.",
         {},
     ),
     bridge._fn(

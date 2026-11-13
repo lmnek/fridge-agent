@@ -59,7 +59,9 @@ export function Kitchen(props: {
   const product = useFresh(events, "product", 9_000);
   const nearby = useFresh(events, "nearby", 14_000);
   const order = useFresh(events, "order", 12_000);
-  const quick = [product, nearby, order].filter(Boolean).sort((a, b) => (b?.ts ?? 0) - (a?.ts ?? 0))[0] ?? null;
+  const callTs = events.findLast((e) => e.type === "call")?.ts ?? 0; // a newer courier call wins over the quick cards
+  const newest = [product, nearby, order].filter(Boolean).sort((a, b) => (b?.ts ?? 0) - (a?.ts ?? 0))[0] ?? null;
+  const quick = newest && (newest.ts ?? 0) > callTs ? newest : null;
   const side = approval ? "approval" : quick ? "quick" : card === "PR" || card === "NB" ? "idle" : card;
 
   return (
