@@ -3,6 +3,7 @@
 // scaled up for the projector.
 import type { BusEvent } from "../bus";
 import { NearbyCard } from "../../kitchen/NearbyCard";
+import { OrderCard } from "../../kitchen/OrderCard";
 import { ProductCard } from "../../kitchen/ProductCard";
 import { latest } from "./ui";
 import "./QuickCards.css";
@@ -15,4 +16,10 @@ export function ProductQuick({ events }: { events: BusEvent[] }) {
 export function NearbyQuick({ events }: { events: BusEvent[] }) {
   const ev = latest(events, "nearby");
   return <div className="ck-quick is-nearby">{ev ? <NearbyCard key={ev.ts} ev={ev} /> : null}</div>;
+}
+
+export function OrderQuick({ events }: { events: BusEvent[] }) {
+  const ev = latest(events, "order");
+  // Not keyed per event (as on the kitchen page), so a new line slides in instead of the whole card remounting.
+  return <div className="ck-quick is-order">{ev ? <OrderCard ev={ev} /> : null}</div>;
 }

@@ -24,7 +24,7 @@ const DWELL_MS = 2600;
  */
 const BATCH_DWELL_MS = 1500;
 /** The quick answers (a price, the nearby shops) leave on their own after this long, as on the kitchen page. */
-const QUICK_MS: Partial<Record<PanelId, number>> = { PR: 9_000, NB: 14_000 };
+const QUICK_MS: Partial<Record<PanelId, number>> = { PR: 9_000, NB: 14_000, OR: 12_000 };
 const BATCH_GAP_MS = 1000;
 
 /**

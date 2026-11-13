@@ -17,6 +17,7 @@ const TITLES: Record<CardId, string> = {
   G: "Delivered",
   PR: "Price",
   NB: "Nearby shops",
+  OR: "Your order",
 };
 
 function placeholder(id: CardId): ComponentType<{ events: BusEvent[] }> {

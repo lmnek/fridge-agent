@@ -5,8 +5,9 @@
 import type { BusEvent } from "./bus";
 
 // Mirrors app/src/stage/cards/index.ts (part 2). Kept here so the panel builds before the cards land.
-// PR and NB are Honza's quick answers (kitchen/ProductCard, kitchen/NearbyCard): a price question and "what shops are nearby?".
-export type CardId = "B" | "C1" | "C2" | "C3" | "C4" | "DE" | "F" | "G" | "PR" | "NB";
+// PR, NB and OR are Honza's quick answers (kitchen/ProductCard, NearbyCard, OrderCard): a price question, "what shops are
+// nearby?" and "add <food> to my order" (add_to_order, a simulated order that never touches the real cart).
+export type CardId = "B" | "C1" | "C2" | "C3" | "C4" | "DE" | "F" | "G" | "PR" | "NB" | "OR";
 export type PanelId = CardId | "idle";
 /** The stage beat. The layout keys off the inset (`insetGone`), the beat only off what's forced and shown. */
 export type Beat = "A" | "B" | "C" | "DE" | "F" | "G" | "H";
@@ -61,6 +62,8 @@ export function cardFor(ev: BusEvent): PanelId | null {
       return "PR";
     case "nearby":
       return "NB";
+    case "order":
+      return "OR";
     case "cart":
       return "C4";
     case "approval":
@@ -89,7 +92,7 @@ export function latestCard(events: BusEvent[]): { card: PanelId; at: number; for
  * an idle later in the run (H, or idle after H) keeps the orb large.
  */
 export function beatFor(card: PanelId, events: BusEvent[]): Beat {
-  if (card === "PR" || card === "NB") return "C"; // a quick answer: the card layout, like C
+  if (card === "PR" || card === "NB" || card === "OR") return "C"; // a quick answer: the card layout, like C
   if (card !== "idle") return card === "B" ? "B" : card.startsWith("C") ? "C" : (card as Beat);
   for (let i = events.length - 1; i >= 0; i--) {
     const ev = events[i];

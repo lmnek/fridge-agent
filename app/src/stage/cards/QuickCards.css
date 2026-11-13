@@ -15,3 +15,6 @@
 .ck-quick.is-nearby > * {
   transform: scale(1.35);
 }
+.ck-quick.is-order > * {
+  transform: scale(1.35);
+}
