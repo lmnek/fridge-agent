@@ -25,6 +25,7 @@ from fastapi.responses import Response, StreamingResponse
 from pydantic import BaseModel
 
 import camera
+import courier
 import vision
 from rohlik import SAFE_TOOLS
 
@@ -342,6 +343,10 @@ vision.attach(
     ),
 )
 app.include_router(vision.router)
+
+# Beat F: the courier call (bridge/courier.py) publishes call phases and captions on the bus.
+courier.attach(emit=emit)
+app.include_router(courier.router)
 
 
 # --------------------------------------------------------------------------- Realtime session

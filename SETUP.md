@@ -33,6 +33,11 @@ The repo holds two apps that share nothing:
 | `REOLINK_USER` | no | Defaults to `admin`. |
 | `REOLINK_PASSWORD` | with `REOLINK_HOST` | The hub's local login password. |
 | `REOLINK_CHANNELS` | no | Defaults to `0,1`, the two Argus B310 cameras on the hub. |
+| `VISION_MODEL` | no | The model for beat B's vision call. Defaults to `gpt-5.5`. `VISION_EFFORT` defaults to `low`. |
+| `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN` | for the call | From the Twilio console. Without them only the fake call runs. |
+| `TWILIO_FROM` | for the call | The Twilio number in E.164 (`+1...` or `+420...`). It must be allowed to call Czech numbers. |
+| `COURIER_NUMBER` | for the call | The courier's phone in E.164. The bridge calls this number and no other. |
+| `PUBLIC_URL` | for the call | The Cloudflare tunnel address that reaches the bridge, for example `https://xyz.trycloudflare.com/api` when the tunnel points at the app on 5174. Twilio streams the call there. |
 | `DEMO_SEED` | no | `1` (default) seeds a few fridge items on first start. |
 | `DATA_DIR` | no | Defaults to `data/` in the repo root. Delete `data/state.json` with the bridge stopped to reset the fridge. |
 
@@ -57,6 +62,8 @@ registration, scopes `openid email roles`. The quickest way to get a token by ha
 3. Open the auth settings, run the Quick OAuth Flow and log in with the household's Rohlík account.
 4. Copy the access token into `bridge/.env` as `ROHLIK_TOKEN=...`.
 
+Check it with `cd bridge && uv run python rohlik.py status` (validity and expiry time) and
+`uv run python rohlik.py tools` (the server's tools, with the ones Coldex may use marked SAFE).
 Unknown so far: how long the token lives and whether a refresh token is issued. If OpenAI rejects the
 MCP setup, the bridge falls back to the fake cart and the app shows "Rohlík MCP rejected". We have a Rohlík pro account, so there's no minimum order.
 
@@ -68,6 +75,16 @@ MCP setup, the bridge falls back to the fake cart and the app shows "Rohlík MCP
 3. The B310 cameras need current firmware before the hub accepts them.
 4. Set `REOLINK_HOST`, `REOLINK_USER` and `REOLINK_PASSWORD`. The hub, the cameras and the laptop must
    be on the same network. Venue Wi-Fi often isolates clients, so bring a travel router.
+
+### Twilio and the tunnel (courier call)
+
+1. In the Twilio console, copy the Account SID and Auth Token, and buy or pick a number. Under Voice
+   Geographic Permissions, allow calls to the Czech Republic.
+2. A trial account can only call verified numbers, so verify the courier's number or upgrade.
+3. Start a quick tunnel to the app: `brew install cloudflared`, then
+   `cloudflared tunnel --url http://localhost:5174`. Put the printed address plus `/api` into `PUBLIC_URL`.
+   The address changes on every start, so restart the bridge after updating it.
+4. Test without a phone: `curl -X POST localhost:8100/courier/fake` plays a scripted call on the bus.
 
 ## Run and verify
 

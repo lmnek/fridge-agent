@@ -40,6 +40,20 @@ A Twilio account with a number that can call Czech phone numbers, the Cloudflare
 2. The audio fork to a WebSocket, and playback on stage (together with part 1).
 3. The `call` events and both-sides captions.
 
+## Built (13. 11., Honza)
+
+Decided: option 2, Twilio Media Streams connected to OpenAI Realtime. The bridge holds both sides of the call,
+so the stage audio and the captions for both sides come from one place. Code: `bridge/courier.py`, the prompt
+in `bridge/memory/courier.md`, tests in `bridge/test_courier.py`, stage playback in `app/src/stage/callAudio.ts`.
+
+- `POST /api/courier/call` is the F hotkey. It calls `COURIER_NUMBER` and no other number.
+- `POST /api/courier/hangup` ends the call. Coldex also hangs up by itself once its goodbye has played.
+- `POST /api/courier/fake` plays a scripted call through the same `call` and `caption` events (HACK(demo)).
+- `call` events: `phase` (dialing, ringing, answered, ended), `number` (masked). `caption` events: `who`
+  (coldex, courier), `id`, `text` so far, `final`.
+- For the stage, part 1 calls `playCallAudio()` from the hotkey handler and uses `level()` for the orb.
+- Setup: the Twilio and tunnel steps in `SETUP.md`. It hasn't run against Twilio yet.
+
 ## Fake mode
 
 A recorded call (audio plus transcript) replayed through the same card. Honza texts the courier the cue.

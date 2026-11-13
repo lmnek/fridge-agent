@@ -7,8 +7,10 @@ export default defineConfig({
   plugins: [react()],
   server: {
     port: 5174,
+    allowedHosts: [".trycloudflare.com"], // the Cloudflare quick tunnel for the stage and Twilio
     proxy: {
-      "/api": { target: bridge, changeOrigin: true, rewrite: (p) => p.replace(/^\/api/, "") },
+      // ws: the courier call's audio (Twilio in, the stage out) goes through the same proxy
+      "/api": { target: bridge, changeOrigin: true, ws: true, rewrite: (p) => p.replace(/^\/api/, "") },
     },
   },
 });
