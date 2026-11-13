@@ -1,33 +1,43 @@
-.ck-checkout-wrap { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 18px; }
-.ck-checkout-browser { flex: 1; min-height: 0; display: flex; flex-direction: column; border: 1.5px solid var(--ck-edge); border-radius: var(--ck-r-inner); overflow: hidden; }
-.ck-checkout-bar { display: flex; align-items: center; gap: 10px; padding: 12px 16px; background: var(--ck-sunk); border-bottom: 1px solid var(--ck-line); }
-.ck-checkout-ctl { width: 12px; height: 12px; border-radius: 50%; border: 1.5px solid var(--ck-faint); }
-.ck-checkout-url { flex: 1; margin-left: 10px; display: flex; align-items: center; gap: 10px; padding: 6px 16px; border: 1px solid var(--ck-line); border-radius: var(--ck-r-chip); background: var(--ck-bg); font-size: var(--ck-t-label); color: var(--ck-ink); }
-.ck-checkout-lock { width: 10px; height: 12px; border-radius: 2px; background: var(--ck-faint); }
-.ck-checkout-view { flex: 1; min-height: 0; background: var(--ck-sunk); display: flex; }
-.ck-checkout-video { width: 100%; height: 100%; object-fit: contain; }
+/* D/E: a solid browser window (chrome bar, address, a thin page-load line), the fast-forward line under it. */
+.ck-checkout-wrap { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 20px; }
+.ck-checkout-browser { flex: 1; min-height: 0; display: flex; flex-direction: column; border: 1.5px solid var(--ck-edge); border-radius: var(--ck-r-inner); overflow: hidden; background: var(--ck-bg); }
+.ck-checkout-bar { display: flex; align-items: center; gap: 10px; padding: 14px 16px 14px 20px; background: var(--ck-sunk); }
+.ck-checkout-ctl { flex: none; width: 14px; height: 14px; border-radius: 50%; background: var(--ck-line); }
+.ck-checkout-url { flex: 1; min-width: 0; margin-left: 14px; display: flex; align-items: center; gap: 12px; height: 48px; padding: 0 18px; border: 1px solid var(--ck-line); border-radius: var(--ck-r-chip); background: var(--ck-bg); font-size: 22px; color: var(--ck-ink); white-space: nowrap; }
+.ck-checkout-lock { flex: none; width: 18px; height: 18px; color: var(--ck-ok); }
+.ck-checkout-path { color: var(--ck-slate); }
+.ck-checkout-load { height: 4px; background: var(--ck-line); }
+.ck-checkout-load i { display: block; height: 100%; background: var(--ck-lamp); transition: width 0.5s ease-out; }
+.ck-checkout-view { flex: 1; min-height: 0; display: flex; background: var(--ck-bg); }
+/* contain: the whole page stays visible, nothing cut; the white around it is the page's own white. */
+.ck-checkout-video { display: block; width: 100%; height: 100%; object-fit: contain; background: var(--ck-bg); }
 
-.ck-checkout-fake { flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 30px; padding: 0 48px; background: var(--ck-bg); }
-.ck-checkout-fake-line { margin: 0; font-family: "Barlow Semi Condensed", sans-serif; font-size: 38px; font-weight: 600; line-height: 1.1; }
-.ck-checkout-fake-steps { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 14px; }
-.ck-checkout-fake-steps li { display: flex; align-items: center; gap: 16px; font-size: var(--ck-t-body); color: var(--ck-slate); }
-.ck-checkout-fake-mark { width: 18px; height: 18px; border-radius: 50%; border: 2px solid currentColor; box-sizing: border-box; }
-.ck-checkout-fake-steps li.is-done { color: var(--ck-ink); }
-.ck-checkout-fake-steps li.is-done .ck-checkout-fake-mark { background: var(--ck-ok); border-color: var(--ck-ok); }
-.ck-checkout-fake-steps li.is-active { color: var(--ck-lamp); }
-.ck-checkout-fake-steps li.is-active .ck-checkout-fake-mark { border-color: var(--ck-lamp); animation: ck-pulse 1.2s ease-in-out infinite; }
-.ck-checkout-fake-bar { height: 4px; background: var(--ck-line); border-radius: 2px; overflow: hidden; }
-.ck-checkout-fake-bar i { display: block; height: 100%; background: var(--ck-lamp); }
+/* HACK(demo) fallback: the checkout as four steps, name left, value right, on one 88 px row grid. */
+.ck-checkout-steps { flex: 1; margin: 0; padding: 16px 32px; list-style: none; display: flex; flex-direction: column; justify-content: center; }
+.ck-checkout-steps li { display: grid; grid-template-columns: 40px 1fr auto; align-items: center; column-gap: 24px; height: 88px; border-bottom: 1px solid var(--ck-line); font-size: var(--ck-t-body); color: var(--ck-faint); }
+.ck-checkout-steps li:last-child { border-bottom: 0; }
+.ck-checkout-mark { display: grid; place-items: center; width: 40px; height: 40px; box-sizing: border-box; border-radius: 50%; border: 2px solid var(--ck-line); }
+.ck-checkout-mark-tick { width: 24px; height: 24px; }
+.ck-checkout-step-name { font-family: "Barlow Semi Condensed", "Barlow", sans-serif; font-size: 34px; font-weight: 600; }
+.ck-checkout-step-value { text-align: right; }
+.ck-checkout-steps li.is-done { color: var(--ck-ink); }
+.ck-checkout-steps li.is-done .ck-checkout-mark { border-color: var(--ck-ok); background: var(--ck-ok); color: var(--ck-bg); }
+.ck-checkout-steps li.is-done .ck-checkout-step-value { color: var(--ck-mute); }
+.ck-checkout-steps li.is-active { color: var(--ck-lamp); }
+.ck-checkout-steps li.is-active .ck-checkout-mark { border: 3px solid var(--ck-lamp); animation: ck-pulse 1.2s ease-in-out infinite; }
+.ck-checkout-steps li.is-active .ck-checkout-step-value { color: var(--ck-ink); font-weight: 500; }
 
-.ck-checkout-ff { display: flex; justify-content: space-between; align-items: baseline; color: var(--ck-slate); font-size: var(--ck-t-label); }
-.ck-checkout-ff-speed { font-weight: 500; }
-.ck-checkout-ff-clock { font-size: var(--ck-t-body); color: var(--ck-ink); font-variant-numeric: tabular-nums; }
+.ck-checkout-ff { display: flex; justify-content: space-between; align-items: center; padding: 0 4px; }
+.ck-checkout-ff-speed { display: flex; align-items: center; gap: 12px; color: var(--ck-lamp); font-family: "Barlow Semi Condensed", "Barlow", sans-serif; font-size: var(--ck-t-body); font-weight: 600; }
+.ck-checkout-ff-speed svg { width: 24px; height: 24px; }
+.ck-checkout-ff-clock { font-size: var(--ck-t-body); font-weight: 500; color: var(--ck-ink); }
 
+/* Placed: the total paid, then the two confirmations. */
 .ck-checkout-done { flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 40px; padding-bottom: 24px; }
-.ck-checkout-receipt { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; padding: 4px 0 32px; border-bottom: 1px solid var(--ck-line); }
-.ck-checkout-receipt-total { font-family: "Barlow Semi Condensed", sans-serif; font-size: 96px; font-weight: 600; line-height: 0.9; letter-spacing: -0.01em; }
-.ck-checkout-receipt-note { color: var(--ck-slate); font-size: var(--ck-t-label); text-align: right; line-height: 1.4; }
+.ck-checkout-receipt { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; padding-bottom: 36px; border-bottom: 1px solid var(--ck-line); }
+.ck-checkout-receipt-total { font-family: "Barlow Semi Condensed", sans-serif; font-size: 112px; font-weight: 600; line-height: 0.85; letter-spacing: -0.015em; }
+.ck-checkout-receipt-note { color: var(--ck-mute); font-size: 22px; text-align: right; line-height: 1.4; }
 .ck-checkout-row { display: flex; align-items: center; gap: 28px; }
-.ck-checkout-tick { flex: none; width: 80px; height: 80px; padding: 17px; box-sizing: border-box; border-radius: 50%; background: var(--ck-ok-soft); color: var(--ck-ok); }
-.ck-checkout-row-t { margin: 0; font-family: "Barlow Semi Condensed", sans-serif; font-size: var(--ck-t-title); font-weight: 600; line-height: 1.05; }
-.ck-checkout-row-s { margin: 4px 0 0; color: var(--ck-slate); font-size: var(--ck-t-body); }
+.ck-checkout-tick { flex: none; width: 80px; height: 80px; padding: 18px; box-sizing: border-box; border-radius: 50%; background: var(--ck-ok-soft); color: var(--ck-ok); }
+.ck-checkout-row-t { margin: 0; font-family: "Barlow Semi Condensed", sans-serif; font-size: 46px; font-weight: 600; line-height: 1.05; }
+.ck-checkout-row-s { margin: 4px 0 0; color: var(--ck-mute); font-size: var(--ck-t-body); }
