@@ -49,8 +49,12 @@ from A to H. If the audio fails, the text still carries the story.
 
 ## Stage view (`app/src/stage/`, see [handoffs](handoffs/README.md))
 
-- Layout: the speaking orb on the left, the side panel on the right, and the fridge's-eye view as a large inset
-  in B that fades out once the door closes.
+- Layout: the orb is the hero, big and dead centre with the subtitles under it, whenever nothing else shows
+  (A, H). When a card or the fridge camera shows, the orb glides to the centre of the left half and stays big,
+  and the card takes the right half. The camera takes that slot from B on and fades out for good when the
+  door closes, and the B card rises in its place. The presenter presses 2 at "Let's watch it work" to bring
+  the camera up, and it also comes up by itself once the kitchen speaks. Other camera placements:
+  `/stage?layout=b` (a small picture-in-picture, the orb stays centred) and `layout=c` (the camera from A on).
 - **The side panel follows the agent's tool calls, not a script.** Every tool call goes onto the bridge's event bus, so the panel switches cards based on which tool is running. It stays truthful and adds no latency.
 - **The B card shows the vision pipeline live:** the captured frame, an "analysing" state, the detection boxes,
   then the diff ("milk: out, eggs: out").
