@@ -32,7 +32,7 @@ type Approval =
   | { kind: "mcp"; id: string; name: string; args: string };
 
 const STATUS_TEXT: Record<Status, string> = {
-  off: "Tap the light to wake me",
+  off: "Tap the ice to wake me",
   connecting: "Waking up",
   listening: "Listening",
   thinking: "Thinking",
@@ -165,7 +165,7 @@ export default function App() {
   return (
     <div className="screen">
       <header className="top">
-        <span className="mark">fridge</span>
+        <span className="mark">Coldex</span>
         <button type="button" className="peek" onClick={() => void look()} title="Look inside now (L)">
           {peek ? <img src={peek.src} alt="Last camera frame" /> : <span className="peek-empty" aria-hidden />}
           <span className="peek-text">{peek ? `Looked ${ago(peek.at)}` : "Look inside"}</span>
@@ -221,7 +221,7 @@ function ApprovalCard({ approval, onDecide }: { approval: Approval; onDecide: (o
     return (
       <div className="card">
         <h3>Rohlík needs your yes</h3>
-        <p className="card-lead">The fridge wants to run {approval.name.replaceAll("_", " ")}.</p>
+        <p className="card-lead">Coldex wants to run {approval.name.replaceAll("_", " ")}.</p>
         <pre className="args">{prettyArgs(approval.args)}</pre>
         <div className="actions">
           <button type="button" className="primary" onClick={() => onDecide(true)}>
