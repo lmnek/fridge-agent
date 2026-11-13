@@ -107,9 +107,15 @@ SAMPLE: dict[str, Any] = {
 }
 
 
+SAVED = bridge.ROOT / "replay" / "deals.json"  # part 8's committed scrape
+
+
 def deals() -> dict[str, Any]:
-    path = bridge.DATA_DIR / "deals.json"
-    return json.loads(path.read_text()) if path.exists() else SAMPLE
+    """Part 8's scrape (bridge/deals.py), else its committed copy, else the sample."""
+    for path in (bridge.DATA_DIR / "deals.json", SAVED):
+        if path.exists():
+            return json.loads(path.read_text())
+    return SAMPLE
 
 
 def deals_markdown() -> str:

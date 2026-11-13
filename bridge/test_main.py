@@ -108,8 +108,12 @@ def test_bus_carries_tool_calls_and_published_events():
     assert {"type": "caption", "who": "actor", "text": "Ugh, again.", "kind": "final"} in events
 
 
-def test_show_cart_and_shops_publish_the_table_shapes():
+def test_show_cart_and_shops_publish_the_table_shapes(monkeypatch):
     import asyncio
+
+    import show
+
+    monkeypatch.setattr(show, "SAVED", main.DATA_DIR / "no-scrape.json")  # the sample, not part 8's saved scrape
 
     queue: asyncio.Queue[str] = asyncio.Queue()
     main._subscribers.add(queue)
