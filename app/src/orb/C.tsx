@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import { ACTIVE, clonePalette, IDLE, mixPalette, mixRgb, rgb, rgba } from "./c/palette";
+import { ACTIVE, clonePalette, IDLE, mixAwake, mixPalette, mixRgb, rgb, rgba } from "./c/palette";
 import { createLife } from "./c/life";
 import type { OrbVariantProps } from "./types";
 
@@ -141,6 +141,10 @@ export default function OrbC({ status, levels }: OrbVariantProps) {
     const active = spring(0); // 0 idle grey ice .. 1 awake ice blue: crossfades the palette
     const wake = spring(0); // the same, but faster: the highlights light up before the colour floods in
     const pal = clonePalette(IDLE);
+    // per-state character, eased slowly so every state change is a long crossfade: the awake colour
+    // (deep: thinking, bright: speaking) and the base motion each state settles into
+    const awakePal = clonePalette(ACTIVE), deepK = spring(0), brightK = spring(0);
+    const spinB = spring(0.07), flowB = spring(0.045), twistB = spring(0.45), lightB = spring(0.45);
     const life = createLife(EDGES, N); // depth colour, travelling waves, edge tracers (c/life.ts)
     let shadowKey = "", shadowGrad: CanvasGradient | null = null;
     let lvlIn = 0, lvlOut = 0, slowOut = 0;
@@ -289,36 +293,47 @@ export default function OrbC({ status, levels }: OrbVariantProps) {
       const st = statusRef.current;
       const lv = levels();
 
-      // levels: fast attack, slower release. Listening hears the mic only, speaking hears Coldex only.
+      // levels: fast attack, slower release. Listening hears the mic only, speaking hears Coldex only. When
+      // the state moves on, a level drains over ~0.7 s instead of dropping with the voice's own release.
       const tin = st === "listening" ? Math.min(1, lv.input) : 0;
       const tout = st === "speaking" ? Math.min(1, lv.output) : 0;
-      lvlIn += (tin - lvlIn) * (1 - Math.exp(-dt / (tin > lvlIn ? 0.06 : 0.25)));
-      lvlOut += (tout - lvlOut) * (1 - Math.exp(-dt / (tout > lvlOut ? 0.06 : 0.25)));
+      lvlIn += (tin - lvlIn) * (1 - Math.exp(-dt / (tin > lvlIn ? 0.06 : st === "listening" ? 0.25 : 0.7)));
+      lvlOut += (tout - lvlOut) * (1 - Math.exp(-dt / (tout > lvlOut ? 0.06 : st === "speaking" ? 0.25 : 0.7)));
       slowOut += (lvlOut - slowOut) * (1 - Math.exp(-dt / 0.45));
       const stress = Math.min(1.2, Math.max(0, lvlOut - slowOut) * 3.4);
 
-      // per-state motion targets. off: asleep, slow and dim. connecting: a quick searching spin that
-      // shimmers. listening: still, leans in with the mic. thinking: flows inward and breathes light.
-      // speaking: driven by Coldex's voice.
-      let tSpin = 0.07, tFlow = 0.045, tTwist = 0.45, tLight = 0.45, tLean = 0;
-      if (st === "connecting") { tSpin = 0.95; tFlow = 0.26; tTwist = 0.9; tLight = 0.8 + Math.sin(t * 5.2) * 0.12; }
-      else if (st === "listening") { tSpin = 0.13 + lvlIn * 0.08; tFlow = 0.07 + lvlIn * 0.06; tTwist = 0.58 + lvlIn * 0.15; tLight = 0.88 + lvlIn * 0.7; tLean = lvlIn; }
-      else if (st === "thinking") { tSpin = 0.3; tFlow = -0.4; tTwist = 1; tLight = 0.82 + Math.sin(t * 2.4) * 0.1; }
-      else if (st === "speaking") { tSpin = 0.2 + lvlOut * 1.2; tFlow = 0.1 + lvlOut * 0.28; tTwist = 0.62 + lvlOut * 0.45; tLight = 0.95 + lvlOut * 0.8; }
+      // per-state motion. Each state sets a base (spin, flow, twist, light) that glides there on a slow,
+      // nearly critically damped spring (~1.5 s, a whisper of overshoot, so a change feels springy but
+      // never bounces); the live mic / voice level rides on top through the faster springs below.
+      // off: asleep, slow and dim. connecting: a quick searching spin that shimmers. listening: still,
+      // leans in with the mic. thinking: flows inward and breathes light. speaking: driven by Coldex.
+      let bSpin = 0.07, bFlow = 0.045, bTwist = 0.45, bLight = 0.45, tDeep = 0, tBright = 0, shimmer = 0;
+      if (st === "connecting") { bSpin = 0.95; bFlow = 0.26; bTwist = 0.9; bLight = 0.8; shimmer = Math.sin(t * 5.2) * 0.12; tBright = 0.3; }
+      else if (st === "listening") { bSpin = 0.13; bFlow = 0.07; bTwist = 0.58; bLight = 0.88; }
+      else if (st === "thinking") { bSpin = 0.3; bFlow = -0.4; bTwist = 1; bLight = 0.8; shimmer = Math.sin(t * 2.4) * 0.1; tDeep = 1; }
+      else if (st === "speaking") { bSpin = 0.2; bFlow = 0.1; bTwist = 0.62; bLight = 0.95; tBright = 0.55; }
       const awake = st !== "off";
-      // motion springs: soft enough that a state change glides (flow reverses smoothly into thinking)
-      step(spin, tSpin, dt, 5, 0.85);
-      step(flow, tFlow, dt, 6, 0.8);
-      step(twist, tTwist, dt, 6, 0.7);
-      step(light, tLight, dt, awake ? 30 : 6, awake ? 0.55 : 0.9);
-      step(lean, tLean, dt, 40, 0.5);
+      step(spinB, bSpin, dt, 2.6, 0.92);
+      step(flowB, bFlow, dt, 2.2, 0.95); // the flow reversal into thinking takes ~1.8 s
+      step(twistB, bTwist, dt, 2.4, 0.92);
+      step(lightB, bLight, dt, awake ? 5 : 2.2, awake ? 0.9 : 1);
+      step(deepK, tDeep, dt, 2.2, 1);
+      step(brightK, tBright + lvlOut * 0.45, dt, 7, 1);
+      // live layer: the level terms, fast and lightly damped so the voice still kicks
+      step(spin, spinB.x + lvlIn * 0.08 + lvlOut * 1.2, dt, 6, 0.9);
+      step(flow, flowB.x + lvlIn * 0.06 + lvlOut * 0.28, dt, 8, 0.9);
+      step(twist, twistB.x + lvlIn * 0.15 + lvlOut * 0.45, dt, 8, 0.85);
+      step(light, lightB.x + shimmer + lvlIn * 0.7 + lvlOut * 0.8, dt, 30, 0.8);
+      step(lean, lvlIn, dt, 40, 0.6);
       step(pulse, stress, dt, 120, 0.45);
-      // waking: light first (~0.4 s), then the colour floods in (~1.2 s), both critically damped. Falling
-      // asleep is slower (~2 s) and the colour drains before the light.
-      step(wake, awake ? 1 : 0, dt, awake ? 36 : 5, 1);
-      step(active, awake ? 1 : 0, dt, awake ? 9 : 4, 1);
+      // waking: the ice lights up first (~0.5 s), then the colour floods in (~1.3 s), both critically
+      // damped. Falling asleep is slower: the colour drains first (~2 s), the light follows (~2.6 s).
+      step(wake, awake ? 1 : 0, dt, awake ? 30 : 2.4, 1);
+      step(active, awake ? 1 : 0, dt, awake ? 8 : 3.6, 1);
       const ax = Math.min(1, Math.max(0, active.x)), wx = Math.min(1, Math.max(0, wake.x));
-      mixPalette(pal, IDLE, ACTIVE, ax * ax * (3 - 2 * ax), wx);
+      const dk = Math.min(1, Math.max(0, deepK.x)), bk = Math.min(1, Math.max(0, brightK.x));
+      mixAwake(awakePal, dk * dk * (3 - 2 * dk), bk * bk * (3 - 2 * bk));
+      mixPalette(pal, IDLE, awakePal, ax * ax * (3 - 2 * ax), wx);
 
       yaw += spin.x * dt;
       phase += (flow.x + Math.max(0, pulse.x) * 0.9) * dt;
