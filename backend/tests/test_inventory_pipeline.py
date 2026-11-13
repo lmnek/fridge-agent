@@ -120,3 +120,10 @@ async def test_manual_changes_do_not_come_back_as_camera_changes(services):
     assert any("Hořčice" in t for t in titles), "skutečná změna se pořád hlásí"
     assert next(i for i in services.inventory.list() if i.canonical == "kecup").fill_level == 0.17
     assert not any(i.canonical == "pivo" for i in services.inventory.list())
+
+
+async def test_small_but_clear_change_is_noticed(services):
+    """Úzká bílá lahev kefíru na bílých dveřích mění jen pár buněk mřížky, ale výrazně."""
+    await seed_demo(services)
+    await services.cameras.simulate("take", "kefir")
+    assert not any(i.canonical == "kefir" for i in services.inventory.list())

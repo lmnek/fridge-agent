@@ -42,24 +42,30 @@ def changed_regions(
     *,
     threshold: float = 0.08,
     min_cells: int = 4,
+    strong: float = 0.3,
+    min_strong_cells: int = 2,
 ) -> list[BBox]:
     """Vrátí obdélníky (normalizované 0..1), kde se snímky liší.
 
     Snímky se nejdřív srovnají na stejný průměrný jas, aby změna osvětlení
     (otevřené dveře, ranní slunce) nevypadala jako pohyb všech věcí.
+    Malá oblast (česnek, úzká lahev kefíru) stačí, když je změna v ní výrazná (`strong`).
     """
     if prev_jpeg is None:
         return []
     a, b = to_rgb(prev_jpeg), to_rgb(new_jpeg)
     a = a - a.mean(axis=(0, 1)) + b.mean(axis=(0, 1))
     # barevně, ne v odstínech šedi: oranžový džus a prázdná lahev mají skoro stejný jas
-    mask = np.abs(a - b).max(axis=2) > threshold
-    if mask.sum() < min_cells:
+    diff = np.abs(a - b).max(axis=2)
+    mask = diff > threshold
+    if mask.sum() < min_strong_cells:
         return []
-    return _components(mask, min_cells=min_cells)
+    return _components(mask, diff, min_cells=min_cells, strong=strong, min_strong_cells=min_strong_cells)
 
 
-def _components(mask: np.ndarray, *, min_cells: int) -> list[BBox]:
+def _components(
+    mask: np.ndarray, diff: np.ndarray, *, min_cells: int, strong: float, min_strong_cells: int
+) -> list[BBox]:
     """Spojité oblasti v masce (4-sousedství) -> obalové obdélníky."""
     h, w = mask.shape
     seen = np.zeros_like(mask, dtype=bool)
@@ -79,7 +85,7 @@ def _components(mask: np.ndarray, *, min_cells: int) -> list[BBox]:
                     if 0 <= ny < h and 0 <= nx < w and mask[ny, nx] and not seen[ny, nx]:
                         seen[ny, nx] = True
                         stack.append((ny, nx))
-            if len(ys) < min_cells:
+            if len(ys) < min_cells and not (len(ys) >= min_strong_cells and diff[ys, xs].max() >= strong):
                 continue
             x0, x1, y0, y1 = min(xs), max(xs) + 1, min(ys), max(ys) + 1
             boxes.append(BBox(x=x0 / w, y=y0 / h, w=(x1 - x0) / w, h=(y1 - y0) / h))
