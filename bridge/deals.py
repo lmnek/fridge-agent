@@ -113,6 +113,9 @@ def key(chain: str) -> str:
 # --------------------------------------------------------------------------- Rohlík
 
 
+LIVE: dict[str, float] = {}  # product ID -> today's Rohlík price per pack, for show_cart
+
+
 async def rohlik_prices() -> list[dict[str, Any]]:
     picks = {row["Item"]: int(row["Product ID"]) for row in read_products() if row.get("Product ID", "").isdigit()}
     async with Rohlik() as r:
@@ -122,6 +125,8 @@ async def rohlik_prices() -> list[dict[str, Any]]:
         )
     products = reply if isinstance(reply, list) else list(reply.values())  # {"1468577": {...}, ...}
     by_id = {p["productId"]: p for p in products if isinstance(p, dict) and "productId" in p}
+    LIVE.clear()
+    LIVE.update({str(pid): p["prices"].get("salePrice") or p["prices"]["originalPrice"] for pid, p in by_id.items()})
     out = []
     for item in ITEMS:
         p = by_id.get(picks.get(item.name))
@@ -282,6 +287,7 @@ async def scrape(keep: bool = True) -> dict[str, Any]:
         "home": ",".join(str(v) for v in HOME),
         "stores": [{"name": "Rohlík", "distance_m": None, "delivery_min": DELIVERY_MIN}, *stores],
         "items": [],
+        "rohlik_prices": dict(LIVE),
     }
     shown = [d for d in shops if d["store"] in names]
     rows = {d["item"] for d in shown}  # only the rows a shop has a price for, the card stays short

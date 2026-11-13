@@ -36,7 +36,6 @@ Add these to every order: Greek yogurt and bananas.
 
 ## Shops
 
-- Lidl, 400 m away, about a 5-minute walk.
-- Albert, 700 m away.
+- The nearby shops and their distances are under "Today's deals" (OpenStreetMap, scraped today).
 - Rohlík delivers within the hour. On a cooking night nobody wants to go out, so Rohlík wins unless
   someone is already heading to the shop.

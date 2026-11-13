@@ -9,13 +9,14 @@ Event shapes: docs/handoffs/README.md.
 from __future__ import annotations
 
 import json
+import time
 from typing import Any
 
-from fastapi import APIRouter
+from fastapi import APIRouter, BackgroundTasks
 from pydantic import BaseModel
 
 import main as bridge  # main imports this module after emit and STATE exist
-from rohlik import _num, read_products
+from rohlik import _num, read_products, set_cart
 
 router = APIRouter()
 
@@ -45,12 +46,17 @@ def _pick(name: str) -> dict[str, str]:
     return (exact or near or [{}])[0]
 
 
+def _live(pick: dict[str, str]) -> float | None:
+    """Today's Rohlík price for a pick from part 8's scrape (bridge/deals.py), so the card matches the real cart."""
+    return deals().get("rohlik_prices", {}).get(_col(pick, "product id"))
+
+
 def _col(row: dict[str, str], prefix: str) -> str:
     return next((v for k, v in row.items() if k.lower().startswith(prefix)), "")
 
 
 @router.post("/tools/show_cart")
-def tool_show_cart(cart: Cart) -> dict[str, Any]:
+def tool_show_cart(cart: Cart, background: BackgroundTasks) -> dict[str, Any]:
     """The model sends names, quantities and reasons. Prices and pictures come from the picks, so its call is short
     (C's silent step before the narration) and a pick's price can't drift."""
     items = []
@@ -60,7 +66,7 @@ def tool_show_cart(cart: Cart) -> dict[str, Any]:
             {
                 "name": line.name,
                 "qty": line.qty if line.qty is not None else (_num(_col(pick, "qty")) or 1),
-                "price_czk": _num(_col(pick, "price")) if pick else (line.price_czk or 0),
+                "price_czk": _live(pick) or _num(_col(pick, "price")) if pick else (line.price_czk or 0),
                 "reason": line.reason,
                 "image_url": _col(pick, "image").strip("<>"),
             }
@@ -70,7 +76,25 @@ def tool_show_cart(cart: Cart) -> dict[str, Any]:
     bridge.STATE["cart"] = items
     bridge.save()
     bridge.emit("cart", items=items, total_czk=total)
+    if bridge.ROHLIK_TOKEN:  # part 5: the real cart, filled by the bridge after this reply, so nobody waits on it
+        picks = [(_col(_pick(i["name"]), "product id"), max(1, round(i["qty"]))) for i in items]
+        background.add_task(fill_rohlik, [(int(pid), qty) for pid, qty in picks if pid.isdigit()])
     return {"ok": True, "total_czk": total}
+
+
+async def fill_rohlik(lines: list[tuple[int, int]]) -> None:
+    """Puts show_cart's items with a product pick into the real Rohlík cart. The model never has to call
+    add_items_to_cart, which it skipped in the 15:00 rehearsal, and the order turn has no MCP round for it."""
+    t0 = time.monotonic()
+    try:
+        res = await set_cart(lines)
+    except Exception as e:  # the narration already ran, so only the stage hears about it
+        print(f"[rohlik] filling the real cart failed: {e}")
+        bridge.emit("rohlik_cart", ok=False, error=str(e)[:300])
+        return
+    seconds = round(time.monotonic() - t0, 1)
+    print(f"[rohlik] real cart: {res['products']} products, {res['total_czk']} Kč, filled in {seconds} s")
+    bridge.emit("rohlik_cart", ok=True, seconds=seconds, **res)
 
 
 # --------------------------------------------------------------------------- deals (C3)
@@ -127,7 +151,12 @@ def deals_markdown() -> str:
         for i in d["items"]
         if i.get("was_czk")
     ]
-    return "# Today's deals\n\nScraped prices around the flat. On sale today:\n\n" + "\n".join(sales or ["- nothing"])
+    shops = ", ".join(f"{s['name']} {s['distance_m']} m" for s in d["stores"] if s.get("distance_m") is not None)
+    return (
+        "# Today's deals\n\nScraped prices around the flat. On sale today:\n\n"
+        + "\n".join(sales or ["- nothing"])
+        + (f"\n\nNearest shops: {shops}. Rohlík delivers within the hour." if shops else "")
+    )
 
 
 @router.post("/tools/show_shops")
@@ -136,7 +165,8 @@ def tool_show_shops(shops: Shops) -> dict[str, Any]:
     bridge.emit("deals", **d, choice=shops.choice, why=shops.why)
     # The prices back to the model too, so "how much are eggs today?" gets an answer and not only a card.
     prices = [{k: i.get(k) for k in ("item", "store", "price_czk", "was_czk")} for i in d["items"]]
-    return {"ok": True, "shown": True, "scraped_at": d.get("scraped_at"), "prices": prices}
+    stores = [{"name": st["name"], "distance_m": st.get("distance_m")} for st in d["stores"]]  # the real nearest shop
+    return {"ok": True, "shown": True, "scraped_at": d.get("scraped_at"), "stores": stores, "prices": prices}
 
 
 TOOLS = [

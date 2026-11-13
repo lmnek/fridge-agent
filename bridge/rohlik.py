@@ -265,6 +265,35 @@ async def cmd_fill() -> None:
     print("Only a person can complete the order on rohlik.cz.")
 
 
+def _quantities(cart: Any) -> dict[int, int]:
+    """Product ID -> quantity in a get_cart reply."""
+    out: dict[int, int] = {}
+    for p in _products_of(cart):
+        pid = p.get("productId") or p.get("product_id") or p.get("id")
+        qty = p.get("quantity") or p.get("amount") or p.get("count")
+        if pid is not None and qty is not None:
+            out[int(pid)] = int(qty)
+    return out
+
+
+async def set_cart(lines: list[tuple[int, int]]) -> dict[str, Any]:
+    """Makes the real cart hold exactly these quantities, other products stay. Repeating it doesn't double
+    anything, so a second show_cart or the model's own add_items_to_cart is harmless. Never orders."""
+    async with Rohlik() as r:
+        have = _quantities(await r.call("get_cart"))
+        add = [{"productId": pid, "quantity": q} for pid, q in lines if pid not in have]
+        if add:
+            await r.call("add_items_to_cart", {"items": add})
+        for pid, q in lines:
+            if pid in have and have[pid] != q:
+                await r.call("update_cart_item", {"product_id": pid, "quantity": q})
+        cart = await r.call("get_cart")
+        link = await r.call("get_checkout_link")
+    data = cart.get("data", {}) if isinstance(cart, dict) else {}
+    url = link.get("checkout_link") if isinstance(link, dict) else str(link)
+    return {"total_czk": data.get("totalPrice"), "checkout_url": url, "products": len(_quantities(cart))}
+
+
 def main() -> None:
     cmd, *rest = sys.argv[1:] or ["status"]
     rest = [a for a in rest if not a.startswith("-")]
