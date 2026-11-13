@@ -22,7 +22,7 @@ type Item = { id: string; name: string; qty?: string; expires?: string };
 
 /** A card leaves this long after the last event that asked for one. */
 const IDLE_MS = 40_000;
-/** The stage cards are drawn for an 860x920 box on the projector; the side scales that box to fit. */
+/** The stage cards are drawn for an 800x800 box on the projector; the side scales that box to fit. */
 const CARD_W = 800;
 const CARD_H = 800;
 
@@ -139,7 +139,7 @@ function useKitchenCard() {
   return { card: fresh ? shown : ("idle" as const), events: bus };
 }
 
-/** Scales the stage's 860x920 card box to whatever the side has, centred. */
+/** Scales the stage's 800x800 card box to whatever the side has, centred. */
 function Fit({ children }: { children: ReactNode }) {
   const ref = useRef<HTMLDivElement>(null);
   const [k, setK] = useState(0);
