@@ -47,8 +47,12 @@ export class FridgeBrain {
   private lastActive = 0; // when the last response ended
   private wantResponse = false;
   private seen = new Set<string>();
-  private captionText = "";
-  private captionId = "";
+  /** Coldex's lines in order: generated text runs seconds ahead of the voice, `shown` is what has been said. */
+  private lines: { id: string; text: string; shown: number; done: boolean }[] = [];
+  private pace: ReturnType<typeof setInterval> | null = null;
+  private paceAt = 0;
+  private playStart = 0;
+  private playChars = 0;
   private heardText = new Map<string, string>();
   private micTrack: MediaStreamTrack | null = null;
   private micOn = true;
@@ -147,6 +151,9 @@ export class FridgeBrain {
     this.pc = this.dc = null;
     this.ctx = this.inAnalyser = this.outAnalyser = this.micTrack = null;
     this.busy = this.wantResponse = this.playing = false;
+    this.lines = [];
+    if (this.pace) clearInterval(this.pace);
+    this.pace = null;
   }
 
   private reconnect(delay = 1500) {
@@ -239,27 +246,36 @@ export class FridgeBrain {
     switch (ev.type) {
       case "response.created":
         this.busy = true;
-        this.captionText = "";
-        this.captionId = String((ev.response as Json)?.id ?? `r${Date.now()}`);
+        this.lines.push({ id: String((ev.response as Json)?.id ?? `r${Date.now()}`), text: "", shown: 0, done: false });
         this.settle();
         break;
       case "output_audio_buffer.started":
+        if (!this.playing) {
+          this.playStart = this.paceAt = performance.now();
+          this.playChars = 0;
+        }
         this.playing = true;
         this.settle();
         break;
       case "output_audio_buffer.stopped":
       case "output_audio_buffer.cleared":
+        this.tick();
         this.playing = false;
+        this.voiceEnded(ev.type === "output_audio_buffer.cleared");
         this.settle();
         break;
       case "input_audio_buffer.speech_started":
         if (!this.playing) this.h.status("listening"); // a real barge-in clears the buffer, which settles it
         break;
+      // Only the spoken audio's transcript (GA and beta names), shown at the pace the voice plays (tick).
       case "response.output_audio_transcript.delta":
-      case "response.output_text.delta":
-        this.captionText += String(ev.delta ?? "");
-        this.h.caption(this.captionText, false, this.captionId);
+      case "response.audio_transcript.delta": {
+        const line = this.line(ev.response_id);
+        if (!line) break;
+        line.text += String(ev.delta ?? "");
+        this.pace ??= setInterval(() => this.tick(), 80);
         break;
+      }
       case "conversation.item.input_audio_transcription.delta": {
         const id = String(ev.item_id ?? "");
         const text = (this.heardText.get(id) ?? "") + String(ev.delta ?? "");
@@ -302,7 +318,13 @@ export class FridgeBrain {
   }
 
   private async onResponseDone(response: Json) {
-    if (this.captionText) this.h.caption(this.captionText, true, this.captionId);
+    const line = this.line(response?.id);
+    if (line) {
+      line.done = true;
+      if (!line.text) this.lines.splice(this.lines.indexOf(line), 1);
+      // Its voice already ended (it can't still be waiting to start once it has been shown): nothing to wait for.
+      else if (!this.playing && line.shown > 0) this.voiceEnded(false);
+    }
     const output = (response?.output as Json[]) ?? [];
     const calls = output.filter((o) => o.type === "function_call");
     if (calls.length) {
@@ -312,7 +334,7 @@ export class FridgeBrain {
         this.send({ type: "conversation.item.create", item: { type: "function_call_output", call_id: c.call_id, output: results[i] } });
       });
       // A price answer already spoken with its product card needs no second round: that round is the wait.
-      if (this.captionText && calls.every((c) => DISPLAY_ONLY.has(String(c.name)))) {
+      if (line?.text && calls.every((c) => DISPLAY_ONLY.has(String(c.name)))) {
         this.busy = false;
         this.lastActive = Date.now();
         this.settle();
@@ -329,6 +351,58 @@ export class FridgeBrain {
       this.wantResponse = false;
       this.respond();
     }
+  }
+
+  // ------------------------------------------------------------------ captions on the playback clock
+
+  /**
+   * Spoken characters per second of playback. The transcript arrives as fast as the model generates (about 3x
+   * real time) and WebRTC gives no per-chunk audio timing, so the reveal runs on this rate while the voice
+   * plays, and every answer that plays to its end recalibrates it. The final lands when the voice stops.
+   */
+  static rate = Number(globalThis.localStorage?.getItem("coldex.speechRate")) || 15;
+
+  private line(responseId: unknown) {
+    return this.lines.find((l) => l.id === String(responseId ?? "")) ?? this.lines.at(-1);
+  }
+
+  /** Reveals what the voice has reached: `rate` characters per second of playback, never past what arrived. */
+  private tick() {
+    const now = performance.now();
+    let budget = this.playing ? (FridgeBrain.rate * (now - this.paceAt)) / 1000 : 0;
+    this.paceAt = now;
+    while (budget > 0 && this.lines.length) {
+      const l = this.lines[0];
+      const before = l.shown;
+      l.shown = Math.min(l.text.length, l.shown + budget);
+      budget -= l.shown - before;
+      this.playChars += l.shown - before;
+      if (cut(l.text, l.shown) !== cut(l.text, before)) this.h.caption(cut(l.text, l.shown), false, l.id);
+      if (l.shown < l.text.length || !l.done || this.lines.length < 2) break; // the last line ends with the voice
+      // Generated in full and shown in full; the next response's voice (after a tool call) goes on from here.
+      this.h.caption(l.text, true, l.id);
+      this.lines.shift();
+    }
+    if (!this.lines.length && this.pace) {
+      clearInterval(this.pace);
+      this.pace = null;
+    }
+  }
+
+  /** The voice stopped: finished lines were said in full. A barge-in keeps only what was actually said. */
+  private voiceEnded(interrupted: boolean) {
+    const dur = performance.now() - this.playStart;
+    let chars = this.playChars;
+    while (this.lines.length && (this.lines[0].done || interrupted)) {
+      const l = this.lines.shift()!;
+      if (!interrupted) chars += l.text.length - l.shown;
+      if (l.text) this.h.caption(interrupted ? cut(l.text, l.shown) : l.text, true, l.id);
+    }
+    if (!interrupted && dur > 2000 && chars > 30) {
+      FridgeBrain.rate = Math.min(28, Math.max(9, 0.25 * FridgeBrain.rate + (0.75 * chars * 1000) / dur));
+      globalThis.localStorage?.setItem("coldex.speechRate", String(FridgeBrain.rate)); // rehearsals calibrate the demo
+    }
+    this.playChars = 0;
   }
 
   // ------------------------------------------------------------------ plumbing
@@ -374,6 +448,13 @@ export class FridgeBrain {
 
 /** Which screen this page is. Tool events carry it, so the kitchen's tool calls don't move the stage panel to C. */
 let screen: "kitchen" | "stage" = "kitchen";
+
+/** The text up to `n` characters, ending on a whole word. */
+function cut(text: string, n: number) {
+  if (n >= text.length) return text;
+  const space = text.lastIndexOf(" ", Math.floor(n));
+  return space > 0 ? text.slice(0, space) : "";
+}
 export function setScreen(s: "kitchen" | "stage") {
   screen = s;
 }
