@@ -52,19 +52,15 @@ export function CardFrame({
     // content builds inside it (rows rise with `stagger`/`rise`), so the two never stack.
     <motion.section className="ck">
       <header className="ck-head">
-        <div className="ck-head-main">
-          {icon && (
-            <span className="ck-icon">
-              <CardIcon id={icon} />
-            </span>
-          )}
-          <div className="ck-head-text">
-            <p className="ck-kicker">
-              {live && <span className="ck-dot is-live" />}
-              {kicker}
-            </p>
-            <h2 className="ck-title">{title}</h2>
-          </div>
+        <div className="ck-head-text">
+          <p className="ck-kicker">
+            {live && <span className="ck-dot is-live" />}
+            {kicker}
+          </p>
+          <h2 className="ck-title">
+            {icon && <CardIcon id={icon} />}
+            {title}
+          </h2>
         </div>
         {aside && <div className="ck-aside">{aside}</div>}
       </header>

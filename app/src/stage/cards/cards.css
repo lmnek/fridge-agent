@@ -56,25 +56,16 @@
   margin-bottom: 28px;
 }
 
-/* The card type's icon, left of the kicker and title: a pale ice tile with a lamp-blue line glyph (icons.tsx). */
-.ck-head-main {
-  display: flex;
-  align-items: center;
-  gap: 22px;
-  min-width: 0;
-}
+/* The card type's icon (icons.tsx), inline before the title like a glyph of the type: lamp blue, the glyph's drawn
+   height (19 of its 24 units) equal to the title's cap height, its drawn bottom on the baseline. */
 .ck-head-text {
   min-width: 0;
 }
-.ck-icon {
-  flex: none;
-  display: grid;
-  place-items: center;
-  width: 76px;
-  height: 76px;
-  border: 1.5px solid var(--ck-edge);
-  border-radius: var(--ck-r-inner);
-  background: var(--ck-lamp-soft);
+.ck-title .ck-icon-glyph {
+  width: 0.9em;
+  height: 0.9em;
+  margin: 0 0.26em -0.094em 0;
+  vertical-align: baseline;
   color: var(--ck-lamp);
 }
 

@@ -46,39 +46,28 @@
 
 /* ---------------------------------------------------------------- wordmark */
 
-/* The nameplate on an enamel appliance: a solid white plate with the cards' ice edge, the cube seated in its own
-   square cell behind a keyline, the name in ink. No shadow, no tint. */
+/* The logo, set like a product mark on a keynote slide: the cube and the name in the display face, ink, no plate.
+   The cube is sized to the cap height and sits on the baseline. Left edge on the 60 px margin the subtitles use. */
 .stage-mark {
   display: flex;
-  align-items: stretch;
+  align-items: baseline;
+  gap: 10px;
   position: absolute;
   left: 60px;
-  top: 40px;
-  height: 64px;
+  top: 44px;
   margin: 0;
-  background: #fff;
-  border: 1.5px solid #c6dbe5;
-  border-radius: 14px;
   font-family: "Barlow Semi Condensed", "Barlow", sans-serif;
   font-weight: 600;
-  font-size: 32px;
+  font-size: 44px;
   line-height: 1;
-  letter-spacing: 0.01em;
+  letter-spacing: -0.015em;
   color: var(--ink);
 }
 
 .stage-mark .mark-cube {
-  display: grid;
-  place-items: center;
-  width: 61px;
-  border-right: 1.5px solid #c6dbe5;
   font-size: 30px;
-}
-
-.stage-mark .mark-name {
-  display: flex;
-  align-items: center;
-  padding: 0 24px 2px 20px;
+  letter-spacing: 0;
+  transform: translateY(-3px); /* the emoji's drips hang below its box: lift the cube's body onto the baseline */
 }
 
 /* ---------------------------------------------------------------- orb */
