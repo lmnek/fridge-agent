@@ -11,6 +11,8 @@ cd bridge && uv run uvicorn main:app --port 8000
 cd app && npm install && npm run dev      # http://localhost:5174
 ```
 
+Every key and credential, with where to get it, is in [SETUP.md](SETUP.md).
+
 Tap the light to wake the fridge (the browser asks for the microphone). Press `L` or click the camera
 thumbnail to make it look inside. `POST /snapshot` on the bridge does the same from a script.
 
