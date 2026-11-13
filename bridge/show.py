@@ -8,6 +8,7 @@ Event shapes: docs/handoffs/README.md.
 
 from __future__ import annotations
 
+import asyncio
 import json
 import time
 from typing import Any
@@ -15,6 +16,7 @@ from typing import Any
 from fastapi import APIRouter, BackgroundTasks
 from pydantic import BaseModel
 
+import deals as leaflets  # part 8's scraper (bridge/deals.py)
 import main as bridge  # main imports this module after emit and STATE exist
 from rohlik import Rohlik, _num, _products_of, read_products, set_cart
 
@@ -158,6 +160,12 @@ def deals_markdown() -> str:
         "# Today's deals\n\nScraped prices around the flat. On sale today:\n\n"
         + "\n".join(sales or ["- nothing"])
         + (f"\n\nNearest shops: {shops}. Rohlík delivers within the hour." if shops else "")
+        + "\n\nCheapest near the flat today (shop leaflets): "
+        + "; ".join(
+            f"{c['item']} at {c['store']} ({c['distance_m']} m), {c['price_czk']:g} Kč for {c['product']}"
+            for c in d.get("sales", [])
+        )
+        + "."
         + "\n\nRohlík prices today: "
         + "; ".join(
             f"{r['Item']} {_live(r) or _num(_col(r, 'price')):g} Kč ({_col(r, 'rohlík product').split(',')[-1].strip()})"
@@ -180,77 +188,22 @@ def tool_show_shops(shops: Shops) -> dict[str, Any]:
 
 class ProductAsk(BaseModel):
     item: str
+    query_cs: str = ""
 
 
 @router.post("/tools/show_product")
 async def tool_show_product(ask: ProductAsk) -> dict[str, Any]:
-    """A small product card on the kitchen screen for a price question: the photo, today's Rohlík price and the
-    cheapest shop deal. A product pick is instant (saved scrape). Anything else is searched on Rohlík live."""
-    pick = _pick(ask.item) if ask.item.strip() else {}
-    d = deals()
-    if pick:
-        card = {
-            "item": pick["Item"],
-            "product": _col(pick, "rohlík product"),
-            "image_url": _col(pick, "image").strip("<>"),
-            "price_czk": _live(pick) or _num(_col(pick, "price")),
-        }
-    else:
-        try:
-            async with Rohlik() as r:
-                raw = await r.call("batch_search_products", {"queries": [{"keyword": ask.item}]})
-            hit = next((h for h in _products_of(raw) if h.get("price")), None)
-        except Exception as e:  # no token or Rohlík down: say so instead of hanging
-            return {"ok": False, "error": f"Rohlík search failed: {e}"[:300]}
-        if not hit:
-            return {"ok": False, "error": f"Nothing on Rohlík for {ask.item}."}
-        pid = hit.get("productId")
-        card = {
-            "item": ask.item,
-            "product": f"{hit.get('productName', '')}, {hit.get('textualAmount', '')}".strip(", "),
-            "image_url": "",
-            "price_czk": hit.get("price"),
-        }
-        bridge.emit("product", **card, deal=None)
-        _image_later(pid, card)
-        return {"ok": True, **{k: card[k] for k in ("item", "product", "price_czk")}}
-    name = card["item"].lower()
-    shop = [i for i in d["items"] if i["store"] != "Rohlík" and i["item"].lower().startswith(name)]
-    deal = min(shop, key=lambda i: i["price_czk"], default=None)
-    card["deal"] = (
-        {
-            "store": deal["store"],
-            "price_czk": deal["price_czk"],
-            "was_czk": deal.get("was_czk"),
-            "per": "kg" if "per kg" in deal["item"] else None,
-        }
-        if deal
-        else None
-    )
+    """A small product card on the kitchen screen: where the food is cheapest near the flat today, from the shops'
+    leaflets (akcniceny.cz). Staples are saved ahead by the scrape and instant, anything else is searched now."""
+    name = ask.item.strip()
+    best = next((s for s in deals().get("sales", []) if s["item"].lower() == name.lower()), None)
+    if not best:
+        best = await asyncio.to_thread(leaflets.search_live, ask.query_cs.strip() or name)
+    if not best:
+        return {"ok": False, "error": f"No leaflet offer for {name} in the shops near the flat today."}
+    card = {**best, "item": name[:1].upper() + name[1:]}
     bridge.emit("product", **card)
-    return {"ok": True, "item": card["item"], "price_czk": card["price_czk"], "deal": card["deal"]}
-
-
-def _image_later(pid: Any, card: dict[str, Any]) -> None:
-    """Search replies carry no picture, so fetch it from the product page and update the card when it lands."""
-    import threading
-
-    def run() -> None:
-        try:
-            import re
-
-            import httpx
-
-            html = httpx.get(
-                f"https://www.rohlik.cz/{pid}", headers={"User-Agent": "Mozilla/5.0"}, timeout=6, follow_redirects=True
-            ).text
-            m = re.search(rf"https://cdn\.rohlik\.cz/images/grocery/products/{pid}/[^\"'\s?]+\.(?:jpg|png|webp)", html)
-            if m:
-                bridge.emit("product", **{**card, "image_url": m.group(0)}, deal=None)
-        except Exception:
-            pass
-
-    threading.Thread(target=run, daemon=True).start()
+    return {"ok": True, **{k: card.get(k) for k in ("item", "product", "store", "distance_m", "price_czk", "was_czk")}}
 
 
 def nearby_shops() -> dict[str, Any]:
@@ -300,9 +253,12 @@ TOOLS = [
     ),
     bridge._fn(
         "show_product",
-        "Show one food's photo and price on the kitchen screen, with the cheapest nearby deal. Call it for a "
-        "question about one food's price, in the same response as your spoken answer.",
-        {"item": {"type": "string", "description": "The food in English, e.g. 'Eggs' or 'Butter'."}},
+        "Show where one food is cheapest near the flat today, with its photo, price and shop, on the kitchen "
+        "screen. Call it for a question about one food's price or where it is cheapest.",
+        {
+            "item": {"type": "string", "description": "The food in English, e.g. 'Tomatoes' or 'Butter'."},
+            "query_cs": {"type": "string", "description": "The same food in Czech for the shop leaflets, e.g. 'rajčata'."},
+        },
         ["item"],
     ),
     bridge._fn(

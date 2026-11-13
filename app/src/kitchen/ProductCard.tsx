@@ -1,6 +1,7 @@
 /**
- * The answer to "how much is <food>?": one small product card with the photo, today's Rohlík price and the
- * cheapest nearby deal. Comes from the bridge's `product` event (show_product, bridge/show.py), leaves on its own.
+ * The answer to "where is <food> cheapest?": one small product card with the photo, the price and the shop near
+ * the flat that has it cheapest today (shop leaflets). From the bridge's `product` event (show_product,
+ * bridge/show.py), leaves on its own.
  */
 import { motion } from "motion/react";
 import type { BusEvent } from "../stage/bus";
@@ -9,9 +10,12 @@ import "./product.css";
 const czk = (n: number) =>
   `${n.toLocaleString("cs-CZ", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Kč`;
 
+const dist = (m: number) => (m < 1000 ? `${m} m` : `${(m / 1000).toLocaleString("cs-CZ", { maximumFractionDigits: 1 })} km`);
+
 export function ProductCard({ ev }: { ev: BusEvent }) {
-  const deal = ev.deal as { store: string; price_czk: number; was_czk: number | null; per: string | null } | null;
-  const off = deal?.was_czk ? Math.round(((deal.was_czk - deal.price_czk) / deal.was_czk) * 100) : 0;
+  const price = Number(ev.price_czk);
+  const was = ev.was_czk ? Number(ev.was_czk) : 0;
+  const off = was > price ? Math.round(((was - price) / was) * 100) : 0;
   return (
     <motion.article
       className="pc"
@@ -24,19 +28,14 @@ export function ProductCard({ ev }: { ev: BusEvent }) {
         <h2 className="pc-item">{String(ev.item)}</h2>
         {ev.product ? <p className="pc-product">{String(ev.product)}</p> : null}
         <p className="pc-price">
-          {czk(Number(ev.price_czk))}
-          <span>at Rohlík</span>
+          {czk(price)}
+          {off > 0 ? <span className="pc-off">−{off} %</span> : null}
         </p>
-        {deal ? (
-          <div className="pc-deal">
-            <span className="pc-store">{deal.store}</span>
-            <span className="pc-deal-price">
-              {czk(deal.price_czk)}
-              {deal.per ? <small> / {deal.per}</small> : null}
-            </span>
-            {off > 0 ? <span className="pc-off">−{off} %</span> : null}
-          </div>
-        ) : null}
+        {was > price ? <p className="pc-was">was {czk(was)}</p> : null}
+        <div className="pc-deal">
+          <span className="pc-store">{String(ev.store)}</span>
+          {ev.distance_m != null ? <span className="pc-deal-price">{dist(Number(ev.distance_m))} away</span> : null}
+        </div>
       </div>
     </motion.article>
   );

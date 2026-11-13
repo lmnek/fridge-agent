@@ -82,6 +82,26 @@ ITEMS = [
     Item("Bananas", "banány", r"^banány\b", (1, "kg"), r"čokol|sušen|chips|lupín"),
 ]
 
+# "What's on sale?": the best leaflet discount per staple in the shops around the flat, with the product photo.
+SALES = [
+    ("Butter", "máslo", r"\bmáslo\b", r"arašíd|bylink|česnek|kakao|sušenk|pomazán"),
+    ("Milk", "mléko", r"\bmléko\b", r"čokolád|kondenz|kokos|sójov|ovesn|mandl|rýžov|tělov|sušen"),
+    ("Chicken breast", "kuřecí prsa", r"kuřecí\s+prs", r"šunk|salám|uzen|nugget"),
+    ("Cheese", "eidam", r"eidam", r"chips|tyčin"),
+    ("Coffee", "káva", r"\bkáva\b|\bkávy\b", r"cukr|bonbon|likér|čokolád"),
+    ("Yogurt", "jogurt", r"jogurt", r"nápoj|drink|čokolád|tyčin|müsli"),
+    ("Tomatoes", "rajčata", r"rajčat", r"protlak|pyré|kečup|omáčk|sušen|loupan|krájen|pasír"),
+    ("Apples", "jablka", r"jabl", r"džus|šťáv|mošt|sušen|chips|přesnídáv|víno|cider"),
+    ("Eggs", "vejce", r"\bvejce\b", r"čokol|kinder|vafl|dino|plněn|vaječn|bonbon|figur|velikonoč"),
+    ("Bananas", "banány", r"^banán", r"čokol|sušen|chips|lupín"),
+    ("Potatoes", "brambory", r"brambor", r"chips|lupín|hranolk|kaše|knedl|plack|salát|krokety"),
+    ("Cucumbers", "okurky", r"okurk", r"steriliz|kyselé|nakládan|čalam"),
+    ("Onions", "cibule", r"cibul", r"smažen|sušen|chips"),
+    ("Spaghetti", "špagety", r"špaget|spaghet", r"boloň|hotov|omáčk"),
+]
+JUNK = r"protlak|pyré|kečup|omáčk|chips|lupín|sušen|nápoj|drink|čokolád|bonbon|tyčin|sirup|likér"
+
+
 _PACK = re.compile(r"(?:(\d+)\s*[x×]\s*)?(\d+(?:[.,]\d+)?)\s*(kg|g|l|ml|ks)\b", re.IGNORECASE)
 
 
@@ -169,7 +189,7 @@ def scrape_akcniceny() -> dict[str, Any]:
     if not python.exists():
         sys.exit(f"No {python}. The shop scrape runs the old Frida scraper with the backend's Python.")
     res = subprocess.run(
-        [str(python), "-c", RUNNER, UA, *(i.query for i in ITEMS)],
+        [str(python), "-c", RUNNER, UA, *dict.fromkeys([*(i.query for i in ITEMS), *(q for _, q, _, _ in SALES)])],
         cwd=BACKEND,
         capture_output=True,
         text=True,
@@ -212,6 +232,58 @@ def shop_deals(raw: dict[str, Any]) -> list[dict[str, Any]]:
                 }
             )
     return out
+
+
+def cheapest(found: Any, match: str, skip: str, around: dict[str, dict[str, Any]]) -> dict[str, Any] | None:
+    """The cheapest offer (per kg or l when the leaflet says) at a chain near the flat, without a loyalty card."""
+    if not isinstance(found, list):
+        return None
+    today = date.today().isoformat()
+    ok = [
+        d
+        for d in found
+        if re.search(match, d["product_name"], re.I)
+        and not re.search(skip, d["product_name"], re.I)
+        and not d.get("requires_card")
+        and key(d["chain"]) in around
+        and (d.get("valid_from") or today) <= today <= (d.get("valid_to") or today)
+    ]
+    best = min(ok, key=lambda d: (d.get("unit_price") or d["price_czk"], not d.get("image_url")), default=None)
+    if not best:
+        return None
+    was = best.get("original_price_czk")
+    return {
+        "product": best["product_name"],
+        "store": best["chain"],
+        "distance_m": around[key(best["chain"])]["distance_m"],
+        "price_czk": best["price_czk"],
+        "was_czk": was if was and was > best["price_czk"] else None,
+        "unit_price": best.get("unit_price"),
+        "unit": best.get("unit_price_unit"),
+        "image_url": best.get("image_url") or "",
+        "valid_to": best.get("valid_to"),
+    }
+
+
+def sales(raw: dict[str, Any], around: dict[str, dict[str, Any]]) -> list[dict[str, Any]]:
+    """The cheapest leaflet offer per SALES staple near the flat, saved ahead so the question is instant."""
+    out = []
+    for name, query, match, skip in SALES:
+        best = cheapest(raw.get(query), match, skip, around)
+        if best:
+            out.append({"item": name, **best})
+    return out
+
+
+def search_live(query: str) -> dict[str, Any] | None:
+    """One food that isn't saved ahead: akcniceny.cz now, about 2 s."""
+    python = BACKEND / ".venv" / "bin" / "python"
+    res = subprocess.run([str(python), "-c", RUNNER, UA, query], cwd=BACKEND, capture_output=True, text=True, timeout=20)
+    if res.returncode:
+        return None
+    found = json.loads(res.stdout.strip().splitlines()[-1]).get(query)
+    stem = re.escape(query.split()[0][: max(4, len(query.split()[0]) - 2)])
+    return cheapest(found, stem, JUNK, stores_nearby())
 
 
 def nearby() -> dict[str, dict[str, Any]]:
@@ -295,6 +367,7 @@ async def scrape(keep: bool = True) -> dict[str, Any]:
         "stores": [{"name": "Rohlík", "distance_m": None, "delivery_min": DELIVERY_MIN}, *stores],
         "items": [],
         "rohlik_prices": dict(LIVE),
+        "sales": sales(raw, around),
     }
     shown = [d for d in shops if d["store"] in names]
     rows = {d["item"] for d in shown}  # only the rows a shop has a price for, the card stays short

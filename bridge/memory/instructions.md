@@ -43,10 +43,10 @@ sentences, with no opener ("Okay, let's…"): your first words are the answer. O
   reply begins with that call, with no words before it, even while you are still deciding. Then answer, for example: "A spinach omelette. You have everything, and it uses up the
   spinach. Want me to order anything?" or "You're missing guanciale and spaghetti. Shall I order them?"
   Don't order until they say so.
-- "How much is <food>?" or "Where is <food> cheapest?": answer at once from "Rohlík prices today" and
-  "Today's deals", in one sentence ("Eggs are 64.90 at Rohlík, or 29.90 on sale at Albert."), and call
-  show_product with the food in the same response. No get_inventory, no show_shops and no Rohlík search
-  for this. Only a food missing from both lists needs show_product first, then answer from what it returns.
+- "How much is <food>?" or "Where is <food> cheapest?": if the food is under "Cheapest near the flat
+  today", answer at once in one sentence ("Tomatoes are cheapest at Albert, 64.90 a kilo, 60 metres away.")
+  and call show_product in the same response. Otherwise call show_product first, with no words before it,
+  and answer from what it returns. Don't mention Rohlík here. No get_inventory, no show_shops.
 - "What shops are nearby?": answer at once from "Nearest shops" in one sentence (the closest two or three
   with their distance) and call show_nearby in the same response.
 

@@ -95,6 +95,22 @@
   color: #86868b;
 }
 
+.pc-was {
+  margin: 2px 0 0;
+  font-size: 14px;
+  color: #86868b;
+  text-decoration: line-through;
+  font-variant-numeric: tabular-nums;
+}
+
+.pc-price .pc-off {
+  align-self: center;
+  letter-spacing: 0;
+  color: #1a7f37;
+  font-size: 13px;
+  font-weight: 600;
+}
+
 .pc-off {
   padding: 2px 8px;
   border-radius: 999px;

@@ -1,5 +1,5 @@
 {
- "scraped_at": "2026-11-13T15:14:00+01:00",
+ "scraped_at": "2026-11-13T15:49:03+01:00",
  "home": "50.0755,14.4378",
  "stores": [
   {
@@ -80,11 +80,181 @@
  ],
  "rohlik_prices": {
   "1412797": 95.9,
-  "1425539": 58.9,
   "1394444": 64.9,
+  "1425539": 58.9,
   "1468577": 10.24,
   "1412796": 64.9,
-  "1306561": 22.9,
-  "1459356": 47.9
- }
+  "1459356": 47.9,
+  "1306561": 22.9
+ },
+ "sales": [
+  {
+   "item": "Butter",
+   "product": "Madeta Jihočeské máslo 250g",
+   "store": "Albert",
+   "distance_m": 60,
+   "price_czk": 44.9,
+   "was_czk": 54.53,
+   "unit_price": 179.6,
+   "unit": "kg",
+   "image_url": "https://cz1.staticac.cz/foto/produkty/031000/30925.jpg",
+   "valid_to": "2026-11-17"
+  },
+  {
+   "item": "Milk",
+   "product": "Nature's Promise Bio mléko čerstvé 1 l",
+   "store": "Albert",
+   "distance_m": 60,
+   "price_czk": 24.9,
+   "was_czk": 35.07,
+   "unit_price": 24.9,
+   "unit": "l",
+   "image_url": "https://cz1.staticac.cz/foto/produkty/039750/39667.jpg",
+   "valid_to": "2026-11-17"
+  },
+  {
+   "item": "Chicken breast",
+   "product": "Kuřecí prsní řízky chlazené 1 kg",
+   "store": "Billa",
+   "distance_m": 820,
+   "price_czk": 109.9,
+   "was_czk": 219.8,
+   "unit_price": 109.9,
+   "unit": "kg",
+   "image_url": "https://cz1.staticac.cz/foto/produkty/003500/3455.jpg",
+   "valid_to": "2026-11-15"
+  },
+  {
+   "item": "Cheese",
+   "product": "Albert Eidam 30%, plátky",
+   "store": "Albert",
+   "distance_m": 60,
+   "price_czk": 13.9,
+   "was_czk": 19.86,
+   "unit_price": null,
+   "unit": null,
+   "image_url": "https://cz1.staticac.cz/foto/produkty/004000/3780.jpg",
+   "valid_to": "2026-11-15"
+  },
+  {
+   "item": "Coffee",
+   "product": "Jihlavanka Standard 1kg mletá káva, vybrané druhy",
+   "store": "Albert",
+   "distance_m": 60,
+   "price_czk": 189.0,
+   "was_czk": 402.13,
+   "unit_price": 189.0,
+   "unit": "kg",
+   "image_url": "https://cz1.staticac.cz/foto/produkty/003750/3721.jpg",
+   "valid_to": "2026-11-17"
+  },
+  {
+   "item": "Yogurt",
+   "product": "Zott Jogobella Jogurt 150g, vybrané druhy",
+   "store": "Albert",
+   "distance_m": 60,
+   "price_czk": 7.9,
+   "was_czk": 15.8,
+   "unit_price": 52.67,
+   "unit": "kg",
+   "image_url": "https://cz1.staticac.cz/foto/produkty/006000/5969.jpg",
+   "valid_to": "2026-11-17"
+  },
+  {
+   "item": "Tomatoes",
+   "product": "Keříková rajčata červená 1 kg",
+   "store": "Albert",
+   "distance_m": 60,
+   "price_czk": 64.9,
+   "was_czk": 80.12,
+   "unit_price": 64.9,
+   "unit": "kg",
+   "image_url": "https://cz1.staticac.cz/foto/produkty/000500/315.jpg",
+   "valid_to": "2026-11-17"
+  },
+  {
+   "item": "Apples",
+   "product": "Jablka červená 1kg",
+   "store": "Albert",
+   "distance_m": 60,
+   "price_czk": 19.9,
+   "was_czk": 33.17,
+   "unit_price": 19.9,
+   "unit": "kg",
+   "image_url": "https://cz1.staticac.cz/foto/produkty/008000/7903.jpg",
+   "valid_to": "2026-11-17"
+  },
+  {
+   "item": "Eggs",
+   "product": "Vejce čerstvá M 30 ks",
+   "store": "Lidl",
+   "distance_m": 1050,
+   "price_czk": 74.9,
+   "was_czk": null,
+   "unit_price": 2.5,
+   "unit": "ks",
+   "image_url": "https://cz1.staticac.cz/foto/produkty/039250/39105.jpg",
+   "valid_to": "2026-11-15"
+  },
+  {
+   "item": "Bananas",
+   "product": "Banány 1kg",
+   "store": "Tesco",
+   "distance_m": 440,
+   "price_czk": 21.9,
+   "was_czk": 39.82,
+   "unit_price": 21.9,
+   "unit": "kg",
+   "image_url": "https://cz1.staticac.cz/foto/produkty/000500/280.jpg",
+   "valid_to": "2026-11-15"
+  },
+  {
+   "item": "Potatoes",
+   "product": "Brambory konzumní volné, 1kg",
+   "store": "Billa",
+   "distance_m": 820,
+   "price_czk": 14.9,
+   "was_czk": 24.83,
+   "unit_price": 14.9,
+   "unit": "kg",
+   "image_url": "https://cz1.staticac.cz/foto/vyrobky/10557250/10557072.jpg",
+   "valid_to": "2026-11-17"
+  },
+  {
+   "item": "Cucumbers",
+   "product": "Okurka salátová hadovka 1 ks",
+   "store": "Billa",
+   "distance_m": 820,
+   "price_czk": 14.9,
+   "was_czk": 24.83,
+   "unit_price": 14.9,
+   "unit": "ks",
+   "image_url": "https://cz1.staticac.cz/foto/produkty/000500/322.jpg",
+   "valid_to": "2026-11-15"
+  },
+  {
+   "item": "Onions",
+   "product": "Cibule žlutá 1 kg",
+   "store": "Lidl",
+   "distance_m": 1050,
+   "price_czk": 11.9,
+   "was_czk": 24.79,
+   "unit_price": 11.9,
+   "unit": "kg",
+   "image_url": "https://cz1.staticac.cz/foto/produkty/000500/309.jpg",
+   "valid_to": "2026-11-15"
+  },
+  {
+   "item": "Spaghetti",
+   "product": "BILLA Premium Špagety 500 g",
+   "store": "Billa",
+   "distance_m": 820,
+   "price_czk": 36.9,
+   "was_czk": null,
+   "unit_price": 73.8,
+   "unit": "kg",
+   "image_url": "https://cz1.staticac.cz/foto/vyrobky/10467000/10466788.jpg",
+   "valid_to": "2026-12-31"
+  }
+ ]
 }
