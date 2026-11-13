@@ -1,0 +1,177 @@
+/* Stage hotkey overlays and the dev player strip. Plain panels on the enamel/ink palette (index.css). */
+
+.hk-mic {
+  position: fixed;
+  top: 14px;
+  right: 20px;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  letter-spacing: 0.02em;
+  color: var(--slate);
+  opacity: 0.75;
+  pointer-events: none;
+}
+
+.hk-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--frost);
+  border: 1px solid var(--slate);
+}
+
+.hk-mic.is-live {
+  color: var(--gone);
+  opacity: 1;
+}
+
+.hk-mic.is-live .hk-dot {
+  background: var(--gone);
+  border-color: var(--gone);
+}
+
+.hk-toast {
+  position: fixed;
+  top: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 60;
+  padding: 8px 16px;
+  border-radius: 8px;
+  background: var(--ink);
+  color: var(--enamel);
+  font-size: 15px;
+}
+
+.hk-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: grid;
+  place-items: center;
+  background: rgb(20 34 43 / 0.35);
+}
+
+.hk-panel {
+  background: var(--white);
+  border: 1px solid var(--frost);
+  border-radius: 12px;
+  padding: 28px 32px;
+  color: var(--ink);
+  box-shadow: 0 12px 40px rgb(20 34 43 / 0.18);
+}
+
+.hk-label {
+  margin: 0 0 12px;
+  font-family: "Barlow Semi Condensed", "Barlow", sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--slate);
+}
+
+.hk-type {
+  width: 760px;
+}
+
+.hk-type input {
+  width: 100%;
+  font: inherit;
+  font-size: 32px;
+  padding: 10px 14px;
+  border: 1px solid var(--frost);
+  border-radius: 8px;
+  color: var(--ink);
+  background: var(--enamel);
+  outline: none;
+}
+
+.hk-type input:focus {
+  border-color: var(--lamp);
+}
+
+.hk-hint {
+  margin: 10px 0 0;
+  font-size: 14px;
+  color: var(--slate);
+}
+
+.hk-help {
+  min-width: 460px;
+}
+
+.hk-help dl {
+  margin: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.hk-help dl > div {
+  display: grid;
+  grid-template-columns: 96px 1fr;
+  gap: 16px;
+}
+
+.hk-help dt {
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.hk-help dd {
+  margin: 0;
+  color: var(--slate);
+}
+
+.hk-clip {
+  position: fixed;
+  inset: 0;
+  z-index: 55;
+  background: var(--ink);
+  display: grid;
+  place-items: center;
+}
+
+.hk-clip video {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.hk-clip-missing {
+  color: var(--frost);
+  font-size: 18px;
+  opacity: 0.7;
+}
+
+.hk-dev {
+  position: fixed;
+  left: 50%;
+  bottom: 0;
+  transform: translateX(-50%);
+  z-index: 45;
+  display: flex;
+  gap: 14px;
+  align-items: baseline;
+  padding: 3px 14px;
+  border-radius: 8px 8px 0 0;
+  background: var(--ink);
+  color: var(--frost);
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: 12px;
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+.hk-dev-beat {
+  color: var(--white);
+  font-weight: 700;
+}
+
+.hk-dev-src {
+  opacity: 0.6;
+}
