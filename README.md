@@ -72,7 +72,7 @@ docs/               napojení, nasazení, rozhodnutí, rešerše integrací
 
 ```bash
 cd backend
-uv run pytest -q          # inventář přes kameru, agent, API, WebSocket, hovory, scrapery na uložených stránkách
+uv run pytest -q          # inventář přes kameru, agent, API, WebSocket, hovory, scrapery, Rohlík MCP a Reolink proti mockům
 uv run ruff check frida tests
 cd ../frontend && npm run build
 ```
