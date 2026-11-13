@@ -78,7 +78,7 @@ export function Kitchen(props: {
           {learned ? <p className="k-learned">Remembered: {learned}</p> : null}
           {error ? <p className="k-error">{error}</p> : null}
         </div>
-        <p className="k-fridge">{fridgeLine(props.items)}</p>
+        {/* No fridge status line here: the presenter wants only the orb, captions and cards. */}
       </motion.main>
 
       <AnimatePresence>
