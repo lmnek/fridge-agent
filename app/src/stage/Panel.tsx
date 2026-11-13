@@ -6,7 +6,7 @@ import { AnimatePresence, motion } from "motion/react";
 import { type ComponentType, useEffect, useRef, useState } from "react";
 import type { BusEvent } from "./bus";
 import { Idle } from "./Idle";
-import { type CardId, type PanelId, latestCard } from "./pick";
+import { type CardId, type PanelId, cardFor, latestCard } from "./pick";
 import { placeholders } from "./placeholders";
 
 type CardMap = Record<CardId, ComponentType<{ events: BusEvent[] }>>;
@@ -17,37 +17,54 @@ const cards: CardMap = { ...placeholders, ...(part2?.cards ?? {}) };
 
 /** A card the agent asks for stays up at least this long, so a fast agent doesn't flash four cards in a second. */
 const DWELL_MS = 2600;
+/**
+ * Cards asked for within BATCH_GAP_MS of each other came in one batch (part 3's C sends show_recipe, show_shops and
+ * show_cart together, right before Coldex says the total). Each but the last holds only BATCH_DWELL_MS, so C2 and
+ * C3 pass briskly and C4 is up while the total is spoken.
+ */
+const BATCH_DWELL_MS = 1500;
+const BATCH_GAP_MS = 1000;
 
-/** The card to show: the newest one asked for, paced so each stays up for DWELL_MS. A forced beat cuts in. */
+/** The card to show: every card asked for, in order, paced by DWELL_MS. A forced beat cuts in. */
 export function usePanelCard(events: BusEvent[]): PanelId {
   const { card: target, at, forced } = latestCard(events);
   const [shown, setShown] = useState<PanelId>(target);
   const shownAt = useRef(0);
-  const queue = useRef<PanelId[]>([]);
+  const shownAsked = useRef(0); // when the shown card was asked for
+  const queue = useRef<{ card: PanelId; asked: number }[]>([]);
+  const scanned = useRef(0); // events already looked at
   const [, wake] = useState(0);
 
   useEffect(() => {
-    if (events.length === 0 || forced) {
+    if (events.length === 0 || forced || events.length < scanned.current) {
       queue.current = [];
-      shownAt.current = performance.now();
+      scanned.current = events.length;
+      shownAt.current = shownAsked.current = performance.now();
       setShown(target);
       return;
     }
-    const last = queue.current.at(-1) ?? shown;
-    if (target !== last) queue.current.push(target);
+    // Every card asked for since the last look, not only the newest: a batch can land in one render.
+    for (let i = scanned.current; i < events.length; i++) {
+      const card = cardFor(events[i]);
+      if (card && card !== (queue.current.at(-1)?.card ?? shown)) queue.current.push({ card, asked: performance.now() });
+    }
+    scanned.current = events.length;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [target, at, forced, events.length === 0]);
 
   useEffect(() => {
-    if (!queue.current.length) return;
-    const wait = Math.max(0, DWELL_MS - (performance.now() - shownAt.current));
+    const next = queue.current[0];
+    if (!next) return;
+    const hold = next.asked - shownAsked.current < BATCH_GAP_MS ? BATCH_DWELL_MS : DWELL_MS;
+    const wait = Math.max(0, hold - (performance.now() - shownAt.current));
     const t = setTimeout(() => {
-      // Skip ahead if the agent got far in front: keep at most the newest two.
-      if (queue.current.length > 2) queue.current = queue.current.slice(-2);
-      const next = queue.current.shift();
-      if (next) {
+      // Skip ahead if the agent got far in front: keep at most the newest three.
+      if (queue.current.length > 3) queue.current = queue.current.slice(-3);
+      const step = queue.current.shift();
+      if (step) {
         shownAt.current = performance.now();
-        setShown(next);
+        shownAsked.current = step.asked;
+        setShown(step.card);
       }
       wake((n) => n + 1);
     }, wait);
