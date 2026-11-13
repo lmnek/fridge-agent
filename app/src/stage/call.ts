@@ -3,11 +3,7 @@
  * and plays both sides of the call on the stage speakers. `callLevel()` drives the orb while it plays.
  */
 import type { FridgeBrain } from "../realtime";
-
-interface CallAudio {
-  stop(): void;
-  level(): number;
-}
+import { type CallAudio, playCallAudio } from "./callAudio";
 
 let active: CallAudio | null = null;
 
@@ -16,11 +12,15 @@ export async function startCourierCall(brain: FridgeBrain, fake = false): Promis
   // The stage session must not hear the call through the speakers and answer it.
   brain.setMic(false);
   // HACK(demo): `fake` plays part 6's scripted call through the same `call` and `caption` events.
-  const res = await fetch(fake ? "/api/courier/fake" : "/api/courier/call", { method: "POST" });
-  if (!res.ok) throw new Error(`The courier call failed: ${res.status} ${await res.text()}`);
+  // Start the player before the request, while the key press still counts as a gesture.
   if (!fake) {
     active?.stop();
-    active = null; // playback hooks in here once part 6's callAudio.ts is merged
+    active = playCallAudio();
+  }
+  const res = await fetch(fake ? "/api/courier/fake" : "/api/courier/call", { method: "POST" });
+  if (!res.ok) {
+    endCallAudio();
+    throw new Error(`The courier call failed: ${res.status} ${await res.text()}`);
   }
 }
 
