@@ -105,8 +105,10 @@ Make this the main `try_demo.py` scenario, and keep the old stage-session C as t
 - **Dead air is the open problem.** Tools first leaves the model silent while it writes the show_* calls:
   gaps of 8.3 and 12.0 s. Saying "What just ran out…" in step 1 brings them to 7.6 and 5.6 s, and C is
   heard until about 30 s. Narration first (as before) was worse: one run ignored the complaint (428 Kč),
-  and one skipped the narration. Next lever: smaller show_* arguments (the bridge fills product ID, price and
-  image from the picks) so that step is faster.
+  and one skipped the narration. **Fixed ~14:55:** show_cart now takes only names, quantities and reasons,
+  and the bridge adds prices and pictures from the picks. Gaps 2.4 and 0.0 s, still 685 Kč, heard until
+  28–31 s. Open: one of the 2 runs said "What just ran out…" again after show_cart.
 - **Stage fallback:** B lines matched exactly, C had 685 Kč, a 3.7 s gap, heard until 26.6 s.
-- **Judge Q&A:** cook and carbonara answers are good. "What's in my fridge?" and "What's expiring?" call
-  show_recipe with an empty card ("Fridge check"), list everything, and one had a preamble. Fix next.
+- **Judge Q&A:** "What's in my fridge?" and "What's expiring?" now answer by voice in about 1 s, with no
+  card and no opener (fixed ~14:55). Open: in 1 run "What can I cook tonight?" opened with "Let me
+  think…" and picked a yogurt bowl (an earlier run gave a spinach omelette, no preamble).

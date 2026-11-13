@@ -15,18 +15,16 @@ from fastapi import APIRouter
 from pydantic import BaseModel
 
 import main as bridge  # main imports this module after emit and STATE exist
-from rohlik import read_products
+from rohlik import _num, read_products
 
 router = APIRouter()
 
 
 class CartLine(BaseModel):
     name: str
-    qty: float = 1
-    price_czk: float = 0  # per unit, the total is qty × price
+    qty: float | None = None  # default: the pick's usual quantity
+    price_czk: float | None = None  # per unit, only used for an item with no pick
     reason: str = ""
-    image_url: str = ""
-    product_id: str | int | None = None
 
 
 class Cart(BaseModel):
@@ -38,18 +36,35 @@ class Shops(BaseModel):
     why: str = ""
 
 
-def _image(line: CartLine) -> str:
-    """The product picks' image URL, so the model never has to spell one out."""
-    for row in read_products():
-        image = next((v for k, v in row.items() if k.lower().startswith("image")), "")
-        if image and (str(line.product_id) == row.get("Product ID") or line.name.lower() == row.get("Item", "").lower()):
-            return image.strip("<>")
-    return ""
+def _pick(name: str) -> dict[str, str]:
+    """The product pick for a cart line: the same item name, else the longest pick name inside it (or it inside one)."""
+    key = name.strip().lower()
+    rows = [r for r in read_products() if r.get("Item")]
+    exact = [r for r in rows if r["Item"].lower() == key]
+    near = sorted((r for r in rows if r["Item"].lower() in key or key in r["Item"].lower()), key=lambda r: -len(r["Item"]))
+    return (exact or near or [{}])[0]
+
+
+def _col(row: dict[str, str], prefix: str) -> str:
+    return next((v for k, v in row.items() if k.lower().startswith(prefix)), "")
 
 
 @router.post("/tools/show_cart")
 def tool_show_cart(cart: Cart) -> dict[str, Any]:
-    items = [line.model_dump(exclude={"product_id"}) | {"image_url": line.image_url or _image(line)} for line in cart.items]
+    """The model sends names, quantities and reasons. Prices and pictures come from the picks, so its call is short
+    (C's silent step before the narration) and a pick's price can't drift."""
+    items = []
+    for line in cart.items:
+        pick = _pick(line.name)
+        items.append(
+            {
+                "name": line.name,
+                "qty": line.qty if line.qty is not None else (_num(_col(pick, "qty")) or 1),
+                "price_czk": _num(_col(pick, "price")) if pick else (line.price_czk or 0),
+                "reason": line.reason,
+                "image_url": _col(pick, "image").strip("<>"),
+            }
+        )
     total = round(sum(i["price_czk"] * i["qty"] for i in items))
     # HACK(demo): without a Rohlík token this is also the fake cart that place_order puts up for approval.
     bridge.STATE["cart"] = items
@@ -118,20 +133,20 @@ def tool_show_shops(shops: Shops) -> dict[str, Any]:
 TOOLS = [
     bridge._fn(
         "show_cart",
-        "Show the cart on the panel, with every item and its reason. Call it once per order with the whole cart.",
+        "Show the cart on the panel, with every item and its reason. Call it once per order with the whole cart. "
+        "Prices and pictures of the product picks are added for you.",
         {
             "items": {
                 "type": "array",
                 "items": {
                     "type": "object",
                     "properties": {
-                        "name": {"type": "string", "description": "Short English name, e.g. 'Lactose-free milk'."},
-                        "product_id": {"type": "string"},
+                        "name": {"type": "string", "description": "The pick's item name, e.g. 'Lactose-free milk'."},
                         "qty": {"type": "number"},
-                        "price_czk": {"type": "number", "description": "Price per unit."},
                         "reason": {"type": "string", "description": "One reason tag from the instructions."},
+                        "price_czk": {"type": "number", "description": "Only for an item with no pick: your guess per unit."},
                     },
-                    "required": ["name", "qty", "price_czk", "reason"],
+                    "required": ["name", "qty", "reason"],
                 },
             }
         },

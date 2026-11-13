@@ -113,20 +113,34 @@ def test_show_cart_and_shops_publish_the_table_shapes():
 
     queue: asyncio.Queue[str] = asyncio.Queue()
     main._subscribers.add(queue)
-    items = [
-        {"name": "Lactose-free milk", "qty": 4, "price_czk": 34, "reason": "ran out"},
-        {"name": "Bananas", "qty": 2, "price_czk": 47, "reason": "-20 % sale"},
+    items = [  # names, quantities and reasons only: prices and pictures come from products.md
+        {"name": "Lactose-free milk", "qty": 4, "reason": "lactose-free"},
+        {"name": "Bananas", "qty": 6, "price_czk": 1, "reason": "-20 % sale"},  # a pick's price wins over the model's
+        {"name": "Pancetta", "qty": 1, "price_czk": 79, "reason": "for carbonara"},  # no pick: the model's guess
     ]
-    assert client.post("/tools/show_cart", json={"items": items}).json()["total_czk"] == 230
+    assert client.post("/tools/show_cart", json={"items": items}).json()["total_czk"] == 329  # 191.6 + 58.08 + 79
     client.post("/tools/show_shops", json={"choice": "Rohlík", "why": "delivers within the hour"})
     main._subscribers.discard(queue)
     events = {e["type"]: e for e in (json.loads(queue.get_nowait()) for _ in range(queue.qsize()))}
     cart = events["cart"]
-    assert cart["total_czk"] == 230 and set(cart["items"][0]) == {"name", "qty", "price_czk", "reason", "image_url"}
+    assert cart["total_czk"] == 329 and set(cart["items"][0]) == {"name", "qty", "price_czk", "reason", "image_url"}
+    assert cart["items"][0]["price_czk"] == 47.9 and cart["items"][0]["image_url"].startswith("https://cdn.rohlik.cz/")
+    assert cart["items"][2]["image_url"] == ""
     assert main.STATE["cart"] == cart["items"]  # the fake cart place_order approves
     deals = events["deals"]
     assert {"items", "stores", "scraped_at"} <= set(deals) and deals["choice"] == "Rohlík"
     assert "Bananas at Rohlík: 9.68 Kč, was 12.1 Kč (-20 %)" in main.memory()
+
+
+def test_demo_cart_from_names_comes_to_the_picks_total():
+    names = ["Lactose-free milk", "Eggs", "Guanciale", "Spaghetti", "Gluten-free spaghetti", "Greek yogurt", "Bananas"]
+    qty = {"Lactose-free milk": 4, "Guanciale": 2, "Greek yogurt": 4, "Bananas": 6}
+    items = [{"name": n, "qty": qty.get(n, 1), "reason": "x"} for n in names]
+    assert client.post("/tools/show_cart", json={"items": items}).json()["total_czk"] == 685
+    assert all(i["image_url"] for i in main.STATE["cart"])
+    # a looser name still finds its pick, and the longest pick name wins ("Gluten-free spaghetti" is not "Spaghetti")
+    loose = [{"name": "milk", "qty": 4, "reason": "x"}, {"name": "Barilla gluten-free spaghetti", "qty": 1, "reason": "x"}]
+    assert [i["price_czk"] for i in (client.post("/tools/show_cart", json={"items": loose}), main.STATE["cart"])[1]] == [47.9, 95.9]
 
 
 def test_stage_reset_restores_the_seed_and_keeps_deals_and_frames():
