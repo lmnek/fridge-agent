@@ -6,7 +6,7 @@
   flex-direction: column;
   flex: 1;
   min-height: 0;
-  gap: 18px;
+  gap: 20px;
 }
 
 .ck-vision-grid {
@@ -50,21 +50,17 @@
   font-weight: 600;
   line-height: 1;
   letter-spacing: 0.02em;
-  padding: 4px 8px 5px; border-radius: var(--ck-r-chip); background: rgba(10, 18, 24, 0.62);
+  padding: 4px 8px 5px;
+  border-radius: 6px;
+  background: rgba(10, 18, 24, 0.72);
 }
 .ck-vision-osd.is-cam {
-  left: 10px;
-  bottom: 10px;
+  left: 8px;
+  bottom: 8px;
 }
 .ck-vision-osd.is-when {
-  right: 10px;
-  top: 10px;
-  display: flex;
-  gap: 10px;
-}
-.ck-vision-clock {
-  font-weight: 500;
-  opacity: 1;
+  right: 8px;
+  top: 8px;
 }
 
 /* Analysing: the frame dims a little and one blue line sweeps it, slowly and back. */
@@ -112,7 +108,7 @@
 .ck-vision-box {
   position: absolute;
   z-index: 2;
-  border-radius: 6px;
+  border-radius: 4px;
   transform-origin: center;
 }
 .ck-vision-box.is-in {
@@ -121,28 +117,33 @@
 }
 .ck-vision-box.is-out {
   border: 3px solid var(--ck-gone);
-  background: rgba(184, 40, 58, 0.1);
+  background: rgba(184, 40, 58, 0.14);
+  box-shadow: 0 0 0 1.5px rgba(255, 255, 255, 0.9);
 }
 .ck-vision-box.is-new {
   border: 3px solid var(--ck-lamp);
-  background: rgba(31, 111, 150, 0.1);
+  background: rgba(31, 111, 150, 0.14);
+  box-shadow: 0 0 0 1.5px rgba(255, 255, 255, 0.9);
 }
+/* The label is a tab fixed to the box's top-left corner, so it reads as the box's name, not a floating chip. */
 .ck-vision-label {
   position: absolute;
   left: -3px;
-  bottom: calc(100% + 3px);
-  padding: 2px 8px 3px;
-  border-radius: 5px;
+  bottom: 100%;
+  padding: 3px 10px 3px;
+  border-radius: 4px 4px 4px 0;
   color: #fff;
-  font-size: 22px;
-  font-weight: 600;
-  line-height: 1.2;
+  font-family: "Barlow Semi Condensed", "Barlow", sans-serif;
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: 0.01em;
   white-space: nowrap;
 }
 .label-inside .ck-vision-label {
   bottom: auto;
-  top: 3px;
-  left: 3px;
+  top: -3px;
+  border-radius: 4px 4px 4px 0;
 }
 .is-out .ck-vision-label {
   background: var(--ck-gone);
@@ -164,14 +165,46 @@
   flex: 1;
   min-height: 0;
   display: flex;
-  align-items: flex-start;
-  gap: 20px;
+  align-items: stretch;
+  gap: 24px;
 }
 
+/* Analysing: one honest line and an indeterminate bar in lamp blue. */
+.ck-vision-busy {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
 .ck-vision-note {
   margin: 0;
-  color: var(--ck-slate);
+  color: var(--ck-mute);
   font-size: var(--ck-t-body);
+  line-height: 1.2;
+}
+.ck-vision-bar {
+  position: relative;
+  height: 6px;
+  overflow: hidden;
+  border-radius: 3px;
+  background: var(--ck-lamp-soft);
+}
+.ck-vision-bar i {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 32%;
+  border-radius: 3px;
+  background: var(--ck-lamp);
+  animation: ck-vision-bar 1.6s cubic-bezier(0.45, 0, 0.55, 1) infinite;
+}
+@keyframes ck-vision-bar {
+  from {
+    left: -32%;
+  }
+  to {
+    left: 100%;
+  }
 }
 
 .ck-vision-error {
@@ -197,21 +230,27 @@
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  padding: 6px 0 7px;
+  height: 56px;
   border-bottom: 1px solid var(--ck-line);
   font-family: "Barlow Semi Condensed", "Barlow", sans-serif;
-}
-.ck-vision-diff li:first-child {
-  padding-top: 0;
 }
 .ck-vision-diff li:last-child {
   border-bottom: none;
 }
 .ck-vision-name {
-  font-size: 32px;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--ck-ink);
+  font-size: 40px;
   font-weight: 600;
-  line-height: 1.1;
+  line-height: 1.2;
   white-space: nowrap;
+}
+.ck-vision-diff .ck-tag {
+  flex: none;
+  font-size: var(--ck-t-label);
+  font-weight: 600;
 }
 .ck-vision-diff .is-none {
   color: var(--ck-slate);
@@ -221,12 +260,16 @@
 /* The craving drops in beside the diff, the one warm moment on the card. */
 .ck-vision-craving {
   flex: none;
-  max-width: 50%;
+  width: 34%;
   margin-left: auto;
+  align-self: flex-start;
+  height: 112px;
+  box-sizing: border-box;
   display: flex;
   flex-direction: column;
-  gap: 2px;
-  padding: 12px 22px 14px;
+  justify-content: center;
+  gap: 6px;
+  padding: 16px 24px;
   border-radius: var(--ck-r-inner);
   border: 1.5px solid var(--ck-edge);
   background: var(--ck-lamp-soft);
@@ -238,15 +281,19 @@
 }
 .ck-vision-craving-dish {
   font-family: "Barlow Semi Condensed", "Barlow", sans-serif;
-  font-size: 36px;
+  font-size: 40px;
   font-weight: 600;
-  line-height: 1.05;
+  line-height: 1.1;
   color: var(--ck-ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 @media (prefers-reduced-motion: reduce) {
   .ck-vision-scan,
-  .ck-vision-scan i {
+  .ck-vision-scan i,
+  .ck-vision-bar i {
     animation: none;
   }
 }

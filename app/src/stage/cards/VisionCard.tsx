@@ -19,14 +19,14 @@ const cameraName = (c: string) => CAMERA_NAMES[c] ?? `${c[0]?.toUpperCase() ?? "
 const clock = (ts?: number) =>
   ts ? new Date(ts).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", second: "2-digit" }) : "";
 
-/** "Craving carbonara tonight" -> "Carbonara, tonight". Works off whatever fact text the agent stored. */
-function craving(fact: string): string {
+/** "Craving carbonara tonight" -> { dish: "Carbonara", when: "tonight" }. Works off whatever fact text the agent stored. */
+function craving(fact: string): { dish: string; when?: string } {
   let t = fact.trim().replace(/[.!]+$/, "");
   t = t.replace(/^(?:the household is |they are |i'?m |is )?(?:craving|craves|wants?|would love|fancies|in the mood for)\s+/i, "");
   const when = t.match(/\b(tonight|today|tomorrow|this weekend|for dinner|for lunch|this evening)\b/i)?.[1];
   if (when) t = t.replace(when, "").replace(/\s{2,}/g, " ").trim();
   const dish = t ? t[0].toUpperCase() + t.slice(1) : fact;
-  return when ? `${dish}, ${when.toLowerCase()}` : dish;
+  return { dish, when: when?.toLowerCase() };
 }
 
 /** Re-renders once `ms` has passed since `since`, and reports whether it has. */
@@ -41,7 +41,7 @@ function useAfter(since: number | undefined, ms: number): boolean {
   return passed;
 }
 
-function FrameTile({ frame, ts, boxes, scanning, delay }: { frame: Frame; ts?: number; boxes: Box[]; scanning: boolean; delay: number }) {
+function FrameTile({ frame, showCam, boxes, scanning, delay }: { frame: Frame; showCam: boolean; boxes: Box[]; scanning: boolean; delay: number }) {
   // Context boxes ("in") first and quietly, then the ones that matter.
   const ordered = [...boxes].sort((a, b) => (a.status === "in" ? 0 : 1) - (b.status === "in" ? 0 : 1));
   return (
@@ -53,11 +53,9 @@ function FrameTile({ frame, ts, boxes, scanning, delay }: { frame: Frame; ts?: n
     >
       {/* object-fit: fill keeps the 0..1 box coordinates on the right spot whatever the camera's aspect. */}
       <img src={frame.url} alt={`${cameraName(frame.camera)}, ${frame.when}`} />
-      <span className="ck-vision-osd is-cam">{cameraName(frame.camera)}</span>
-      <span className="ck-vision-osd is-when">
-        {frame.when === "before" ? "Before" : "After"}
-        {ts && frame.when === "after" ? <span className="ck-vision-clock">{clock(ts)}</span> : null}
-      </span>
+      {/* The camera is named once per column (top row); the time lives in the header aside. */}
+      {showCam && <span className="ck-vision-osd is-cam">{cameraName(frame.camera)}</span>}
+      <span className="ck-vision-osd is-when">{frame.when === "before" ? "Before" : "After"}</span>
       {scanning && (
         <div className="ck-vision-scan" style={{ animationDelay: `${-delay * 4}s` }}>
           <i style={{ animationDelay: `${-delay * 4}s` }} />
@@ -102,6 +100,7 @@ export default function VisionCard({ events }: { events: BusEvent[] }) {
   const learned = latest(events, "learned", (e) => e.category === "craving");
   const remember = latest(events, "tool", (e) => e.name === "remember" && e.args?.category === "craving");
   const cravingFact: string | undefined = learned?.fact ?? remember?.args?.fact;
+  const crave = cravingFact ? craving(cravingFact) : undefined;
 
   // Frames laid out as a grid: one column per camera, before on top, after below.
   const cameras = [...new Set(frames.map((f) => f.camera))];
@@ -137,8 +136,7 @@ export default function VisionCard({ events }: { events: BusEvent[] }) {
             {["before", "after"].flatMap((w) =>
               ["top", "door"].map((c) => (
                 <div key={`${w}-${c}`} className="ck-vision-frame is-idle">
-                  <span className="ck-vision-osd is-cam">{cameraName(c)}</span>
-                  <span className="ck-vision-osd is-when">{w === "before" ? "Standby" : ""}</span>
+                  {w === "before" && <span className="ck-vision-osd is-cam">{cameraName(c)}</span>}
                 </div>
               )),
             )}
@@ -154,7 +152,7 @@ export default function VisionCard({ events }: { events: BusEvent[] }) {
                   <FrameTile
                     key={`${run}-${when}-${camera}`}
                     frame={frames[idx]}
-                    ts={captured?.ts}
+                    showCam={r === 0}
                     boxes={phase === "done" ? boxes.filter((b) => b.frame === idx) : []}
                     scanning={phase === "analysing"}
                     delay={(r * cameras.length + c) * 0.08}
@@ -189,8 +187,16 @@ export default function VisionCard({ events }: { events: BusEvent[] }) {
               The cameras sent frames but vision could not read them: {error}. Coldex will ask what was taken.
             </p>
           )}
-          {phase === "analysing" && <p className="ck-vision-note">Comparing before and after on both cameras</p>}
-          {phase === "captured" && <p className="ck-vision-note">Frames in from {cameras.length} {cameras.length === 1 ? "camera" : "cameras"}</p>}
+          {(phase === "analysing" || phase === "captured") && (
+            <div className="ck-vision-busy">
+              <p className="ck-vision-note">
+                {phase === "analysing"
+                  ? `Comparing before and after on ${cameras.length === 1 ? "the camera" : `${cameras.length === 2 ? "both" : "all"} cameras`}`
+                  : `Frames in from ${cameras.length} ${cameras.length === 1 ? "camera" : "cameras"}`}
+              </p>
+              <div className="ck-vision-bar"><i /></div>
+            </div>
+          )}
 
           <AnimatePresence>
             {cravingFact && (phase === "done" || phase === "waiting") && (
@@ -201,8 +207,8 @@ export default function VisionCard({ events }: { events: BusEvent[] }) {
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 transition={{ type: "spring", stiffness: 300, damping: 19, mass: 0.9 }}
               >
-                <span className="ck-vision-craving-kicker">Craving noted</span>
-                <span className="ck-vision-craving-dish">{craving(cravingFact)}</span>
+                <span className="ck-vision-craving-kicker">{crave?.when ? `Craving ${crave.when}` : "Craving noted"}</span>
+                <span className="ck-vision-craving-dish">{crave?.dish}</span>
               </motion.div>
             )}
           </AnimatePresence>
