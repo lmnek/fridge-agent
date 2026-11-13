@@ -172,7 +172,8 @@ export default function App() {
   useEffect(() => {
     let awake = false;
     try {
-      awake = sessionStorage.getItem(AWAKE) === "1";
+      // ?wake (infra/kitchen.sh): the demo window wakes on load, its Chrome flags let it play sound without a tap
+      awake = sessionStorage.getItem(AWAKE) === "1" || new URLSearchParams(location.search).has("wake");
     } catch {}
     if (awake && !autoWoke) {
       autoWoke = true;
