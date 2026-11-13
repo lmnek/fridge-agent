@@ -1,4 +1,5 @@
-/* C4 cart card. Rows share the height they get, so 7 fit in the 864x984 panel and fewer just breathe. */
+/* C4 cart card. Rows share the height they get, so 7 (with their why tags) fit the 800x800 box and fewer
+   just breathe. */
 
 .ck-cart-list {
   flex: 1;
@@ -13,24 +14,24 @@
 }
 
 .ck-cart-row {
-  flex: 0 1 112px;
+  flex: 0 1 96px;
   min-height: 0;
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr) 64px 132px;
+  grid-template-columns: auto minmax(0, 1fr) 52px 118px;
   align-items: center;
-  column-gap: 20px;
-  padding: 10px 0;
+  column-gap: 18px;
+  padding: 3px 0;
   border-bottom: 1px solid var(--ck-line);
 }
 
 .ck-cart-thumb {
   display: grid;
   place-items: center;
-  height: 100%;
-  max-height: 76px;
+  height: calc(100% - 4px);
+  max-height: 58px;
   aspect-ratio: 1;
   overflow: hidden;
-  border-radius: 12px;
+  border-radius: var(--ck-r-inner);
   background: var(--ck-sunk);
 }
 .ck-cart-thumb img {
@@ -43,45 +44,51 @@
 .ck-cart-thumb b {
   color: var(--ck-faint);
   font-family: "Barlow Semi Condensed", "Barlow", sans-serif;
-  font-size: 24px;
+  font-size: var(--ck-t-label);
   font-weight: 600;
 }
 
 .ck-cart-main {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  align-items: flex-start;
+  gap: 3px;
   min-width: 0;
 }
 .ck-cart-name {
+  max-width: 100%;
   overflow: hidden;
   font-size: 24px;
   font-weight: 500;
-  line-height: 1.2;
+  line-height: 1.15;
   white-space: nowrap;
   text-overflow: ellipsis;
 }
 /* Rohlík's long Czech names step down in size so they still fit one line: a second line plus the
    tag doesn't fit 7 rows in the panel, so the ellipsis is only the last resort. */
 .ck-cart-name.is-long {
-  font-size: 21px;
+  font-size: 22px;
 }
 .ck-cart-name.is-longer {
-  font-size: 19px;
+  font-size: 20px;
 }
 .ck-cart-tags {
   display: flex;
-  gap: 8px;
+  gap: 6px;
+  max-width: 100%;
   overflow: hidden;
+}
+.ck-cart-tags .ck-tag {
+  padding: 1px 9px 2px;
 }
 
 .ck-cart-qty {
-  color: var(--ck-mute);
-  font-size: 22px;
+  color: var(--ck-slate);
+  font-size: var(--ck-t-label);
   text-align: right;
 }
 .ck-cart-price {
-  font-size: 26px;
+  font-size: var(--ck-t-body);
   font-weight: 600;
   text-align: right;
 }
@@ -93,21 +100,21 @@
   gap: 24px;
 }
 .ck-cart-note {
-  margin: 0 0 8px;
-  color: var(--ck-mute);
-  font-size: 20px;
+  margin: 0 0 6px;
+  color: var(--ck-slate);
+  font-size: var(--ck-t-label);
   line-height: 1.4;
 }
 .ck-cart-total {
   font-family: "Barlow Semi Condensed", "Barlow", sans-serif;
-  font-size: 88px;
+  font-size: 68px;
   font-weight: 600;
   line-height: 0.95;
   letter-spacing: -0.02em;
   white-space: nowrap;
   position: relative;
-  padding-bottom: 10px;
-  color: var(--ck-mute);
+  padding-bottom: 8px;
+  color: var(--ck-slate);
   transition: color 0.7s ease;
 }
 /* The running sum is quiet; once every row is in, it settles: full ink and a hairline drawing in under it. */
@@ -131,7 +138,7 @@
 }
 
 /* Smaller boxes: drop the tags first, then shrink the photo. */
-@container (max-height: 520px) {
+@container (max-height: 400px) {
   .ck-cart-tags {
     display: none;
   }
@@ -153,7 +160,7 @@
 }
 .ck-cart-bar {
   height: 18px;
-  border-radius: 6px;
+  border-radius: var(--ck-r-chip);
   background: var(--ck-sunk);
 }
 @keyframes ck-cart-breathe {

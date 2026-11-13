@@ -62,10 +62,10 @@ function Radar({ stores, scanning }: { stores: Store[]; scanning: boolean }) {
       ))}
       <line x1={C - R} y1={C} x2={C + R} y2={C} className="ck-shops-ring" />
       <line x1={C} y1={C - R} x2={C} y2={C + R} className="ck-shops-ring" />
-      <text x={C + 6} y={C - R * 0.5 - 8} className="ck-shops-scale">
+      <text x={C + 8} y={C - R * 0.5 + 26} className="ck-shops-scale">
         {dist(range / 2)}
       </text>
-      <text x={C + 6} y={C - R + 24} className="ck-shops-scale">
+      <text x={C + 8} y={C - R + 30} className="ck-shops-scale">
         {dist(range)}
       </text>
 
@@ -91,8 +91,8 @@ function Radar({ stores, scanning }: { stores: Store[]; scanning: boolean }) {
               transition={{ type: "spring", stiffness: 300, damping: 22, delay: 0.15 + i * 0.25 }}
               style={{ transformOrigin: `${p.x}px ${p.y}px` }}
             >
-              <circle cx={p.x} cy={p.y} r={9} className="ck-shops-blip" />
-              <text x={p.x} y={below ? p.y + 34 : p.y - 18} textAnchor="middle" className="ck-shops-blip-name">
+              <circle cx={p.x} cy={p.y} r={11} className="ck-shops-blip" />
+              <text x={p.x} y={below ? p.y + 44 : p.y - 22} textAnchor="middle" className="ck-shops-blip-name">
                 {s.name}
               </text>
             </motion.g>
@@ -141,7 +141,7 @@ export default function ShopsCard({ events }: { events: BusEvent[] }) {
 
   // The grid only picks a side once the prices are in.
   const win = ev ? winner : null;
-  const cols = { gridTemplateColumns: `1fr repeat(${stores.length}, 172px)` };
+  const cols = { gridTemplateColumns: `1fr repeat(${stores.length}, 136px)` };
 
   return (
     <CardFrame

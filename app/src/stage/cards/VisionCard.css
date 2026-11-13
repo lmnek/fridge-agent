@@ -6,13 +6,13 @@
   flex-direction: column;
   flex: 1;
   min-height: 0;
-  gap: 22px;
+  gap: 18px;
 }
 
 .ck-vision-grid {
   position: relative;
   display: grid;
-  gap: 12px;
+  gap: 10px;
 }
 
 .ck-vision-frame {
@@ -20,7 +20,7 @@
   margin: 0;
   aspect-ratio: 16 / 9;
   overflow: hidden;
-  border-radius: 10px;
+  border-radius: var(--ck-r-inner);
   background: #1b262d;
 }
 .ck-vision-frame img {
@@ -46,20 +46,19 @@
   z-index: 3;
   color: #fff;
   font-family: "Barlow Semi Condensed", "Barlow", sans-serif;
-  font-size: 22px;
+  font-size: var(--ck-t-label);
   font-weight: 600;
   line-height: 1;
   letter-spacing: 0.02em;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.75), 0 0 1px rgba(0, 0, 0, 0.9);
-  padding: 3px 7px; border-radius: 4px; background: rgba(10, 18, 24, 0.55);
+  padding: 4px 8px 5px; border-radius: var(--ck-r-chip); background: rgba(10, 18, 24, 0.62);
 }
 .ck-vision-osd.is-cam {
-  left: 12px;
-  bottom: 11px;
+  left: 10px;
+  bottom: 10px;
 }
 .ck-vision-osd.is-when {
-  right: 12px;
-  top: 11px;
+  right: 10px;
+  top: 10px;
   display: flex;
   gap: 10px;
 }
@@ -154,36 +153,41 @@
 
 .ck-vision-wait {
   grid-column: 1 / -1;
-  margin: 10px 0 0;
-  color: var(--ck-mute);
-  font-size: 24px;
+  margin: 8px 0 0;
+  color: var(--ck-slate);
+  font-size: var(--ck-t-body);
 }
 
+/* Under the frames: the diff on the left, the craving dropping in on the right. */
 .ck-vision-bottom {
   position: relative;
   flex: 1;
   min-height: 0;
   display: flex;
-  flex-direction: column;
+  align-items: flex-start;
+  gap: 20px;
 }
 
 .ck-vision-note {
   margin: 0;
-  color: var(--ck-mute);
-  font-size: 24px;
+  color: var(--ck-slate);
+  font-size: var(--ck-t-body);
 }
 
 .ck-vision-error {
+  flex: 1;
   margin: 0;
-  padding: 16px 20px;
-  border-left: 3px solid var(--ck-soon);
+  padding: 14px 18px;
+  border-radius: var(--ck-r-inner);
   background: var(--ck-soon-soft);
   color: var(--ck-ink);
-  font-size: 22px;
+  font-size: var(--ck-t-label);
 }
 
 /* The diff: what left the fridge, set big. */
 .ck-vision-diff {
+  flex: 1;
+  min-width: 0;
   margin: 0;
   padding: 0;
   list-style: none;
@@ -192,43 +196,49 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 24px;
-  padding: 6px 0 8px;
+  gap: 16px;
+  padding: 6px 0 7px;
   border-bottom: 1px solid var(--ck-line);
   font-family: "Barlow Semi Condensed", "Barlow", sans-serif;
 }
 .ck-vision-diff li:first-child {
-  border-top: 1px solid var(--ck-line);
+  padding-top: 0;
+}
+.ck-vision-diff li:last-child {
+  border-bottom: none;
 }
 .ck-vision-name {
-  font-size: 40px;
+  font-size: 32px;
   font-weight: 600;
   line-height: 1.1;
+  white-space: nowrap;
 }
 .ck-vision-diff .is-none {
-  color: var(--ck-mute);
-  font-size: 28px;
+  color: var(--ck-slate);
+  font-size: var(--ck-t-body);
 }
 
-/* The craving drops in at the bottom, the one warm moment on the card. */
+/* The craving drops in beside the diff, the one warm moment on the card. */
 .ck-vision-craving {
-  margin-top: auto;
+  flex: none;
+  max-width: 50%;
+  margin-left: auto;
   display: flex;
   flex-direction: column;
   gap: 2px;
-  padding: 16px 24px 18px;
-  border-radius: 14px;
-  border: 1px solid #b9d6e5;
+  padding: 12px 22px 14px;
+  border-radius: var(--ck-r-inner);
+  border: 1.5px solid var(--ck-edge);
   background: var(--ck-lamp-soft);
 }
 .ck-vision-craving-kicker {
   color: var(--ck-lamp);
-  font-size: 20px;
+  font-size: var(--ck-t-label);
   font-weight: 600;
 }
 .ck-vision-craving-dish {
   font-family: "Barlow Semi Condensed", "Barlow", sans-serif;
-  font-size: 46px;
+  font-size: 36px;
   font-weight: 600;
   line-height: 1.05;
   color: var(--ck-ink);

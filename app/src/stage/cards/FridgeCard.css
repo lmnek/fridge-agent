@@ -1,21 +1,22 @@
+/* C1 fridge check: what ran out set big in red, then the rest of the fridge, soonest expiry first. */
 .ck-fridge-body { display: flex; flex-direction: column; }
-.ck-fridge-out { display: flex; flex-direction: column; margin-bottom: 36px; border-bottom: 1px solid var(--ck-line); }
+.ck-fridge-out { display: flex; flex-direction: column; margin-bottom: 30px; border-bottom: 1px solid var(--ck-line); }
 .ck-fridge-outrow {
   display: flex; align-items: center; gap: 18px;
-  padding: 20px 0; border-top: 1px solid var(--ck-line); color: var(--ck-gone);
+  padding: 16px 0; border-top: 1px solid var(--ck-line); color: var(--ck-gone);
 }
 .ck-fridge-x { display: grid; place-items: center; flex: none; width: 28px; }
 .ck-fridge-outname {
   flex: 1; font-family: "Barlow Semi Condensed", "Barlow", sans-serif;
-  font-size: 40px; font-weight: 600; line-height: 1.1; color: var(--ck-ink);
+  font-size: 36px; font-weight: 600; line-height: 1.1; color: var(--ck-ink);
 }
-.ck-fridge-label { margin: 0 0 6px; color: var(--ck-mute); font-size: 20px; font-weight: 500; }
+.ck-fridge-label { margin: 0 0 6px; color: var(--ck-slate); font-size: var(--ck-t-label); font-weight: 500; }
 .ck-fridge-list { margin: 0; padding: 0; list-style: none; }
 .ck-fridge-row {
-  display: grid; grid-template-columns: 1fr auto 230px; align-items: baseline; gap: 20px;
-  padding: 16px 0; border-top: 1px solid var(--ck-line); font-size: 26px;
+  display: grid; grid-template-columns: 1fr auto 210px; align-items: baseline; gap: 20px;
+  padding: 14px 0; border-top: 1px solid var(--ck-line); font-size: var(--ck-t-body);
 }
 .ck-fridge-name { font-weight: 500; }
-.ck-fridge-qty { color: var(--ck-mute); font-weight: 500; }
-.ck-fridge-exp { color: var(--ck-mute); font-weight: 500; text-align: right; }
+.ck-fridge-qty { color: var(--ck-slate); font-weight: 500; }
+.ck-fridge-exp { color: var(--ck-slate); font-weight: 500; text-align: right; }
 .ck-fridge-exp.soon { color: var(--ck-soon); font-weight: 600; }
