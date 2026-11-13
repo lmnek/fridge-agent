@@ -60,7 +60,8 @@ def tool_show_cart(cart: Cart) -> dict[str, Any]:
 
 # --------------------------------------------------------------------------- deals (C3)
 
-# HACK(demo): a hand-made sample until part 8's scrape lands in data/deals.json. Rohlík prices follow products.md.
+# HACK(demo): a hand-made sample until part 8's scrape lands in data/deals.json. Rohlík prices follow products.md
+# (per pack or piece). The banana sale is staged: Rohlík had none on 13. 11.
 SAMPLE: dict[str, Any] = {
     "scraped_at": "sample",
     "stores": [
@@ -69,23 +70,24 @@ SAMPLE: dict[str, Any] = {
         {"name": "Albert", "distance_m": 700},
     ],
     "items": [
-        {"item": "Lactose-free milk", "store": "Rohlík", "price_czk": 34, "was_czk": None},
-        {"item": "Lactose-free milk", "store": "Lidl", "price_czk": 31.9, "was_czk": None},
-        {"item": "Lactose-free milk", "store": "Albert", "price_czk": 36.9, "was_czk": None},
-        {"item": "Eggs", "store": "Rohlík", "price_czk": 89, "was_czk": None},
-        {"item": "Eggs", "store": "Lidl", "price_czk": 79.9, "was_czk": None},
-        {"item": "Eggs", "store": "Albert", "price_czk": 92.9, "was_czk": None},
-        {"item": "Guanciale", "store": "Rohlík", "price_czk": 189, "was_czk": None},
-        {"item": "Spaghetti", "store": "Rohlík", "price_czk": 49, "was_czk": None},
-        {"item": "Spaghetti", "store": "Lidl", "price_czk": 44.9, "was_czk": 54.9},
-        {"item": "Spaghetti", "store": "Albert", "price_czk": 52.9, "was_czk": None},
-        {"item": "Gluten-free spaghetti", "store": "Rohlík", "price_czk": 78, "was_czk": None},
-        {"item": "Gluten-free spaghetti", "store": "Albert", "price_czk": 84.9, "was_czk": None},
-        {"item": "Greek yogurt", "store": "Rohlík", "price_czk": 59, "was_czk": None},
-        {"item": "Greek yogurt", "store": "Lidl", "price_czk": 54.9, "was_czk": None},
-        {"item": "Bananas", "store": "Rohlík", "price_czk": 47, "was_czk": 59},
-        {"item": "Bananas", "store": "Lidl", "price_czk": 52.9, "was_czk": None},
-        {"item": "Bananas", "store": "Albert", "price_czk": 54.9, "was_czk": None},
+        {"item": "Lactose-free milk", "store": "Rohlík", "price_czk": 47.9, "was_czk": None},
+        {"item": "Lactose-free milk", "store": "Lidl", "price_czk": 39.9, "was_czk": None},
+        {"item": "Lactose-free milk", "store": "Albert", "price_czk": 44.9, "was_czk": None},
+        {"item": "Eggs", "store": "Rohlík", "price_czk": 64.9, "was_czk": None},
+        {"item": "Eggs", "store": "Lidl", "price_czk": 59.9, "was_czk": None},
+        {"item": "Eggs", "store": "Albert", "price_czk": 69.9, "was_czk": None},
+        {"item": "Guanciale", "store": "Rohlík", "price_czk": 58.9, "was_czk": None},
+        {"item": "Spaghetti", "store": "Rohlík", "price_czk": 64.9, "was_czk": None},
+        {"item": "Spaghetti", "store": "Lidl", "price_czk": 49.9, "was_czk": 59.9},
+        {"item": "Spaghetti", "store": "Albert", "price_czk": 59.9, "was_czk": None},
+        {"item": "Gluten-free spaghetti", "store": "Rohlík", "price_czk": 95.9, "was_czk": None},
+        {"item": "Gluten-free spaghetti", "store": "Albert", "price_czk": 99.9, "was_czk": None},
+        {"item": "Greek yogurt", "store": "Rohlík", "price_czk": 22.9, "was_czk": None},
+        {"item": "Greek yogurt", "store": "Lidl", "price_czk": 19.9, "was_czk": None},
+        {"item": "Greek yogurt", "store": "Albert", "price_czk": 24.9, "was_czk": None},
+        {"item": "Bananas", "store": "Rohlík", "price_czk": 9.68, "was_czk": 12.1},
+        {"item": "Bananas", "store": "Lidl", "price_czk": 10.9, "was_czk": None},
+        {"item": "Bananas", "store": "Albert", "price_czk": 11.5, "was_czk": None},
     ],
 }
 

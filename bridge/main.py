@@ -137,7 +137,21 @@ async def events() -> StreamingResponse:
 async def publish(request: Request) -> dict[str, Any]:
     """Anyone can put an event on the bus: the kitchen app's captions, the courier call, Telegram. See docs/handoffs."""
     event = await request.json()
-    emit(event.pop("type"), **event)
+    kind = event.pop("type")
+    emit(kind, **event)
+    if kind == "stage" and event.get("action") == "reset":
+        reset()  # the stage reset hotkey resets the rehearsal data too
+    return {"ok": True}
+
+
+@app.post("/reset")
+def reset() -> dict[str, Any]:
+    """Rehearsal reset: the seed fridge, no cart, approvals, orders or notes. Keeps data/deals.json and data/vision."""
+    STATE.clear()
+    STATE.update(_seed())
+    save()
+    NOTES_FILE.unlink(missing_ok=True)
+    emit("inventory", items=inventory(), source="reset")
     return {"ok": True}
 
 

@@ -126,4 +126,20 @@ def test_show_cart_and_shops_publish_the_table_shapes():
     assert main.STATE["cart"] == cart["items"]  # the fake cart place_order approves
     deals = events["deals"]
     assert {"items", "stores", "scraped_at"} <= set(deals) and deals["choice"] == "Rohlík"
-    assert "Bananas at Rohlík: 47 Kč, was 59 Kč (-20 %)" in main.memory()
+    assert "Bananas at Rohlík: 9.68 Kč, was 12.1 Kč (-20 %)" in main.memory()
+
+
+def test_stage_reset_restores_the_seed_and_keeps_deals_and_frames():
+    deals = main.DATA_DIR / "deals.json"
+    frame = main.DATA_DIR / "vision" / "last" / "0.jpg"
+    frame.parent.mkdir(parents=True, exist_ok=True)
+    deals.write_text(json.dumps({"scraped_at": "07:30", "stores": [], "items": []}))
+    frame.write_bytes(b"jpeg")
+    client.post("/inventory/changes", json={"removed": [{"name": "Eggs"}]})
+    client.post("/tools/show_cart", json={"items": [{"name": "Eggs", "qty": 1, "price_czk": 64.9, "reason": "ran out"}]})
+    client.post("/tools/remember", json={"fact": "Craving carbonara.", "category": "craving"})
+    client.post("/events", json={"type": "stage", "action": "reset"})
+    assert "Eggs" in {i["name"] for i in client.get("/inventory").json()}
+    assert main.STATE["cart"] == [] and main.STATE["approvals"] == {} and not main.NOTES_FILE.exists()
+    assert deals.exists() and frame.exists()
+    deals.unlink()
