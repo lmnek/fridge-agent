@@ -49,6 +49,15 @@ Gaps against the demo we want:
 | Language | **Undecided** (§8) | |
 | Apify | Not needed. Frida scrapes akcniceny.cz itself. | |
 
+### 3.1 Honza's simpler version: one OpenAI Realtime session (`bridge/` + `app/`)
+
+Status: built, not decided against Frida. A single OpenAI Realtime session in the browser is the whole
+brain: voice, vision (camera photos as image input) and tools. Rohlík plugs in as a remote MCP server
+inside that session. The server is one FastAPI file in `bridge/` (port 8100, so it runs next to Frida on
+8000) and the app is one screen in `app/` (port 5174) with no emoji, sparkles or glass. Frida in
+`backend/` and `frontend/` is untouched. It covers the "Realtime voice orb" workstream (§7) in its
+simplest form. How it works: `REALTIME.md`. Keys: `SETUP.md`. Not yet run against OpenAI with a real key.
+
 ## 4. Demo: 3:00 run of show (draft, adapt as features land)
 
 What's real: tracking, vision, the expiry scan, agent reasoning, the recipe, and the Rohlík cart and order.

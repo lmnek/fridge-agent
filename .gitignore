@@ -28,3 +28,6 @@ frontend/dist/
 
 # Nástroje
 .playwright-mcp/
+
+# Realtime app
+app/dist/
