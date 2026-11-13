@@ -49,8 +49,8 @@ export function createLife(EDGES: number[][], N: number) {
     for (let i = 0; i < MAX_TR; i++) {
       if (tAge[i] < tLife[i]) continue;
       const r = rnd();
-      // mostly the shell, some on the inner rim, a few on the mid cycling cubes
-      tC[i] = r < 0.5 ? N + 1 : r < 0.68 ? N : Math.floor(rnd() * N);
+      // mostly the deep-blue cycling cubes (white light reads best against deep ice), some on the shell
+      tC[i] = r < 0.32 ? N + 1 : Math.floor(rnd() * N);
       tE[i] = Math.floor(rnd() * 12);
       tV[i] = EDGES[tE[i]][rnd() < 0.5 ? 0 : 1];
       tPE[i] = -1;
@@ -68,7 +68,7 @@ export function createLife(EDGES: number[][], N: number) {
     t = now;
     act = Math.min(1, Math.max(0, activeX));
     for (let j = 0; j < 3; j++) {
-      bodyRgb[j] = pal.body[j] + (pal.deep[j] - pal.body[j]) * 0.5;
+      bodyRgb[j] = pal.body[j] + (pal.deep[j] - pal.body[j]) * 0.25;
       coreRgb[j] = pal.core[j];
     }
 
@@ -97,11 +97,11 @@ export function createLife(EDGES: number[][], N: number) {
 
     // tracers
     let rate = 0, speed = 0.5;
-    if (st === "speaking") { rate = 0.9 + lvlOut * 2.6; speed = 0.75 + lvlOut * 1.4; }
-    else if (st === "thinking") { rate = 0.75; speed = 0.45; }
-    else if (st === "listening") { rate = 0.35; speed = 0.35; }
+    if (st === "speaking") { rate = 0.7 + voice * 2; speed = 0.7 + voice * 1.2; }
+    else if (st === "thinking") { rate = 0.55; speed = 0.4; }
+    else if (st === "listening") { rate = 0.3; speed = 0.32; }
     else if (st === "connecting") { rate = 1.2; speed = 0.9; }
-    trAcc += rate * act * dt;
+    trAcc += rate * act * dt * 10; // DEBUGTMP
     if (trAcc > 1) { trAcc -= 1 + rnd() * 0.4; spawnTracer(speed); }
     for (let i = 0; i < MAX_TR; i++) {
       if (tAge[i] >= tLife[i]) continue;
@@ -138,9 +138,10 @@ export function createLife(EDGES: number[][], N: number) {
 
   /** edge tone 0 (light body) .. 1 (deep blue): deep inside, light outside, slowly breathing; waves lighten it */
   const toneAt = (d: number) => {
-    const depth = 1 - smooth(0.12, 0.92, d);
-    const breathe = 0.78 + 0.22 * Math.sin(t * 0.8 - d * 4.2);
-    return act * depth * breathe * (1 - 0.75 * waveAt(d));
+    const depth = 1 - smooth(0.08, 0.88, d);
+    // a slow swell rolling outward through the depth, so the deep blue breathes rather than sits
+    const breathe = 0.8 + 0.2 * Math.sin(t * 0.55 - d * 3.2);
+    return act * depth * breathe * (1 - 0.85 * waveAt(d));
   };
 
   /** brightness at the centre, for the inner glow */
@@ -201,16 +202,18 @@ export function createLife(EDGES: number[][], N: number) {
       const a = Math.min(1, env * cubeA * act * (wantFront ? 1 : 0.45));
       if (a < 0.01) continue;
       const len = tLen[i], s = tS[i];
+      (globalThis as any).__orbFps2 = [c, i, a, s, len, tE[i], tV[i], tPE[i]]; // DEBUGTMP
       if (!span(ctx, i, s - len, s + 0.03, SX, SY, front, wantFront)) continue;
       pointAt(i, s - len, SX, SY);
       const x0 = ptX, y0 = ptY;
       pointAt(i, s + 0.03, SX, SY);
       ctx.globalAlpha = 1;
-      ctx.strokeStyle = streak(ctx, x0, y0, ptX, ptY, bodyRgb, a, 0.5);
+      // a light-blue body (white alone vanishes on the pale page) under a crisp white filament
+      ctx.strokeStyle = streak(ctx, x0, y0, ptX, ptY, bodyRgb, a * 0.7, 0.45);
       ctx.lineWidth = w * 5;
       ctx.stroke();
-      ctx.strokeStyle = streak(ctx, x0, y0, ptX, ptY, coreRgb, a, 0.6);
-      ctx.lineWidth = w * 1.7;
+      ctx.strokeStyle = streak(ctx, x0, y0, ptX, ptY, coreRgb, a, 0.55);
+      ctx.lineWidth = w * 2;
       ctx.stroke();
     }
   };
